@@ -1,15 +1,22 @@
-CC = iverilog
-CFLAGS = -W all -I. -g2005-sv
+RTL_DIR := ../../rtl
+INCLUDE_DIR := $(RTL_DIR)
 
-SRC = iob_eth_rx.v iob_eth_tx.v iob_eth.v iob_eth_crc.v
 
-TARGET = iob_eth
+VC = iverilog
+CFLAGS := -W all -I$(INCLUDE_DIR)  -g2005-sv
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $(SRC)
+VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
+SRC := $(shell find $(RTL_DIR) -name '*.v')
+
+
+all: $(SRC) $(VHEADERS)
+	$(VC) $(CFLAGS) -o $@ $(SRC)
 	./$@
 
 clean:
-	@rm -f *~ $(TARGET) *.vcd 
+	@rm -f *.vcd 
+	@rm -f *#
+	@rm -f *~ 
+	@rm -f a.out
 
-.phony: clean
+.phony: all clean
