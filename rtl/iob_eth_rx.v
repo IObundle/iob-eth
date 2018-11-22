@@ -1,12 +1,6 @@
 `timescale 1ns/1ps
 `include "iob_eth_defs.vh"
 
-`define IDLE 3'd0
-`define L_NIBBLE 3'd2
-`define H_NIBBLE 3'd1
-`define CRC 3'd3
-
-
 module iob_eth_rx(
 
 		   input 	     rst,

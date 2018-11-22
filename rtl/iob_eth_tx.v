@@ -1,11 +1,6 @@
 `timescale 1ns/1ps
 `include "iob_eth_defs.vh"
 
-`define IDLE 3'd0
-`define L_NIBBLE 3'd2
-`define H_NIBBLE 3'd1
-`define CRC 3'd3
-
 module iob_eth_tx(
 		  //control
 		  input 	   rst,
@@ -98,7 +93,7 @@ module iob_eth_tx(
            TX_DATA = tx_data[7:4];
 
 	   if(tx_addr == (pkt_size - 1'b1))
-	      next_state = `CRC;
+	      next_state = `CHK_CRC;
 	   else
 	     next_state = `L_NIBBLE;
 

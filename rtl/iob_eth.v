@@ -62,6 +62,7 @@ module iob_eth (
    assign txp_en = wr_en | tx_rd;
    assign txp_addr = {1'b1, wr_en? addr : tx_addr};
 
+
    // send and receive commands
    wire 			    send, receive;
    assign send = (addr == 12'd2047) & data_in[7];
