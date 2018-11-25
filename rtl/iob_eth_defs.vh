@@ -14,7 +14,7 @@
 `define ETH_TYPE 8'h08
 
 
-// Medium Access Control Address
+// Medium Access Control Addresses
 `define ETH_MAC_ADDR_W 48
 `define ETH_MAC_ADDR 48'h00aa0062c606
 
@@ -29,17 +29,22 @@
 `define ETH_INTRRPT_EN `ETH_ADDR_W'd2
 
 `define ETH_TX_DATA `ETH_ADDR_W'h1000
-`define ETH_TX_NBYTES `ETH_ADDR_W'd4
+`define ETH_TX_NBYTES `ETH_ADDR_W'd3
 
 `define ETH_RX_DATA `ETH_ADDR_W'h1800
-`define ETH_RX_NBYTES `ETH_ADDR_W'd6
+`define ETH_RX_NBYTES `ETH_ADDR_W'd4
 
-`define ETH_MAC_ADDR_LO  `ETH_ADDR_W'd7
-`define ETH_MAC_ADDR_HI  `ETH_ADDR_W'd8
+`define ETH_MAC_ADDR_LO  `ETH_ADDR_W'd5
+`define ETH_MAC_ADDR_HI  `ETH_ADDR_W'd6
 
-`define ETH_DEST_MAC_ADDR_LO `ETH_ADDR_W'd9
-`define ETH_DEST_MAC_ADDR_HI `ETH_ADDR_W'd10
-
+`define ETH_DEST_MAC_ADDR_LO `ETH_ADDR_W'd7
+`define ETH_DEST_MAC_ADDR_HI `ETH_ADDR_W'd8
 
 // Memory type
 `define ETH_ALT_MEM_TYPE
+
+
+//Test and its size
+`define DEBUG
+`define ETH_TEST_SIZE 20
+
