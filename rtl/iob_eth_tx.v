@@ -3,139 +3,177 @@
 
 module iob_eth_tx(
 		  //control
-		  input 	   rst,
-		  input 	   send,
-		  input [47:0] 	   destMAC,
+		  input 		       rst,
 
 		  //frontend 
-		  input wire 	   TX_CLK,
-		  output reg 	   TX_EN,
-		  output reg [3:0] TX_DATA,
-		  output reg 	   TX_ERR,
+		  input wire 		       TX_CLK,
+		  output 		       TX_EN,
+		  output reg [3:0] 	       TX_DATA,
 
 		  //backend
-		  output 	   tx_rd,
-		  output [10:0]    tx_addr,
-		  input [7:0] 	   tx_data,
+		  output [`ETH_BUF_ADDR_W-1:0] addr,
+		  input [`ETH_DATA_W-1:0]      data,
+		  input [`ETH_BUF_ADDR_W-1:0]  nbytes,
+		  input 		       send,
+		  input [`ETH_MAC_ADDR_W-1:0]  src_mac_addr,
+		  input [`ETH_MAC_ADDR_W-1:0]  dest_mac_addr,
 
-		  //interrupt
-		  output reg 	   frameTransmitted
+		  //status
+		  output reg 		       ready
 		  );
+
+   //tx reset
+   reg 				    tx_rst, tx_rst_1;
+   
+   //state
    reg [1:0] 			    state;
-   reg [1:0] 			    next_state;
-
-
-   //byte addr
-   reg [10:0] 			    next_addr;
+   reg [1:0] 			    state_nxt;
+   reg [`ETH_BUF_ADDR_W-1:0] 	    byte_counter;
+   wire 			    frame_sent;
    
-   //CRC related
-   reg 				    crc_en;
-   reg 				    crc_rst;
-   wire [31:0] 			    crc_value;
 
+   //tx data
+   reg [`ETH_DATA_W-1:0] 	    tx_data;
+
+   //send bit syncrononizer
+   reg 				    tx_send, tx_send_1;
+   
+   //CRC
+   wire 			    crc_en;
+   wire [`ETH_CRC_W-1:0] 	    crc_value;
  
-   
-   //Source MAC address
-   reg [47:0] 			    srcMAC;
-
    //SFD
-   wire [7:0] 			    sfd;
-   assign sfd = `SFD;
+   wire [`ETH_DATA_W-1:0] 	    sfd;
 
-	   
-   //crc compute 
+   //PREAMBLE
+   wire [`ETH_DATA_W-1:0] 	    preamble;		    
+
+   //instantiate crc module
    iob_eth_crc crc_tx (
-		   .clk(TX_CLK),
-		   .rst(TX_RST),
-		   .start(crc_start),
-		   .data(TX_DATA),
-		   .data_valid(crc_en),
-		   .crc(crc_value) 
-		   );
+		       .clk(TX_CLK),
+		       .rst(TX_RST),
+		       .start(tx_send),
+		       .data(TX_DATA),
+		       .data_valid(crc_en),
+		       .crc(crc_value) 
+		       );
    
 
-   // FSM 
-   always @* begin
+   // assignments
+   assign TX_EN = (state != `ETH_IDLE);
 
-      tx_rd = 1'b0;
-      frameTransmitted = 1'b0;
+   assign sfd = `ETH_SFD;
+   assign preamble = `ETH_PREAMBLE;
+ 
 
-      crc_en = 1'b0;
-      crc_start = 1'b0;
-      next_state = state;
-      next_addr = tx_addr;
-
-      TX_ERR = 1'b0;
-      TX_DATA = tx_data[3:0];
-      TX_EN = 1'b0;
-
-      case(state)
-        `IDLE : begin
-	   if(send) begin
-	      tx_rd = 1'b1;
-              next_state = `L_NIBBLE;
-              crc_start = 1'b1;
-	   end
+   assign addr = byte_counter - `ETH_BUF_ADDR_W'd20;
+   assign crc_en = (byte_counter >= 8 && byte_counter <= (nbytes + `ETH_BUF_ADDR_W'd25));
+   assign frame_sent = (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd25));
+ 
+   //select data to send according to byte counter
+   always @*
+     if(byte_counter <= `ETH_BUF_ADDR_W'd6)
+       tx_data = preamble;
+     else if(byte_counter == `ETH_BUF_ADDR_W'd7)
+       tx_data = sfd;
+     else if(byte_counter == `ETH_BUF_ADDR_W'd8)
+       tx_data = dest_mac_addr[7 : 0];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd9)
+       tx_data = dest_mac_addr[15 : 8];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd10)
+       tx_data = dest_mac_addr[23 : 16];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd11)
+       tx_data = dest_mac_addr[31 : 24];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd12)
+       tx_data = dest_mac_addr[39 : 32];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd13)
+       tx_data = dest_mac_addr[47 : 40];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd14)
+       tx_data = src_mac_addr[7 : 0];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd15)
+       tx_data = src_mac_addr[15 : 8];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd16)
+       tx_data = src_mac_addr[23 : 16];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd17)
+       tx_data = src_mac_addr[31 : 24];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd18)
+       tx_data = src_mac_addr[39 : 32];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd19)
+       tx_data = src_mac_addr[47 : 40];
+     else if(byte_counter == (nbytes + `ETH_BUF_ADDR_W'd20))
+       tx_data = data;
+     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd22))
+       tx_data = crc_value[7 : 0];
+     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd23))
+       tx_data = crc_value[15 : 8];
+     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd24))
+       tx_data = crc_value[23 : 16];
+     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd25))
+       tx_data = crc_value[31 : 24];
+     else
+       tx_data = `ETH_BUF_ADDR_W'd0;
+      
+   // tx fsm
+   always @* begin 
+     state_nxt = state;
+     case(state)
+       `ETH_IDLE : 
+	 if(tx_send)
+           state_nxt = `ETH_L_NIBBLE;
+       `ETH_L_NIBBLE : begin
+          TX_DATA = tx_data[3:0];
+          state_nxt = `ETH_H_NIBBLE;
+       end
+       `ETH_H_NIBBLE : begin
+          TX_DATA = tx_data[7:4];
+	  state_nxt = `ETH_L_NIBBLE;
+	  if(frame_sent)
+	    state_nxt = `ETH_IDLE;
+       end
+       default: TX_DATA = 4'd0;
+     endcase
+   end // always @ *
+   
+   
+   //update state 
+   always @(posedge TX_CLK)
+     if(tx_rst) begin
+	state <= `ETH_IDLE;
+	byte_counter <= `ETH_BUF_ADDR_W'd0;
+     end else begin // if (rst)
+	state <= state_nxt;
+	if(state == `ETH_H_NIBBLE) begin
+	   byte_counter <= byte_counter + 1'b1;
+	   if(frame_sent)
+	     byte_counter <= `ETH_BUF_ADDR_W'd0;
 	end
-	`L_NIBBLE : begin
-	   tx_rd = 1'b1;
- 	   crc_en = 1'b1;
-           TX_DATA = tx_data[3:0];
-	   if(RX_DV & ~RX_ERR)
-	     if(rx_data == 4'b0101)
-               next_state = `H_NIBBLE;
-	   else
-	     next_state = `IDLE;
-	end
-	`H_NIBBLE : begin
-   	   crc_en = 1'b1;
-	   next_addr = tx_addr + 1'b1;
-           TX_DATA = tx_data[7:4];
+     end
 
-	   if(tx_addr == (pkt_size - 1'b1))
-	      next_state = `CHK_CRC;
-	   else
-	     next_state = `L_NIBBLE;
+   //ready flag
+   always @ (posedge TX_CLK)
+     if(tx_rst)
+       ready <= 1'b0;
+     else if (frame_sent)
+       ready <= 1'b1;
+   
+   //reset sync
+   always @ (posedge rst, posedge TX_CLK)
+     if(rst) begin
+	tx_rst <= 1'b1;
+	tx_rst_1 <= 1'b1;
+     end else begin
+	tx_rst <= tx_rst_1;
+	tx_rst_1 <= 1'b0;
+     end
 
-           case(tx_addr)
-	     11'h0 : TX_DATA = sfd[3:0]
-	     11'h1 : next_destMAC[47:40] = rx_data;
-	     11'h2 : next_destMAC[39:32] = rx_data;
-	     11'h3 : next_destMAC[31:24] = rx_data;
-	     11'h4 : next_destMAC[23:16] = rx_data;
-	     11'h5 : next_destMAC[15:8] = rx_data;
-	     11'h6 : next_destMAC[7:0] = rx_data;
-	     11'h7 : if(destMAC != `MAC_ADDR && destMAC != 48'h FFFFFFFFFFFF)
-		   next_state = `IDLE;
-	     default : rx_wr = 1'b1;
-           endcase
-	end
-	`CHK_CRC : begin
-	   if(crc_value == 0) begin
-              frameReceived =  1'b1;
-	      next_addr = 11'd2047;
-	      next_rx_data = 8'b1;
-	      if(receive) begin
-		 next_state = `IDLE;
-		 next_addr = 0;
-	      end
-	   end
-	end
-	default : begin
-	   next_state = `IDLE;
-	end
-      endcase
-   end
-
-   //registers' update
-   always @(posedge RX_CLK) begin
-      if(rst) begin
-	 state <= `IDLE;
-	 tx_addr <= 11'd0;
-      end else begin // if (rst)
-	 state <= next_state;
-	 tx_addr <= next_addr;
-      end
-   end
+  //send sync
+   always @ (posedge send, posedge TX_CLK)
+     if(send) begin 
+	tx_send <= 1'b1;
+	tx_send_1 <= 1'b1;
+     end else begin
+	tx_send_1 <= 1'b0;
+	tx_send <= tx_send_1;    
+     end
 
 endmodule

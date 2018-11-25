@@ -52,39 +52,27 @@ module iob_eth_crc (
    assign next_crc[30] = crc_reg[26];
    assign next_crc[31] = crc_reg[27];
    
-   always @(crc_reg) begin
-      for (i=0; i <= 31; i = i + 1) begin
-	 crc[i] =  ~crc_reg[31 - i];
-      end
-   end
+   always @*
+     for (i=0; i <= 31; i = i + 1)
+       crc[i] =  ~crc_reg[31 - i];
 
-   always @(data) begin
-      for (i=0; i <= 3; i = i + 1) begin
-	 reversed[i] = data[3 - i];
-      end
-   end
+   always @*
+     for (i=0; i <= 3; i = i + 1)
+       reversed[i] = data[3 - i];
+   
 
-   always @(posedge clk, posedge rst) begin
-
+   always @(posedge clk, posedge rst)
       if(rst) begin
 	 byte_cnt <= 4'b0;
 	 crc_reg <= 32'b0;
-      end else begin
-	 if(start) begin
-            byte_cnt <= 0;
-            crc_reg <= 32'b0;
-	 end
-	 else if(data_valid) begin
-            if(byte_cnt != 8) begin
-               crc_reg <= {crc_reg[27:0], ~reversed};
-               byte_cnt <= byte_cnt + 1'b1;
-            end
-            else begin
-               crc_reg <= next_crc;
-            end
-	 end
-      end
-   end
-
+      end else if(start) begin
+         byte_cnt <= 0;
+         crc_reg <= 32'b0;
+      end else if(data_valid) 
+        if(byte_cnt != 8) begin
+           crc_reg <= {crc_reg[27:0], ~reversed};
+           byte_cnt <= byte_cnt + 1'b1;
+        end else 
+          crc_reg <= next_crc;
 
 endmodule
