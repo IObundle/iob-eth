@@ -27,7 +27,7 @@ module iob_eth_tb;
    
    reg 				RX_CLK;
    wire [3:0]			RX_DATA;
-   wire 			RX_DV;
+   reg                          RX_DV;
 
    //iterator
    integer 			i;
@@ -46,7 +46,7 @@ module iob_eth_tb;
 		.we			(we),
 		.addr			(addr[`ETH_ADDR_W-1:0]),
 		.data_in		(data_in[`ETH_MAC_ADDR_W/2-1:0]),
-		.data_out		(data_out[`ETH_DATA_W-1:0]),
+		.data_out		(data_out[`ETH_MAC_ADDR_W/2-1:0]),
 		.interrupt		(interrupt),
 
 		// phy backend
@@ -62,11 +62,12 @@ module iob_eth_tb;
 		.RX_DV			(RX_DV)
 		);
 
-   // self loop
-   assign RX_DATA = TX_DATA;
-   assign RX_DV = TX_EN;
-   
+   // loop back through PHY
+   always @(TX_EN) 
+     RX_DV <=  #(14*pclk_per) TX_EN;   
  
+   assign RX_DATA = TX_DATA;
+
    initial begin
  
 
@@ -75,15 +76,17 @@ module iob_eth_tb;
       $dumpvars();
 `endif
 
-      // generate random test data
+      // generate test data
       for(i=0; i < `ETH_TEST_SIZE; i= i+1)
-	data[i]  = $random;
+	data[i]  = i+1;
+	//data[i]  = $random;
 
       rst = 1;
       clk = 1;
       RX_CLK = 1;
+      RX_DV = 0;
       we = 0;
-      sel = 0;
+      sel = 1;
       
 
       // deassert reset
@@ -97,14 +100,14 @@ module iob_eth_tb;
 
       // write number of bytes to transmit
       #(clk_per) addr = `ETH_TX_NBYTES;
-      data_in = `ETH_TEST_SIZE;
       we = 1;
-
+      data_in = `ETH_TEST_SIZE;
+ 
       // write data to send
       for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin
-	#(clk_per) addr = `ETH_TX_DATA + i;
-	data_in = data[i];
-      end
+	 #(clk_per) addr = `ETH_TX_DATA + i;
+	 data_in = data[i];
+     end
 
       // start sending
       #(clk_per) addr = `ETH_CONTROL;
@@ -112,10 +115,13 @@ module iob_eth_tb;
             
       #(clk_per) we = 0;
 
+      
       // wait until rx ready
-      addr = `ETH_STATUS;
+      #(10*clk_per) addr = `ETH_STATUS;
       while(~data_out[1])
 	#(clk_per);
+
+      $display("Got here");
 
       // read and check received data
       for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin

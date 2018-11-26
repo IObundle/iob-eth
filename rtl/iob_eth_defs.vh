@@ -16,7 +16,8 @@
 
 // Medium Access Control Addresses
 `define ETH_MAC_ADDR_W 48
-`define ETH_MAC_ADDR 48'h00aa0062c606
+//`define ETH_MAC_ADDR 48'h00aa0062c606
+`define ETH_MAC_ADDR 48'hFF00FF00FF00
 
 // TRX States
 `define ETH_IDLE 3'd0
@@ -39,6 +40,9 @@
 
 `define ETH_DEST_MAC_ADDR_LO `ETH_ADDR_W'd7
 `define ETH_DEST_MAC_ADDR_HI `ETH_ADDR_W'd8
+
+`define ETH_SRC_MAC_ADDR_LO `ETH_ADDR_W'd9
+`define ETH_SRC_MAC_ADDR_HI `ETH_ADDR_W'd10
 
 // Memory type
 `define ETH_ALT_MEM_TYPE

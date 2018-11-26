@@ -2,37 +2,37 @@
 
 /*
  
- Simple Ethernet Core 
+ Ethernet Core 
  
 */
 
 
 module iob_eth (
-		output 			      GTX_CLK,
-		output reg 		      ETH_RESETN,
+		output                             GTX_CLK,
+		output reg                         ETH_RESETN,
  
 		// frontend mii
 		// RX
-		input 			      RX_CLK,
-		input [3:0] 		      RX_DATA,
-		input 			      RX_DV,
+		input                              RX_CLK,
+		input [3:0]                        RX_DATA,
+		input                              RX_DV,
 
 		//TX
-		input 			      TX_CLK,
-		output reg 		      TX_EN,
-		output reg [3:0] 	      TX_DATA,
+		input                              TX_CLK,
+		output reg                         TX_EN,
+		output reg [3:0]                   TX_DATA,
 
 		// backend interface
-		input 			      clk,
-		input 			      rst,
-		input 			      sel,
-		input 			      we,
-		input [`ETH_ADDR_W-1:0]       addr,
-		output reg [`ETH_DATA_W-1:0]  data_out,
-		input [`ETH_MAC_ADDR_W/2-1:0] data_in,
+		input                              clk,
+		input                              rst,
+		input                              sel,
+		input                              we,
+		input [`ETH_ADDR_W-1:0]            addr,
+		output reg [`ETH_MAC_ADDR_W/2-1:0] data_out,
+		input [`ETH_MAC_ADDR_W/2-1:0]      data_in,
 
 		// interrupt bit
-		output 			      interrupt
+		output                             interrupt
 		);
 
    // interrupt
@@ -42,36 +42,35 @@ module iob_eth (
    // mac addresses
    reg [`ETH_MAC_ADDR_W-1:0] 		      mac_addr;
    reg [`ETH_MAC_ADDR_W-1:0] 		      dest_mac_addr;
+   reg [`ETH_MAC_ADDR_W-1:0]                  src_mac_addr;
    reg 					      mac_addr_lo_en;
    reg 					      mac_addr_hi_en;
    reg 					      dest_mac_addr_lo_en;
    reg 					      dest_mac_addr_hi_en;
 
    //tx signals
-   wire [`ETH_BUF_ADDR_W-1:0] 		     tx_rd_addr; 
-   wire [`ETH_DATA_W-1:0] 		     tx_rd_data; 
-   reg 					     tx_wr;
-   reg 					     tx_send;
-   wire 				     tx_ready;
-   reg 					     tx_ready_clr;
-   reg [`ETH_ADDR_W-3:0] 		     tx_nbytes;
-   reg 					     tx_nbytes_en;
- 
-  //rx signals
-   wire [`ETH_BUF_ADDR_W-1:0] 		     rx_wr_addr;
-   wire [`ETH_DATA_W-1:0] 		     rx_wr_data; 
-   wire 				     rx_wr;
-   wire 				     rx_ready;
-   reg 					     rx_ready_clr;
-   wire [`ETH_ADDR_W-3:0] 		     rx_nbytes;
-  
+   wire [`ETH_BUF_ADDR_W-1:0]                 tx_rd_addr; 
+   wire [`ETH_DATA_W-1:0]                     tx_rd_data; 
+   reg                                        tx_wr;
+   reg                                        tx_send;
+   wire                                       tx_ready;
+   reg [2*`ETH_DATA_W-1:0]                    tx_nbytes;
+   reg                                        tx_nbytes_en;
+   
+   //rx signals
+   wire [`ETH_BUF_ADDR_W-1:0]                 rx_wr_addr;
+   wire [`ETH_DATA_W-1:0]                     rx_wr_data; 
+   wire                                       rx_wr;
+   wire                                       rx_ready;
+   reg                                        rx_ready_clr;
+   wire [2*`ETH_DATA_W-1:0]                   rx_nbytes;
+   
 
-   // memory buffer
-   wire [`ETH_ADDR_W-2:0] 		     be_addr;
-   wire [`ETH_DATA_W-1:0] 		     rx_rd_data; 
-
+   // tx/rx buffers
+   wire [`ETH_DATA_W-1:0]                     rx_rd_data; 
+   
    // phy reset timer
-   reg [3:0] 				     phy_rst_cnt;
+   reg [3:0]                                  phy_rst_cnt;
    
    
    //
@@ -81,9 +80,6 @@ module iob_eth (
    assign GTX_CLK = 1'b0; //this will force 10/100 negotiation
    assign interrupt = interrupt_en & (tx_ready | rx_ready);
   
-   assign be_addr = TX_EN? tx_rd_addr: rx_wr_addr; // back-end memory address is controlled by either tx or rx
-   
- 
    
    //
    // ADDRESS DECODER
@@ -106,31 +102,36 @@ module iob_eth (
       tx_wr = 1'b0;
       tx_send = 1'b0;
       tx_nbytes_en = 1'b0;
-      tx_ready_clr = 1'b0;
 
       // rx
       rx_ready_clr = 1'b0;
 
       case (addr)
 	`ETH_INTRRPT_EN: interrupt_en_en = sel&we;
-	`ETH_STATUS: data_out = { {`ETH_DATA_W-2{1'b0}}, rx_ready, tx_ready};
-	`ETH_CONTROL: tx_send = data_in[0];
-	`ETH_TX_DATA: begin
-	   tx_ready_clr= sel&~we;
-	   tx_wr = 1'b1;
-	end
-	`ETH_TX_NBYTES: tx_nbytes_en = 1'b1;
-	`ETH_MAC_ADDR_LO: mac_addr_lo_en = 1'b1;
-	`ETH_MAC_ADDR_HI: mac_addr_hi_en = 1'b1;
-	`ETH_DEST_MAC_ADDR_LO: dest_mac_addr_lo_en = 1'b1;
-	`ETH_DEST_MAC_ADDR_HI: dest_mac_addr_hi_en = 1'b1;
-	`ETH_RX_DATA: begin
-	   rx_ready_clr= sel&~we;
-	   data_out = rx_rd_data;
-	end
-	`ETH_RX_NBYTES: data_out = rx_nbytes;
-	   
-	default:;
+	`ETH_STATUS: data_out = { {`ETH_MAC_ADDR_W-2{1'b0}}, rx_ready, tx_ready};
+	`ETH_CONTROL: tx_send = sel&we&data_in[0];
+	`ETH_TX_NBYTES: tx_nbytes_en = sel&we;
+	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
+	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
+	`ETH_DEST_MAC_ADDR_LO: begin 
+           dest_mac_addr_lo_en = sel&we;
+           data_out = dest_mac_addr[23:0];
+        end
+	`ETH_DEST_MAC_ADDR_HI: begin 
+           dest_mac_addr_hi_en = sel&we;
+           data_out = dest_mac_addr[47:24];
+        end
+	`ETH_SRC_MAC_ADDR_LO: data_out = src_mac_addr[23:0];
+	`ETH_SRC_MAC_ADDR_HI: data_out = src_mac_addr[47:24];
+	`ETH_RX_NBYTES: data_out = {{`ETH_DATA_W{1'b0}}, rx_nbytes};	   
+	default: begin
+           if (addr >= `ETH_TX_DATA && addr < `ETH_TX_DATA + 2**`ETH_BUF_ADDR_W)
+	  tx_wr = sel&we;
+	   if (addr >= `ETH_RX_DATA && addr < `ETH_RX_DATA + 2**`ETH_BUF_ADDR_W) begin
+	      rx_ready_clr= sel&~we;
+	      data_out = {{2*`ETH_DATA_W{1'b0}},rx_rd_data};
+	   end
+        end
       endcase
    end // always @ *
    
@@ -165,35 +166,47 @@ module iob_eth (
    // register tx number of bytes
    always @ (posedge clk)
      if(tx_nbytes_en)
-       tx_nbytes <= data_in[10:0];
+       tx_nbytes <= data_in[2*`ETH_DATA_W-1:0];
 
 
    //
-   // MEMORY BUFFER
+   // TX and RX BUFFERS
    //
    
 `ifdef ETH_ALT_MEM_TYPE
 
-   iob_eth_alt_t2p_mem  #(
+   iob_eth_alt_s2p_mem  #(
 			  .DATA_W(`ETH_DATA_W),
-			  .ADDR_W(`ETH_ADDR_W-1)) 
-   alt_mem
+			  .ADDR_W(`ETH_BUF_ADDR_W)) 
+   tx_buffer
      (
-      .clk(clk),
-
-      // Front-End
-      
-      .addr_a(addr[`ETH_ADDR_W-2:0]),
+      // Back-End (written by host)
+      .clk_a(clk),
+      .addr_a(addr[`ETH_BUF_ADDR_W-1:0]),
       .data_a(data_in[`ETH_DATA_W-1:0]),
       .we_a(tx_wr),
-      .q_a(rx_rd_data),
 
-      // Back-End
-
-      .addr_b(be_addr),
-      .data_b(rx_wr_data),
-      .we_b(rx_wr),
+      // Front-End (read by core)
+      .clk_b(TX_CLK),
+      .addr_b(tx_rd_addr),
       .q_b(tx_rd_data)
+      );
+ 
+  iob_eth_alt_s2p_mem  #(
+			  .DATA_W(`ETH_DATA_W),
+			  .ADDR_W(`ETH_BUF_ADDR_W)) 
+   rx_buffer
+     (
+      // Front-End (written by core)
+      .clk_a(RX_CLK),
+      .addr_a(rx_wr_addr),
+      .data_a(rx_wr_data),
+      .we_a(rx_wr),
+
+      // Back-End (read by host)
+      .clk_b(clk),
+      .addr_b(addr[`ETH_BUF_ADDR_W-1:0]),
+      .q_b(rx_rd_data)
       );
 
 `endif
@@ -203,23 +216,23 @@ module iob_eth (
    //
    
  
-    iob_eth_tx tx (
-		   .rst			(rst | tx_ready_clr),
+   iob_eth_tx tx (
+		  .rst			(rst),
 
-		   //frontend
-		   .TX_CLK		(TX_CLK),
-		   .TX_EN		(TX_EN),
-		   .TX_DATA		(TX_DATA),
+		  //frontend
+		  .TX_CLK		(TX_CLK),
+		  .TX_EN		(TX_EN),
+		  .TX_DATA		(TX_DATA),
 		   
-		   //backend
-		   .addr	       	(tx_rd_addr),
-		   .data	       	(tx_rd_data),
-		   .nbytes              (tx_nbytes),
-		   .send	        (tx_send),
-		   .src_mac_addr        (mac_addr),
-		   .dest_mac_addr       (dest_mac_addr),
+		  //backend
+		  .addr	       	        (tx_rd_addr),
+		  .data	       	        (tx_rd_data),
+		  .nbytes               (tx_nbytes),
+		  .send	                (tx_send),
+		  .src_mac_addr         (mac_addr),
+		  .dest_mac_addr        (dest_mac_addr),
 		   
-		   //status
+		  //status
 		  .ready                (tx_ready)
 		  );
  
@@ -228,7 +241,7 @@ module iob_eth (
    //
    //RECEIVER
    //
-   /*
+
    iob_eth_rx rx (
 		  .rst			(rst | rx_ready_clr),
 
@@ -241,11 +254,13 @@ module iob_eth (
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr[10:0]),
 		  .data		        (rx_wr_data[7:0]),
-		  .ready	        (rx_ready),
 		  .nbytes               (rx_nbytes),
-		  .mac_addr             (mac_addr)
+		  .src_mac_addr         (src_mac_addr),
+		  .mac_addr             (mac_addr),
+
+		  .ready	        (rx_ready)
 		  );
-*/
+
    
 
    //

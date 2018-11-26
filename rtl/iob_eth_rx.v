@@ -2,23 +2,23 @@
 `include "iob_eth_defs.vh"
 
 module iob_eth_rx(
-		  input 			   rst,
+		  input                            rst,
 		  
 		   //frontend 
-		  input 			   RX_CLK,
-		  input 			   RX_DV,
-		  input [3:0] 			   RX_DATA,
+		  input                            RX_CLK,
+		  input                            RX_DV,
+		  input [3:0]                      RX_DATA,
 
 		   //backend
-		  output [`ETH_BUF_ADDR_W-1:0] 	   addr,
-		  output reg [`ETH_DATA_W-1:0] 	   data,
-		  output reg 			   wr,
-		  output reg [`ETH_BUF_ADDR_W-1:0] nbytes,
+		  output [`ETH_BUF_ADDR_W-1:0]     addr,
+		  output [`ETH_DATA_W-1:0]         data,
+		  output reg                       wr,
+		  output reg [2*`ETH_DATA_W-1:0]   nbytes,
 		  output reg [`ETH_MAC_ADDR_W-1:0] src_mac_addr,
-		  input [`ETH_MAC_ADDR_W-1:0] 	   mac_addr,
+		  input [`ETH_MAC_ADDR_W-1:0]      mac_addr,
 
 		  //status
-		  output reg 			   ready
+		  output reg                       ready
 		  );
 
    //rx reset
@@ -28,14 +28,14 @@ module iob_eth_rx(
    reg [1:0] 					   state;
    reg [1:0] 					   state_nxt;
    reg 						   rst_state;
-   reg [`ETH_BUF_ADDR_W-1:0] 			   byte_counter;
+   reg [2*`ETH_DATA_W-1:0] 			   byte_counter;
 
    //mac addresses
    reg [`ETH_MAC_ADDR_W-1:0] 			   dest_mac_addr, dest_mac_addr_nxt;
    reg [`ETH_MAC_ADDR_W-1:0] 			   src_mac_addr_nxt;
    
    //payload size
-   reg [`ETH_BUF_ADDR_W-1:0] 			   nbytes_nxt;
+   reg [`ETH_DATA_W-1:0] 			   nbytes_nxt;
    
    //rx data
    reg [`ETH_DATA_W-1:0] 			   rx_data, rx_data_nxt;
@@ -55,10 +55,10 @@ module iob_eth_rx(
    //
    // ASSIGNMENTS
    //
-
+   assign data = rx_data;
    assign preamble = `ETH_PREAMBLE;
-   assign addr = byte_counter - `ETH_BUF_ADDR_W'd15;
-   assign crc_en = (byte_counter >= 1 && byte_counter <= (`ETH_BUF_ADDR_W'd14 + nbytes + `ETH_CRC_W/4));
+   assign addr = byte_counter - 15;
+   assign crc_en = (byte_counter >= 1 && byte_counter <= (14 + nbytes + `ETH_CRC_W/4));
 
    
    //
@@ -67,15 +67,15 @@ module iob_eth_rx(
    always @ (posedge RX_CLK)
      if(rx_rst)
        ready <= 1'b0;
-     else if(byte_counter == (`ETH_BUF_ADDR_W'd14 + nbytes + `ETH_CRC_W/4) && state == `ETH_H_NIBBLE)
-       if(crc_value == `ETH_CRC_W'd0)
-	 ready <= 1'b1;
+     else if(byte_counter == (14 + nbytes + `ETH_CRC_W/4) && state == `ETH_H_NIBBLE) begin 
+	ready <= 1'b1;
 `ifdef DEBUG
-       else
-	 $display("CRC check failed");
+        if(crc_value != 0)
+	  $display("CRC check failed");
 `endif
+     end
+
    
-   //
    // RECEIVE FRAME
    //
    always @* begin
@@ -84,13 +84,12 @@ module iob_eth_rx(
       dest_mac_addr_nxt = dest_mac_addr;
       src_mac_addr_nxt = src_mac_addr;
       nbytes_nxt = nbytes;
-      data = `ETH_DATA_W'd0;
       wr = 1'b0;
       
 
       //receive start of frame delimiter (sfd)
 
-      if(byte_counter == `ETH_BUF_ADDR_W'd0)
+      if(byte_counter == 0)
 	sfd_nxt = rx_data;
 
       
@@ -135,20 +134,17 @@ module iob_eth_rx(
       else if(byte_counter == `ETH_BUF_ADDR_W'd12)
 	src_mac_addr_nxt = {rx_data, src_mac_addr[5*`ETH_DATA_W-1:0]};
 
- 
      //receive payload size
       else if(byte_counter == `ETH_BUF_ADDR_W'd13)
-	nbytes_nxt = {nbytes[`ETH_BUF_ADDR_W-1:`ETH_DATA_W], rx_data};
+	nbytes_nxt = {nbytes[2*`ETH_DATA_W-1:`ETH_DATA_W], rx_data};
       
       else if(byte_counter == `ETH_BUF_ADDR_W'd14)
-	nbytes_nxt = {rx_data[`ETH_BUF_ADDR_W-`ETH_DATA_W-1:0], nbytes[`ETH_DATA_W-1:0]};
+	nbytes_nxt = {rx_data, nbytes[`ETH_DATA_W-1:0]};
       
- 
-     //receive data
+      //receive data
 
-      else if(byte_counter < (`ETH_BUF_ADDR_W'd15 + nbytes)) begin
-	 data = rx_data;
-	 wr = 1'b1;
+      else if(byte_counter < (15 + nbytes)) begin
+	 wr = (state == `ETH_L_NIBBLE);
       end
    end // always @ *
 
@@ -165,11 +161,11 @@ module iob_eth_rx(
 	  if(dest_mac_addr != mac_addr) 
 	    rst_state = 1'b0;
 	else if(byte_counter == `ETH_BUF_ADDR_W'd6) begin
-	   if(dest_mac_addr != mac_addr) 
-	     rst_state = 1'b0;
-	end 
-   end
-
+	  if(dest_mac_addr != mac_addr) 
+	    rst_state = 1'b0;
+	end else if (byte_counter == (`ETH_BUF_ADDR_W'd14 + nbytes + `ETH_CRC_W/4)) 
+	  rst_state = 1'b0;
+   end // always @ *
 
    //
    // RECEIVER STATE MACHINE
@@ -183,14 +179,14 @@ module iob_eth_rx(
 	`ETH_L_NIBBLE : 
 	  if(RX_DV) begin
 	     state_nxt = `ETH_H_NIBBLE;
-	     rx_data_nxt = {rx_data, RX_DATA};
+	     rx_data_nxt = {4'd0, RX_DATA};
 	     if(rst_state)
 	       state_nxt = `ETH_IDLE;	     
 	  end
 	`ETH_H_NIBBLE : 
 	  if(RX_DV) begin
 	     state_nxt = `ETH_L_NIBBLE;
-	     rx_data_nxt = {RX_DATA, rx_data};
+	     rx_data_nxt = {RX_DATA, rx_data[3:0]};
 	     if(rst_state)
 	       state_nxt = `ETH_IDLE;
        end
@@ -203,16 +199,16 @@ module iob_eth_rx(
       if(rx_rst) begin
 	 state <= `ETH_IDLE;
 	 byte_counter <= `ETH_BUF_ADDR_W'd0;
-	 sfd <= `ETH_DATA_W'd0;
+	 sfd <= 0;
 	 dest_mac_addr <= `ETH_MAC_ADDR_W'd0;
 	 src_mac_addr <= `ETH_MAC_ADDR_W'd0;
-	 nbytes <= {`ETH_BUF_ADDR_W{1'b1}};
+	 nbytes <= {2*`ETH_DATA_W{1'b1}};
       end else begin // if (rst)
 	 state <= state_nxt;
 	 if(state == `ETH_H_NIBBLE)
-	   byte_counter <= byte_counter + 1'b1;
+	   byte_counter <= byte_counter+1;
 	 else if(rst_state)
-	   byte_counter <= `ETH_BUF_ADDR_W'd0;;
+	   byte_counter <= 0;;
 	 sfd <= sfd_nxt;
 	 dest_mac_addr <= dest_mac_addr_nxt;
 	 src_mac_addr <= src_mac_addr_nxt;
@@ -220,8 +216,8 @@ module iob_eth_rx(
       end
    end
 
-   // capture data on negative edge
-   always @(negedge RX_CLK)
+   // capture data
+   always @(posedge RX_CLK)
      rx_data <= rx_data_nxt;
    
    //reset sync

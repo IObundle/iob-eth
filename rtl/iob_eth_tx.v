@@ -3,23 +3,23 @@
 
 module iob_eth_tx(
 		  //control
-		  input 		       rst,
+		  input                        rst,
 
 		  //frontend 
-		  input wire 		       TX_CLK,
-		  output 		       TX_EN,
-		  output reg [3:0] 	       TX_DATA,
+		  input wire                   TX_CLK,
+		  output                       TX_EN,
+		  output reg [3:0]             TX_DATA,
 
 		  //backend
 		  output [`ETH_BUF_ADDR_W-1:0] addr,
 		  input [`ETH_DATA_W-1:0]      data,
-		  input [`ETH_BUF_ADDR_W-1:0]  nbytes,
-		  input 		       send,
+		  input [2*`ETH_DATA_W-1:0]    nbytes,
+		  input                        send,
 		  input [`ETH_MAC_ADDR_W-1:0]  src_mac_addr,
 		  input [`ETH_MAC_ADDR_W-1:0]  dest_mac_addr,
 
 		  //status
-		  output		       ready
+		  output                       ready
 		  );
 
    //tx reset
@@ -28,7 +28,7 @@ module iob_eth_tx(
    //state
    reg [1:0] 			    state;
    reg [1:0] 			    state_nxt;
-   reg [`ETH_BUF_ADDR_W-1:0] 	    byte_counter;
+   reg [2*`ETH_DATA_W-1:0] 	    byte_counter;
    wire 			    frame_sent;
    
 
@@ -49,9 +49,9 @@ module iob_eth_tx(
 
    assign ready = ~TX_EN;
    assign TX_EN = (state != `ETH_IDLE);
-   assign addr = byte_counter - `ETH_BUF_ADDR_W'd20;
-   assign crc_en = (byte_counter >= 8 && byte_counter <= (nbytes + `ETH_BUF_ADDR_W'd25));
-   assign frame_sent = (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd25));
+   assign addr = byte_counter[`ETH_BUF_ADDR_W-1:0] - 21;
+   assign crc_en = (byte_counter >= 8 && byte_counter <= (nbytes + 25));
+   assign frame_sent = (byte_counter == (nbytes + 25));
    
    //
    // TRANSMIT FRAME
@@ -87,16 +87,20 @@ module iob_eth_tx(
        tx_data = src_mac_addr[39 : 32];
      else if(byte_counter == `ETH_BUF_ADDR_W'd19)
        tx_data = src_mac_addr[47 : 40];
-     else if(byte_counter == (nbytes + `ETH_BUF_ADDR_W'd20))
+     else if(byte_counter == `ETH_BUF_ADDR_W'd20)
+       tx_data = nbytes[7:0];
+     else if(byte_counter == `ETH_BUF_ADDR_W'd21)
+       tx_data = nbytes[15:8];
+     else if(byte_counter < (nbytes + 22))
        tx_data = data;
-     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd22))
-       tx_data = crc_value[7 : 0];
      else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd23))
-       tx_data = crc_value[15 : 8];
+       tx_data = crc_value[7 : 0];
      else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd24))
-       tx_data = crc_value[23 : 16];
+       tx_data = crc_value[15 : 8];
      else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd25))
-       tx_data = crc_value[31 : 24];
+       tx_data = crc_value[23 : 16];
+     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd26))
+       tx_data = crc_value[31 : 25];
      else
        tx_data = `ETH_BUF_ADDR_W'd0;
       
@@ -128,13 +132,13 @@ module iob_eth_tx(
    always @(posedge TX_CLK, posedge tx_rst)
      if(tx_rst) begin
 	state <= `ETH_IDLE;
-	byte_counter <= `ETH_BUF_ADDR_W'd0;
+	byte_counter <= {2*`ETH_DATA_W{1'b0}};
      end else begin
 	state <= state_nxt;
 	if(state == `ETH_H_NIBBLE) begin
 	   byte_counter <= byte_counter + 1'b1;
 	   if(frame_sent)
-	     byte_counter <= `ETH_BUF_ADDR_W'd0;
+	     byte_counter <= {2*`ETH_DATA_W{1'b0}};
 	end
      end
 
