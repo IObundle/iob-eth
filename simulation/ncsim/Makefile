@@ -1,12 +1,14 @@
 RTL_DIR := ../../rtl/src
-INCLUDE_DIR := $(RTL_DIR)/include
+INCLUDE_DIR := ../../rtl/include
+TB_DIR := ../../rtl/testbench
+TOP := $(TB_DIR)/iob_eth_tb.v
 
 CFLAGS = -errormax 15 -incdir $(INCLUDE_DIR) -status -update -linedebug -sv
 EFLAGS = -errormax 15 -access +wc -status
 SFLAGS = -errormax 15 -status
 
 VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
-SRC := $(shell find $(RTL_DIR) -name '*.v')
+SRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
 
 all: $(SRC) $(HEADERS)
 	ncvlog $(CFLAGS) $(SRC)
