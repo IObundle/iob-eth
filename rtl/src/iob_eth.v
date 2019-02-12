@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "iob_eth_defs.vh"
 
 /*
  
@@ -8,31 +9,33 @@
 
 
 module iob_eth (
-		output                             GTX_CLK,
-		output reg                         ETH_RESETN,
+		// CPU side
+		input                   clk,
+		input                   rst,
+		input                   sel,
+		input                   we,
+		input [`ETH_ADDR_W-1:0] addr,
+		output reg [31:0]       data_out,
+		input [31:0]            data_in,
+
+
+
+		// MII side
+		output                  GTX_CLK,
+		output reg              ETH_RESETN,
  
-		// frontend mii
 		// RX
-		input                              RX_CLK,
-		input [3:0]                        RX_DATA,
-		input                              RX_DV,
+		input                   RX_CLK,
+		input [3:0]             RX_DATA,
+		input                   RX_DV,
 
 		//TX
-		input                              TX_CLK,
-		output reg                         TX_EN,
-		output reg [3:0]                   TX_DATA,
-
-		// backend interface
-		input                              clk,
-		input                              rst,
-		input                              sel,
-		input                              we,
-		input [`ETH_ADDR_W-1:0]            addr,
-		output reg [`ETH_MAC_ADDR_W/2-1:0] data_out,
-		input [`ETH_MAC_ADDR_W/2-1:0]      data_in,
+		input                   TX_CLK,
+		output                  TX_EN,
+		output [3:0]            TX_DATA,
 
 		// interrupt bit
-		output                             interrupt
+		output                  interrupt
 		);
 
    // interrupt
@@ -40,9 +43,9 @@ module iob_eth (
    reg 					      interrupt_en_en;
    
    // mac addresses
-   reg [`ETH_MAC_ADDR_W-1:0] 		      mac_addr;
-   reg [`ETH_MAC_ADDR_W-1:0] 		      dest_mac_addr;
-   reg [`ETH_MAC_ADDR_W-1:0]                  src_mac_addr;
+   reg [`ETH_MAC_ADDR_W-1:0]                  mac_addr;
+   reg [`ETH_MAC_ADDR_W-1:0]                  dest_mac_addr;
+   wire [`ETH_MAC_ADDR_W-1:0]                 src_mac_addr;
    reg 					      mac_addr_lo_en;
    reg 					      mac_addr_hi_en;
    reg 					      dest_mac_addr_lo_en;
@@ -108,7 +111,7 @@ module iob_eth (
 
       case (addr)
 	`ETH_INTRRPT_EN: interrupt_en_en = sel&we;
-	`ETH_STATUS: data_out = { {`ETH_MAC_ADDR_W-2{1'b0}}, rx_ready, tx_ready};
+	`ETH_STATUS: data_out = { {30{1'b0}}, rx_ready, tx_ready};
 	`ETH_CONTROL: tx_send = sel&we&data_in[0];
 	`ETH_TX_NBYTES: tx_nbytes_en = sel&we;
 	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
@@ -192,7 +195,7 @@ module iob_eth (
       .q_b(tx_rd_data)
       );
  
-  iob_eth_alt_s2p_mem  #(
+   iob_eth_alt_s2p_mem  #(
 			  .DATA_W(`ETH_DATA_W),
 			  .ADDR_W(`ETH_BUF_ADDR_W)) 
    rx_buffer
@@ -215,7 +218,7 @@ module iob_eth (
    //TRANSMITTER
    //
    
- 
+
    iob_eth_tx tx (
 		  .rst			(rst),
 
@@ -261,7 +264,7 @@ module iob_eth (
 		  .ready	        (rx_ready)
 		  );
 
-   
+  
 
    //
    //  PHY RESET

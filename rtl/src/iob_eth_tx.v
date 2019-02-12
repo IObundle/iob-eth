@@ -49,7 +49,7 @@ module iob_eth_tx(
 
    assign ready = ~TX_EN;
    assign TX_EN = (state != `ETH_IDLE);
-   assign addr = byte_counter[`ETH_BUF_ADDR_W-1:0] - 21;
+   assign addr = byte_counter[`ETH_BUF_ADDR_W-1:0] - `ETH_BUF_ADDR_W'd21;
    assign crc_en = (byte_counter >= 8 && byte_counter <= (nbytes + 25));
    assign frame_sent = (byte_counter == (nbytes + 25));
    
@@ -102,29 +102,30 @@ module iob_eth_tx(
      else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd26))
        tx_data = crc_value[31 : 25];
      else
-       tx_data = `ETH_BUF_ADDR_W'd0;
+       tx_data = `ETH_DATA_W'd0;
       
    //
    // TRANSMITTER STATE MACHINE
    //
    always @* begin 
-     state_nxt = state;
-     case(state)
-       `ETH_IDLE : 
-	 if(tx_send)
-           state_nxt = `ETH_L_NIBBLE;
-       `ETH_L_NIBBLE : begin
-          TX_DATA = tx_data[3:0];
+      state_nxt = state;
+      TX_DATA = 4'd0;
+      case(state)
+        `ETH_IDLE : 
+	  if(tx_send)
+            state_nxt = `ETH_L_NIBBLE;
+        `ETH_L_NIBBLE : begin
+           TX_DATA = tx_data[3:0];
           state_nxt = `ETH_H_NIBBLE;
-       end
-       `ETH_H_NIBBLE : begin
-          TX_DATA = tx_data[7:4];
-	  state_nxt = `ETH_L_NIBBLE;
-	  if(frame_sent)
-	    state_nxt = `ETH_IDLE;
-       end
-       default: TX_DATA = 4'd0;
-     endcase
+        end
+        `ETH_H_NIBBLE : begin
+           TX_DATA = tx_data[7:4];
+	   state_nxt = `ETH_L_NIBBLE;
+	   if(frame_sent)
+	     state_nxt = `ETH_IDLE;
+        end
+        default: TX_DATA = 4'd0;
+      endcase
    end // always @ *
    
    

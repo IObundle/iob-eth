@@ -1,13 +1,14 @@
-RTL_DIR := ../../rtl
-INCLUDE_DIR := $(RTL_DIR)
+RTL_DIR := ../../rtl/src
+INCLUDE_DIR := ../../rtl/include
+TB_DIR := ../../rtl/testbench
 
-TOP := iob_eth_tb
+TOP := $(TB_DIR)/iob_eth_tb
 
 VC = iverilog
-CFLAGS := -W all -I$(INCLUDE_DIR)  -g2005-sv -s $(TOP)
+CFLAGS := -W all -I$(INCLUDE_DIR)  -g2005-sv -DDEBUG
 
 VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
-SRC := $(shell find $(RTL_DIR) -name '*.v')
+SRC := $(shell find $(RTL_DIR) -name '*.v') $(shell find $(TB_DIR) -name '*.v')
 
 
 all: $(SRC) $(VHEADERS)

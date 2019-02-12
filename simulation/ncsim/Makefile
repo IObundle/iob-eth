@@ -1,5 +1,5 @@
-RTL_DIR := ../../rtl
-INCLUDE_DIR := $(RTL_DIR)
+RTL_DIR := ../../rtl/src
+INCLUDE_DIR := $(RTL_DIR)/include
 
 CFLAGS = -errormax 15 -incdir $(INCLUDE_DIR) -status -update -linedebug -sv
 EFLAGS = -errormax 15 -access +wc -status

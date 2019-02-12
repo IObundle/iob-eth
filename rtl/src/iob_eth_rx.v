@@ -28,14 +28,14 @@ module iob_eth_rx(
    reg [1:0] 					   state;
    reg [1:0] 					   state_nxt;
    reg 						   rst_state;
-   reg [2*`ETH_DATA_W-1:0] 			   byte_counter;
+   reg [`ETH_BUF_ADDR_W-1:0] 			   byte_counter;
 
    //mac addresses
    reg [`ETH_MAC_ADDR_W-1:0] 			   dest_mac_addr, dest_mac_addr_nxt;
    reg [`ETH_MAC_ADDR_W-1:0] 			   src_mac_addr_nxt;
    
    //payload size
-   reg [`ETH_DATA_W-1:0] 			   nbytes_nxt;
+   reg [2*`ETH_DATA_W-1:0] 			   nbytes_nxt;
    
    //rx data
    reg [`ETH_DATA_W-1:0] 			   rx_data, rx_data_nxt;
@@ -45,19 +45,11 @@ module iob_eth_rx(
    reg 						   crc_start;
    wire [31:0] 					   crc_value;   
    
-   //sfd
-   reg [`ETH_DATA_W-1:0] 			   sfd, sfd_nxt;
-
-   //preamble
-   wire [`ETH_DATA_W-1:0] 			   preamble;		    
- 
-
    //
    // ASSIGNMENTS
    //
    assign data = rx_data;
-   assign preamble = `ETH_PREAMBLE;
-   assign addr = byte_counter - 15;
+   assign addr = byte_counter - `ETH_BUF_ADDR_W'd15;
    assign crc_en = (byte_counter >= 1 && byte_counter <= (14 + nbytes + `ETH_CRC_W/4));
 
    
@@ -84,18 +76,13 @@ module iob_eth_rx(
       dest_mac_addr_nxt = dest_mac_addr;
       src_mac_addr_nxt = src_mac_addr;
       nbytes_nxt = nbytes;
+      
       wr = 1'b0;
       
 
-      //receive start of frame delimiter (sfd)
-
-      if(byte_counter == 0)
-	sfd_nxt = rx_data;
-
-      
       //receive destination address
 
-      else if(byte_counter == `ETH_BUF_ADDR_W'd1)
+      if(byte_counter == `ETH_BUF_ADDR_W'd1)
 	dest_mac_addr_nxt = {dest_mac_addr[`ETH_MAC_ADDR_W-1:`ETH_DATA_W], rx_data};
       
       else if(byte_counter == `ETH_BUF_ADDR_W'd2)
@@ -136,10 +123,10 @@ module iob_eth_rx(
 
      //receive payload size
       else if(byte_counter == `ETH_BUF_ADDR_W'd13)
-	nbytes_nxt = {nbytes[2*`ETH_DATA_W-1:`ETH_DATA_W], rx_data};
+	nbytes_nxt[2*`ETH_DATA_W-1:`ETH_DATA_W] = rx_data;
       
       else if(byte_counter == `ETH_BUF_ADDR_W'd14)
-	nbytes_nxt = {rx_data, nbytes[`ETH_DATA_W-1:0]};
+	nbytes_nxt[`ETH_DATA_W-1:0] = rx_data;
       
       //receive data
 
@@ -172,6 +159,7 @@ module iob_eth_rx(
    //
    always @* begin 
       state_nxt = state;
+      rx_data_nxt = rx_data;
       case(state)
 	`ETH_IDLE : 
 	  if(RX_DV)
@@ -190,7 +178,7 @@ module iob_eth_rx(
 	     if(rst_state)
 	       state_nxt = `ETH_IDLE;
        end
-	default:;
+	default: rx_data_nxt = rx_data;
       endcase
    end // always @ *
    
@@ -199,17 +187,15 @@ module iob_eth_rx(
       if(rx_rst) begin
 	 state <= `ETH_IDLE;
 	 byte_counter <= `ETH_BUF_ADDR_W'd0;
-	 sfd <= 0;
 	 dest_mac_addr <= `ETH_MAC_ADDR_W'd0;
 	 src_mac_addr <= `ETH_MAC_ADDR_W'd0;
 	 nbytes <= {2*`ETH_DATA_W{1'b1}};
       end else begin // if (rst)
 	 state <= state_nxt;
 	 if(state == `ETH_H_NIBBLE)
-	   byte_counter <= byte_counter+1;
+	   byte_counter <= byte_counter+1'b1;
 	 else if(rst_state)
 	   byte_counter <= 0;;
-	 sfd <= sfd_nxt;
 	 dest_mac_addr <= dest_mac_addr_nxt;
 	 src_mac_addr <= src_mac_addr_nxt;
 	 nbytes <= nbytes_nxt;

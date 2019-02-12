@@ -13,27 +13,27 @@ module iob_eth_tb;
    reg [`ETH_ADDR_W-1:0] addr;
    reg 			 sel;
    reg 			 we;
-   reg [`ETH_MAC_ADDR_W/2-1:0] data_in;
-   wire [`ETH_MAC_ADDR_W/2-1:0] data_out;
-   wire 			interrupt;
+   reg [31:0]            data_in;
+   wire [31:0]           data_out;
+   wire                  interrupt;
 
    // frontend signals
-   wire 			GTX_CLK;
-   wire 			ETH_RESETN;
+   wire                  GTX_CLK;
+   wire                  ETH_RESETN;
    
-   wire 			TX_CLK;   
-   wire [3:0]			TX_DATA;
-   wire 			TX_EN;
+   wire                  TX_CLK;   
+   wire [3:0]            TX_DATA;
+   wire                  TX_EN;
    
-   reg 				RX_CLK;
-   wire [3:0]			RX_DATA;
-   reg                          RX_DV;
-
+   reg                   RX_CLK;
+   wire [3:0]            RX_DATA;
+   reg                   RX_DV;
+   
    //iterator
-   integer 			i;
+   integer               i;
 
    // data vector
-   reg [`ETH_DATA_W-1:0] 	data[`ETH_TEST_SIZE-1:0];
+   reg [`ETH_DATA_W-1:0] data[`ETH_TEST_SIZE-1:0];
    
    // Instantiate the Unit Under Test (UUT)
    
@@ -62,35 +62,34 @@ module iob_eth_tb;
 		.RX_DV			(RX_DV)
 		);
 
+   
    // loop back through PHY
    always @(TX_EN) 
      RX_DV <=  #(14*pclk_per) TX_EN;   
- 
-   assign RX_DATA = TX_DATA;
+   
+   //assign RX_DATA = TX_DATA;
 
    initial begin
- 
-
+   
 `ifdef DEBUG
       $dumpfile("iob_eth.vcd");
-      $dumpvars();
+      $dumpvars;
 `endif
 
       // generate test data
       for(i=0; i < `ETH_TEST_SIZE; i= i+1)
 	data[i]  = i+1;
 	//data[i]  = $random;
-
+ 
       rst = 1;
       clk = 1;
       RX_CLK = 1;
       RX_DV = 0;
       we = 0;
       sel = 1;
-      
 
       // deassert reset
-      #(20*clk_per+1) rst = 0;
+      #100 @(posedge clk) rst = 0;
       
 	
       // wait until tx ready
@@ -98,6 +97,7 @@ module iob_eth_tb;
       while(~data_out[0])
 	#(clk_per);
 
+      
       // write number of bytes to transmit
       #(clk_per) addr = `ETH_TX_NBYTES;
       we = 1;
@@ -149,6 +149,6 @@ module iob_eth_tb;
 
    //tx clock
    assign TX_CLK = ~RX_CLK;
-   
+
 endmodule
 
