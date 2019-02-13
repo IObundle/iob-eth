@@ -50,7 +50,7 @@ module iob_eth_rx(
    //
    assign data = rx_data;
    assign addr = byte_counter - `ETH_BUF_ADDR_W'd15;
-   assign crc_en = (byte_counter >= 1 && byte_counter <= (14 + nbytes + `ETH_CRC_W/4));
+   assign crc_en = (byte_counter >= 1 && byte_counter <= (14 + nbytes + `ETH_CRC_W/8));
 
    
    //
@@ -59,7 +59,7 @@ module iob_eth_rx(
    always @ (posedge RX_CLK)
      if(rx_rst)
        ready <= 1'b0;
-     else if(byte_counter == (14 + nbytes + `ETH_CRC_W/4) && state == `ETH_H_NIBBLE) begin 
+     else if(byte_counter == (14 + nbytes + `ETH_CRC_W/8) && state == `ETH_H_NIBBLE) begin 
 	ready <= 1'b1;
 `ifdef DEBUG
         if(crc_value != 0)

@@ -44,9 +44,9 @@ module iob_eth_tb;
 		// frontend 		
 		.sel			(sel),
 		.we			(we),
-		.addr			(addr[`ETH_ADDR_W-1:0]),
-		.data_in		(data_in[`ETH_MAC_ADDR_W/2-1:0]),
-		.data_out		(data_out[`ETH_MAC_ADDR_W/2-1:0]),
+		.addr			(addr),
+		.data_in		(data_in),
+		.data_out		(data_out),
 		.interrupt		(interrupt),
 
 		// phy backend
@@ -54,11 +54,11 @@ module iob_eth_tb;
 		.ETH_RESETN		(ETH_RESETN),
 		
 		.TX_CLK			(TX_CLK),
-		.TX_DATA		(TX_DATA[3:0]),
+		.TX_DATA		(TX_DATA),
 		.TX_EN			(TX_EN),
 		
 		.RX_CLK			(RX_CLK),
-		.RX_DATA		(RX_DATA[3:0]),
+		.RX_DATA		(RX_DATA),
 		.RX_DV			(RX_DV)
 		);
 
@@ -67,7 +67,7 @@ module iob_eth_tb;
    always @(TX_EN) 
      RX_DV <=  #(14*pclk_per) TX_EN;   
    
-   //assign RX_DATA = TX_DATA;
+   assign RX_DATA = TX_DATA;
 
    initial begin
    
@@ -121,8 +121,6 @@ module iob_eth_tb;
       while(~data_out[1])
 	#(clk_per);
 
-      $display("Got here");
-
       // read and check received data
       for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin
 	 addr = `ETH_RX_DATA + i;
@@ -148,7 +146,7 @@ module iob_eth_tb;
    always #(pclk_per/2) RX_CLK = ~RX_CLK;
 
    //tx clock
-   assign TX_CLK = ~RX_CLK;
+   assign TX_CLK = RX_CLK;
 
 endmodule
 
