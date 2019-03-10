@@ -6,7 +6,7 @@ module iob_eth_tb;
    parameter clk_per = 10;
    parameter pclk_per = 40;
    
-   // backend signals
+   // CPU SIDE
    reg 			rst;
    reg 			clk;
 
@@ -17,7 +17,10 @@ module iob_eth_tb;
    wire [31:0]           data_out;
    wire                  interrupt;
 
-   // frontend signals
+   reg [31:0]            cpu_reg;
+   
+   
+   // ETH SIDE
    wire                  GTX_CLK;
    wire                  ETH_RESETN;
    
@@ -41,16 +44,14 @@ module iob_eth_tb;
 		.clk			(clk),
 		.rst			(rst),
 
-		// frontend 		
+		// CPU side		
 		.sel			(sel),
 		.we			(we),
 		.addr			(addr),
 		.data_in		(data_in),
 		.data_out		(data_out),
-		.interrupt		(interrupt),
-
-		// phy backend
-		.GTX_CLK		(GTX_CLK),
+	
+		// PHY
 		.ETH_RESETN		(ETH_RESETN),
 		
 		.TX_CLK			(TX_CLK),
@@ -65,7 +66,7 @@ module iob_eth_tb;
    
    // loop back through PHY
    always @(TX_EN) 
-     RX_DV <=  #(14*pclk_per) TX_EN;   
+     RX_DV <=  #(15*pclk_per) TX_EN;   
    
    assign RX_DATA = TX_DATA;
 
@@ -86,51 +87,44 @@ module iob_eth_tb;
       RX_CLK = 1;
       RX_DV = 0;
       we = 0;
-      sel = 1;
+      sel = 0;
 
       // deassert reset
       #100 @(posedge clk) rst = 0;
       
 	
       // wait until tx ready
-      #(clk_per) addr = `ETH_STATUS;
-      while(~data_out[0])
-	#(clk_per);
-
-      
+      cpu_read(`ETH_STATUS, cpu_reg);
+      while(!cpu_reg)
+        cpu_read(`ETH_STATUS, cpu_reg);
+	      
       // write number of bytes to transmit
-      #(clk_per) addr = `ETH_TX_NBYTES;
-      we = 1;
-      data_in = `ETH_TEST_SIZE;
+      cpu_write(`ETH_TX_NBYTES, `ETH_TEST_SIZE);
  
       // write data to send
-      for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin
-	 #(clk_per) addr = `ETH_TX_DATA + i;
-	 data_in = data[i];
-     end
-
+      for(i=0; i < `ETH_TEST_SIZE; i= i+1)
+	cpu_write(`ETH_TX_DATA + i, data[i]);
+  
       // start sending
-      #(clk_per) addr = `ETH_CONTROL;
-      data_in = 1;
+      cpu_write(`ETH_CONTROL, 1);
             
-      #(clk_per) we = 0;
-
       
       // wait until rx ready
-      #(10*clk_per) addr = `ETH_STATUS;
-      while(~data_out[1])
-	#(clk_per);
+      cpu_read (`ETH_STATUS, cpu_reg);
+      while(!cpu_reg[1])
+        cpu_read (`ETH_STATUS, cpu_reg);
+
 
       // read and check received data
       for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin
-	 addr = `ETH_RX_DATA + i;
-	 #(clk_per) if (data_out != data[i]) begin 
+	 cpu_read (`ETH_RX_DATA + i, cpu_reg);
+	 if (cpu_reg != data[i]) begin  
 	    $display("Test failed on vector %d", i);
 	    $finish;
 	 end
       end
 
-      $display("Test passed!");
+      $display("Test complete!");
       $finish;
 
    end // initial begin
@@ -147,6 +141,34 @@ module iob_eth_tb;
 
    //tx clock
    assign TX_CLK = RX_CLK;
+
+   //
+   // TASKS
+   //
+   
+   // 1-cycle write
+   task cpu_write;
+      input [`ETH_ADDR_W-1:0]  cpu_address;
+      input [31:0]  cpu_data;
+
+      #1 addr = cpu_address;
+      sel = 1;
+      we = 1;
+      data_in = cpu_data;
+      @ (posedge clk) #1 we = 0;
+      sel = 0;
+   endtask
+
+   // 2-cycle read
+   task cpu_read;
+      input [`ETH_ADDR_W-1:0]   cpu_address;
+      output [31:0] read_reg;
+
+      #1 addr = cpu_address;
+      sel = 1;
+      @ (posedge clk) #1 read_reg = data_out;
+      @ (posedge clk) #1 sel = 0;
+   endtask
 
 endmodule
 

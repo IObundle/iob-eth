@@ -21,7 +21,6 @@ module iob_eth (
 
 
 		// MII side
-		output                  GTX_CLK,
 		output reg              ETH_RESETN,
  
 		// RX
@@ -32,16 +31,10 @@ module iob_eth (
 		//TX
 		input                   TX_CLK,
 		output                  TX_EN,
-		output [3:0]            TX_DATA,
+		output [3:0]            TX_DATA
 
-		// interrupt bit
-		output                  interrupt
 		);
 
-   // interrupt
-   reg 					      interrupt_en;
-   reg 					      interrupt_en_en;
-   
    // mac addresses
    reg [`ETH_MAC_ADDR_W-1:0]                  mac_addr;
    reg [`ETH_MAC_ADDR_W-1:0]                  dest_mac_addr;
@@ -80,9 +73,7 @@ module iob_eth (
    // ASSIGNMENTS
    //
    
-   assign GTX_CLK = 1'b0; //this will force 10/100 negotiation
-   assign interrupt = interrupt_en & (tx_ready | rx_ready);
-  
+   //assign GTX_CLK = 1'b0; //this will force 10/100 negotiation
    
    //
    // ADDRESS DECODER
@@ -93,7 +84,6 @@ module iob_eth (
 
       // core outputs
       data_out = `ETH_DATA_W'd0;
-      interrupt_en_en = 1'b0;
 
       // mac addresses
       mac_addr_lo_en = 1'b0;
@@ -110,7 +100,6 @@ module iob_eth (
       rx_ready_clr = 1'b0;
 
       case (addr)
-	`ETH_INTRRPT_EN: interrupt_en_en = sel&we;
 	`ETH_STATUS: data_out = { {30{1'b0}}, rx_ready, tx_ready};
 	`ETH_CONTROL: tx_send = sel&we&data_in[0];
 	`ETH_TX_NBYTES: tx_nbytes_en = sel&we;
@@ -128,9 +117,9 @@ module iob_eth (
 	`ETH_SRC_MAC_ADDR_HI: data_out = src_mac_addr[47:24];
 	`ETH_RX_NBYTES: data_out = {{`ETH_DATA_W{1'b0}}, rx_nbytes};	   
 	default: begin
-           if (addr >= `ETH_TX_DATA && addr < `ETH_TX_DATA + 2**`ETH_BUF_ADDR_W)
+           if (addr >= `ETH_TX_DATA && addr < (`ETH_TX_DATA + 2**`ETH_BUF_ADDR_W))
 	  tx_wr = sel&we;
-	   if (addr >= `ETH_RX_DATA && addr < `ETH_RX_DATA + 2**`ETH_BUF_ADDR_W) begin
+	   if (addr >= `ETH_RX_DATA && addr < (`ETH_RX_DATA + 2**`ETH_BUF_ADDR_W)) begin
 	      rx_ready_clr= sel&~we;
 	      data_out = {{2*`ETH_DATA_W{1'b0}},rx_rd_data};
 	   end
@@ -143,15 +132,8 @@ module iob_eth (
    //
    // REGISTERS
    //
-   
-   // register interrupt enable
-   always @ (posedge clk)
-     if(rst)
-       interrupt_en <= 1'b0;
-     else if(interrupt_en_en)
-       interrupt_en <= data_in[0];
 
-   // register mac addresses
+   // mac addresses
    
    always @ (posedge clk)
      if(rst) begin
@@ -166,7 +148,7 @@ module iob_eth (
      else if(mac_addr_hi_en)
        mac_addr[47:24]<= data_in[23:0];
 
-   // register tx number of bytes
+   // tx number of bytes
    always @ (posedge clk)
      if(tx_nbytes_en)
        tx_nbytes <= data_in[2*`ETH_DATA_W-1:0];
@@ -192,7 +174,7 @@ module iob_eth (
       // Front-End (read by core)
       .clk_b(TX_CLK),
       .addr_b(tx_rd_addr),
-      .q_b(tx_rd_data)
+      .data_b(tx_rd_data)
       );
  
    iob_eth_alt_s2p_mem  #(
@@ -209,7 +191,7 @@ module iob_eth (
       // Back-End (read by host)
       .clk_b(clk),
       .addr_b(addr[`ETH_BUF_ADDR_W-1:0]),
-      .q_b(rx_rd_data)
+      .data_b(rx_rd_data)
       );
 
 `endif

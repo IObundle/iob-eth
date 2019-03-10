@@ -27,7 +27,7 @@
 // Memory map
 `define ETH_STATUS `ETH_ADDR_W'd0
 `define ETH_CONTROL `ETH_ADDR_W'd1
-`define ETH_INTRRPT_EN `ETH_ADDR_W'd2
+//`define ETH_INTRRPT_EN `ETH_ADDR_W'd2
 
 `define ETH_TX_DATA `ETH_ADDR_W'h1000
 `define ETH_TX_NBYTES `ETH_ADDR_W'd3
