@@ -11,9 +11,8 @@ module iob_eth_tx(
 		  output reg [3:0]             TX_DATA,
 
 		  //backend
-		  output [`ETH_BUF_ADDR_W-1:0] addr,
+		  output reg [`ETH_BUF_ADDR_W-1:0] addr,
 		  input [`ETH_DATA_W-1:0]      data,
-		  input [2*`ETH_DATA_W-1:0]    nbytes,
 		  input                        send,
 		  input [`ETH_MAC_ADDR_W-1:0]  src_mac_addr,
 		  input [`ETH_MAC_ADDR_W-1:0]  dest_mac_addr,
@@ -49,9 +48,15 @@ module iob_eth_tx(
 
    assign ready = ~TX_EN;
    assign TX_EN = (state != `ETH_IDLE);
-   assign addr = byte_counter[`ETH_BUF_ADDR_W-1:0] - `ETH_BUF_ADDR_W'd21;
-   assign crc_en = (byte_counter >= 8 && byte_counter < (nbytes + 22));
-   assign frame_sent = (byte_counter == (nbytes + 25));
+   assign crc_en = (byte_counter >= 8 && byte_counter < ( `ETH_SIZE + `ETH_DATA_W'd22));
+   assign frame_sent = (byte_counter == (`ETH_SIZE + `ETH_DATA_W'd25));
+
+   always @(posedge TX_CLK, posedge tx_rst)
+     if(tx_rst)
+       addr <= 0;
+     else
+       addr <= byte_counter[`ETH_BUF_ADDR_W-1:0] - `ETH_BUF_ADDR_W'd21;
+
    
    // 1 + 6 + 6 + 1
    // TRANSMIT FRAME
@@ -88,18 +93,18 @@ module iob_eth_tx(
      else if(byte_counter == `ETH_BUF_ADDR_W'd19)
        tx_data = src_mac_addr[47 : 40];
      else if(byte_counter == `ETH_BUF_ADDR_W'd20)
-       tx_data = nbytes[7:0];
+       tx_data = `ETH_TYPE;
      else if(byte_counter == `ETH_BUF_ADDR_W'd21)
-       tx_data = nbytes[15:8];
-     else if(byte_counter < (nbytes + `ETH_BUF_ADDR_W'd22))
+       tx_data = 8'h00;
+     else if(byte_counter < (`ETH_SIZE + `ETH_BUF_ADDR_W'd22))
        tx_data = data;
-     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd22))
+     else if (byte_counter == (`ETH_SIZE + `ETH_BUF_ADDR_W'd22))
        tx_data = crc_value[7 : 0];
-     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd23))
+     else if (byte_counter == (`ETH_SIZE + `ETH_BUF_ADDR_W'd23))
        tx_data = crc_value[15 : 8];
-     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd24))
+     else if (byte_counter == (`ETH_SIZE + `ETH_BUF_ADDR_W'd24))
        tx_data = crc_value[23 : 16];
-     else if (byte_counter == (nbytes + `ETH_BUF_ADDR_W'd25))
+     else if (byte_counter == (`ETH_SIZE + `ETH_BUF_ADDR_W'd25))
        tx_data = crc_value[31 : 24];
      else
        tx_data = `ETH_DATA_W'd0;

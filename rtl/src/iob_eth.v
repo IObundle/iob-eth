@@ -50,8 +50,6 @@ module iob_eth (
    reg                                        tx_wr;
    reg                                        tx_send;
    wire                                       tx_ready;
-   reg [2*`ETH_DATA_W-1:0]                    tx_nbytes;
-   reg                                        tx_nbytes_en;
    
    //rx signals
    wire [`ETH_BUF_ADDR_W-1:0]                 rx_wr_addr;
@@ -59,7 +57,7 @@ module iob_eth (
    wire                                       rx_wr;
    wire                                       rx_ready;
    reg                                        rx_ready_clr;
-   wire [2*`ETH_DATA_W-1:0]                   rx_nbytes;
+
    
 
    // tx/rx buffers
@@ -94,7 +92,6 @@ module iob_eth (
       // tx 
       tx_wr = 1'b0;
       tx_send = 1'b0;
-      tx_nbytes_en = 1'b0;
 
       // rx
       rx_ready_clr = 1'b0;
@@ -102,7 +99,6 @@ module iob_eth (
       case (addr)
 	`ETH_STATUS: data_out = { {30{1'b0}}, rx_ready, tx_ready};
 	`ETH_CONTROL: tx_send = sel&we&data_in[0];
-	`ETH_TX_NBYTES: tx_nbytes_en = sel&we;
 	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
 	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
 	`ETH_DEST_MAC_ADDR_LO: begin 
@@ -115,7 +111,6 @@ module iob_eth (
         end
 	`ETH_SRC_MAC_ADDR_LO: data_out = src_mac_addr[23:0];
 	`ETH_SRC_MAC_ADDR_HI: data_out = src_mac_addr[47:24];
-	`ETH_RX_NBYTES: data_out = {{`ETH_DATA_W{1'b0}}, rx_nbytes};	   
 	default: begin
            if (addr >= `ETH_TX_DATA && addr < (`ETH_TX_DATA + 2**`ETH_BUF_ADDR_W))
 	  tx_wr = sel&we;
@@ -147,11 +142,6 @@ module iob_eth (
        mac_addr[23:0]<= data_in[23:0];
      else if(mac_addr_hi_en)
        mac_addr[47:24]<= data_in[23:0];
-
-   // tx number of bytes
-   always @ (posedge clk)
-     if(tx_nbytes_en)
-       tx_nbytes <= data_in[2*`ETH_DATA_W-1:0];
 
 
    //
@@ -212,7 +202,6 @@ module iob_eth (
 		  //backend
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
-		  .nbytes               (tx_nbytes),
 		  .send	                (tx_send),
 		  .src_mac_addr         (mac_addr),
 		  .dest_mac_addr        (dest_mac_addr),
@@ -239,7 +228,6 @@ module iob_eth (
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr[10:0]),
 		  .data		        (rx_wr_data[7:0]),
-		  .nbytes               (rx_nbytes),
 		  .src_mac_addr         (src_mac_addr),
 		  .mac_addr             (mac_addr),
 

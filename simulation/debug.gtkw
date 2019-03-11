@@ -1,20 +1,40 @@
 [*]
 [*] GTKWave Analyzer v3.3.61 (w)1999-2014 BSI
-[*] Sat Mar  9 23:15:59 2019
+[*] Sun Mar 10 20:03:23 2019
 [*]
 [dumpfile] "/home/user19/sandbox/iob-eth/simulation/ncsim/iob_eth.vcd"
-[dumpfile_mtime] "Sat Mar  9 23:13:06 2019"
-[dumpfile_size] 336088128
+[dumpfile_mtime] "Sun Mar 10 20:02:06 2019"
+[dumpfile_size] 262741
 [savefile] "/home/user19/sandbox/iob-eth/simulation/debug.gtkw"
-[timestart] 0
-[size] 3840 1961
-[pos] -77 -77
-*-17.329746 1159600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 530000
+[size] 1920 1031
+[pos] -1 -1
+*-19.068968 1000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] iob_eth_tb.
 [treeopen] iob_eth_tb.uut.
 [sst_width] 375
-[signals_width] 334
+[signals_width] 242
 [sst_expanded] 1
 [sst_vpaned_height] 186
+@200
+-TX
+@28
+iob_eth_tb.uut.tx.TX_CLK
+@22
+iob_eth_tb.uut.tx.TX_DATA[3:0]
+@28
+iob_eth_tb.uut.tx.TX_EN
+@25
+iob_eth_tb.uut.tx.byte_counter[15:0]
+@28
+iob_eth_tb.uut.tx.crc_en
+@22
+iob_eth_tb.uut.tx.nbytes[15:0]
+@200
+-RX
+@28
+iob_eth_tb.uut.rx.crc_en
+@22
+iob_eth_tb.uut.rx.nbytes[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

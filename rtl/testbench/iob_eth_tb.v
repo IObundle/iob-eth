@@ -36,7 +36,7 @@ module iob_eth_tb;
    integer               i;
 
    // data vector
-   reg [`ETH_DATA_W-1:0] data[`ETH_TEST_SIZE-1:0];
+   reg [`ETH_DATA_W-1:0] data[`ETH_SIZE-1:0];
    
    // Instantiate the Unit Under Test (UUT)
    
@@ -78,7 +78,7 @@ module iob_eth_tb;
 `endif
 
       // generate test data
-      for(i=0; i < `ETH_TEST_SIZE; i= i+1)
+      for(i=0; i < `ETH_SIZE; i= i+1)
 	data[i]  = i+1;
 	//data[i]  = $random;
  
@@ -97,12 +97,9 @@ module iob_eth_tb;
       cpu_read(`ETH_STATUS, cpu_reg);
       while(!cpu_reg)
         cpu_read(`ETH_STATUS, cpu_reg);
-	      
-      // write number of bytes to transmit
-      cpu_write(`ETH_TX_NBYTES, `ETH_TEST_SIZE);
  
       // write data to send
-      for(i=0; i < `ETH_TEST_SIZE; i= i+1)
+      for(i=0; i < `ETH_SIZE; i= i+1)
 	cpu_write(`ETH_TX_DATA + i, data[i]);
   
       // start sending
@@ -116,7 +113,7 @@ module iob_eth_tb;
 
 
       // read and check received data
-      for(i=0; i < `ETH_TEST_SIZE; i= i+1) begin
+      for(i=0; i < `ETH_SIZE; i= i+1) begin
 	 cpu_read (`ETH_RX_DATA + i, cpu_reg);
 	 if (cpu_reg != data[i]) begin  
 	    $display("Test failed on vector %d", i);

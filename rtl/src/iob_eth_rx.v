@@ -13,7 +13,6 @@ module iob_eth_rx(
 		  output [`ETH_BUF_ADDR_W-1:0]     addr,
 		  output [`ETH_DATA_W-1:0]         data,
 		  output reg                       wr,
-		  output reg [2*`ETH_DATA_W-1:0]   nbytes,
 		  output reg [`ETH_MAC_ADDR_W-1:0] src_mac_addr,
 		  input [`ETH_MAC_ADDR_W-1:0]      mac_addr,
 
@@ -34,9 +33,6 @@ module iob_eth_rx(
    reg [`ETH_MAC_ADDR_W-1:0] 			   dest_mac_addr, dest_mac_addr_nxt;
    reg [`ETH_MAC_ADDR_W-1:0] 			   src_mac_addr_nxt;
    
-   //payload size
-   reg [2*`ETH_DATA_W-1:0] 			   nbytes_nxt;
-   
    //rx data
    reg [`ETH_DATA_W-1:0] 			   rx_data, rx_data_nxt;
    
@@ -50,16 +46,16 @@ module iob_eth_rx(
    //
    assign data = rx_data;
    assign addr = byte_counter - `ETH_BUF_ADDR_W'd15;
-   assign crc_en = (byte_counter >= 1 && byte_counter <= (14 + nbytes + `ETH_CRC_W/8));
+   assign crc_en = (byte_counter >= 0 && byte_counter <= (8'd13 +  `ETH_SIZE + `ETH_CRC_W/8));
 
    
    //
    // GENERATE READY FLAG
    //
-   always @ (posedge RX_CLK)
+   always @ (posedge RX_CLK, posedge rx_rst)
      if(rx_rst)
        ready <= 1'b0;
-     else if(byte_counter == (14 + nbytes + `ETH_CRC_W/8) && state == `ETH_H_NIBBLE) begin 
+     else if(byte_counter == (8'd14 + `ETH_SIZE + `ETH_CRC_W/8) && state == `ETH_H_NIBBLE) begin 
 	ready <= 1'b1;
 `ifdef DEBUG
         if(crc_value != 0)
@@ -75,7 +71,6 @@ module iob_eth_rx(
       //defaults
       dest_mac_addr_nxt = dest_mac_addr;
       src_mac_addr_nxt = src_mac_addr;
-      nbytes_nxt = nbytes;
       
       wr = 1'b0;
       
@@ -120,17 +115,11 @@ module iob_eth_rx(
       
       else if(byte_counter == `ETH_BUF_ADDR_W'd12)
 	src_mac_addr_nxt = {rx_data, src_mac_addr[5*`ETH_DATA_W-1:0]};
-
-     //receive payload size
-      else if(byte_counter == `ETH_BUF_ADDR_W'd13)
-	nbytes_nxt[2*`ETH_DATA_W-1:`ETH_DATA_W] = rx_data;
-      
-      else if(byte_counter == `ETH_BUF_ADDR_W'd14)
-	nbytes_nxt[`ETH_DATA_W-1:0] = rx_data;
-      
+     
+ 
       //receive data
-
-      else if(byte_counter < (15 + nbytes)) begin
+      
+      else if(byte_counter < (8'd15 + `ETH_SIZE)) begin
 	 wr = (state == `ETH_L_NIBBLE);
       end
    end // always @ *
@@ -150,7 +139,7 @@ module iob_eth_rx(
 	else if(byte_counter == `ETH_BUF_ADDR_W'd6) begin
 	  if(dest_mac_addr != mac_addr) 
 	    rst_state = 1'b0;
-	end else if (byte_counter == (`ETH_BUF_ADDR_W'd14 + nbytes + `ETH_CRC_W/4)) 
+	end else if (byte_counter == (`ETH_BUF_ADDR_W'd14 + `ETH_SIZE + `ETH_CRC_W/4)) 
 	  rst_state = 1'b0;
    end // always @ *
 
@@ -183,22 +172,20 @@ module iob_eth_rx(
    end // always @ *
    
    // update registers
-   always @(posedge RX_CLK)begin
+   always @(posedge RX_CLK, posedge rx_rst)begin
       if(rx_rst) begin
 	 state <= `ETH_IDLE;
-	 byte_counter <= `ETH_BUF_ADDR_W'd0;
+	 byte_counter <= ~`ETH_BUF_ADDR_W'd0;
 	 dest_mac_addr <= `ETH_MAC_ADDR_W'd0;
 	 src_mac_addr <= `ETH_MAC_ADDR_W'd0;
-	 nbytes <= {2*`ETH_DATA_W{1'b1}};
       end else begin // if (rst)
 	 state <= state_nxt;
-	 if(state == `ETH_H_NIBBLE)
+	 if(state == `ETH_IDLE && RX_DV || state == `ETH_H_NIBBLE)
 	   byte_counter <= byte_counter+1'b1;
 	 else if(rst_state)
 	   byte_counter <= 0;;
 	 dest_mac_addr <= dest_mac_addr_nxt;
 	 src_mac_addr <= src_mac_addr_nxt;
-	 nbytes <= nbytes_nxt;
       end
    end
 
@@ -221,7 +208,7 @@ module iob_eth_rx(
    // CRC MODULE
    //
    iob_eth_crc crc_rx (
-		       .clk(~RX_CLK),
+		       .clk(RX_CLK),
 		       .rst(rst),
 		       .start(crc_start),
 		       .data(RX_DATA),

@@ -1,3 +1,4 @@
+`define DEBUG
 // Data and address widths
 `define ETH_DATA_W 8
 `define ETH_ADDR_W 13
@@ -13,6 +14,8 @@
 // Frame type
 `define ETH_TYPE 8'h08
 
+// Custom frame size
+//`define ETH_SIZE 11'd1152
 
 // Medium Access Control Addresses
 `define ETH_MAC_ADDR_W 48
@@ -30,10 +33,8 @@
 //`define ETH_INTRRPT_EN `ETH_ADDR_W'd2
 
 `define ETH_TX_DATA `ETH_ADDR_W'h1000
-`define ETH_TX_NBYTES `ETH_ADDR_W'd3
 
 `define ETH_RX_DATA `ETH_ADDR_W'h1800
-`define ETH_RX_NBYTES `ETH_ADDR_W'd4
 
 `define ETH_MAC_ADDR_LO  `ETH_ADDR_W'd5
 `define ETH_MAC_ADDR_HI  `ETH_ADDR_W'd6
@@ -46,9 +47,3 @@
 
 // Memory type
 `define ETH_ALT_MEM_TYPE
-
-
-//Test and its size
-`define DEBUG
-`define ETH_TEST_SIZE 20
-
