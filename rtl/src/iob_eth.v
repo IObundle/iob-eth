@@ -18,8 +18,6 @@ module iob_eth (
 		output reg [31:0]       data_out,
 		input [31:0]            data_in,
 
-
-
 		// MII side
 		output reg              ETH_RESETN,
  
