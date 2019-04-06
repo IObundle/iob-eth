@@ -1,4 +1,4 @@
-`define DEBUG
+//`define DEBUG
 `define ETH_SIZE 20
 
 // Data and address widths
