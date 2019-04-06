@@ -1,5 +1,8 @@
 #include "iob-eth.h"
 
+#define MEMSET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)
+#define MEMGET(base, location)        (*((volatile int*) (base + (sizeof(int)) * location)))
+
 void ethInit(unsigned int base)
 {
   // check processor interface
