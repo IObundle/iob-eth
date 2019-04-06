@@ -32,3 +32,4 @@
 #define ETH_RES_PHY          11
 #define ETH_DUMMY            12
 
+void ethInit(void);
