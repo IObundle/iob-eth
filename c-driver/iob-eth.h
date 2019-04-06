@@ -1,14 +1,14 @@
 // Preamble
-#define ETH_PREAMBLE 8'h55
+#define ETH_PREAMBLE 0x55
 
 // Start Frame Delimiter
-#define ETH_SFD 8'hD5
+#define ETH_SFD 0xD5
 
 // Frame type
-#define ETH_TYPE 8'h08
+#define ETH_TYPE 0x08
 
 // Custom frame size
-//#define ETH_SIZE 11'd1152
+//#define ETH_SIZE 1152
 
 
 
