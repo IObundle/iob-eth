@@ -3,7 +3,7 @@
 #define MEMSET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)
 #define MEMGET(base, location)        (*((volatile int*) (base + (sizeof(int)) * location)))
 
-void ethInit(unsigned int base)
+int ethInit(unsigned int base)
 {
   // check processor interface
   // write dummy register
@@ -11,5 +11,6 @@ void ethInit(unsigned int base)
 
   // read and check result
   if (MEMGET(base, ETH_DUMMY) != 0xDEADBEEF)
-    uart_puts("Ethernet dummy reg test failed\n");
+    return -1;
+  return 0;
 }

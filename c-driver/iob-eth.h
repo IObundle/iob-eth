@@ -32,4 +32,5 @@
 #define ETH_RES_PHY          11
 #define ETH_DUMMY            12
 
-void ethInit(unsigned int);
+/*Return 0 in case of successful init or -1 in case of failure*/
+int ethInit(unsigned int);
