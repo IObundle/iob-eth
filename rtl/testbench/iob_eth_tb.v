@@ -72,7 +72,7 @@ module iob_eth_tb;
 
    initial begin
 
-`ifdef DEBUG
+`ifdef VCD
       $dumpfile("iob_eth.vcd");
       $dumpvars;
 `endif
