@@ -5,6 +5,7 @@ module iob_eth_tx(
                   //CPU clk domain
 		  input             rst,
                   input [10:0]      nbytes,
+                  input             send,
 
 		  //TX_CLK domain
 		  output reg [10:0] addr,
@@ -35,37 +36,39 @@ module iob_eth_tx(
          pc <= 0;
          crc_en <= 0;
          addr <= 0;
-         ready <= 0;      
+         ready <= 1;      
       end else begin
 
          pc <= pc + 1;
-         addr = addr + pc[0];
+         addr <= addr + pc[0];
 
          case(pc)
 
-           0: begin
+           0: if(send) begin
               TX_EN <= 1;
               TX_DATA <= 4'd5;
-           end
+              ready <= 0;
+           end else
+             pc <= pc;
            
            1: if(addr != 7)
              pc <= pc-1;
-           else 
-             addr <= 0;
            
-           2:;
-
+           2: begin TX_DATA <= 4'd5;
+              addr <= 0;
+           end
            3: TX_DATA <= 4'hD;
 
-           4:;
+           4: TX_DATA <= data[3:0];
 
-           5: if(addr != (13+nbytes_sync))
+           5: if(addr != (13+nbytes_sync)) begin
+             TX_DATA <= data[7:0];
              pc <= pc-1;
-           else begin
+           end else begin
               TX_EN <= 0;
-              pc <= pc;
+              pc <= 0;
               ready <= 1;
-              addr <= addr;
+              addr <= 0;
            end   
          endcase
       end
@@ -97,7 +100,8 @@ module iob_eth_tx(
    iob_eth_crc crc_tx (
 		       .rst(tx_rst),
 		       .clk(TX_CLK),
-		       .data_in(tx_data),
+                       .start(send),
+		       .data_in(data),
 		       .data_en(crc_en),
 		       .crc_out(crc_value) 
 		       );

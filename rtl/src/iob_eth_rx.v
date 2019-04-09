@@ -119,7 +119,7 @@ module iob_eth_rx(
 		      .clk(RX_CLK),
 		      .start(pc == 0),
 		      .data_in(data),
-		      .data_en(wr_en),
+		      .data_en(wr),
 		      .crc_out(crc_value)
 		      );
 

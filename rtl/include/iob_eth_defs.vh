@@ -7,8 +7,8 @@
 `define ETH_MAC_ADDR 48'hFF00FF00FF00
 
 // Memory map
-`define ETH_RCVD             `ETH_ADDR_W'd0
-`define ETH_SEND             `ETH_ADDR_W'd1
+`define ETH_STATUS           `ETH_ADDR_W'd0
+`define ETH_CONTROL          `ETH_ADDR_W'd1
 
 `define ETH_MAC_ADDR_LO      `ETH_ADDR_W'd2
 `define ETH_MAC_ADDR_HI      `ETH_ADDR_W'd3
@@ -17,7 +17,10 @@
 `define ETH_DUMMY            `ETH_ADDR_W'd5
 
 `define ETH_TX_RST          `ETH_ADDR_W'd6
-`define ETH_RX_RST          `ETH_ADDR_W'd7
+`define ETH_TX_SEND         `ETH_ADDR_W'd7
+`define ETH_TX_NBYTES       `ETH_ADDR_W'd8
 
-//`define ETH_DATA          `ETH_ADDR_W'd2048
+`define ETH_RX_RST          `ETH_ADDR_W'd9
+
+`define ETH_DATA          `ETH_ADDR_W'd2048
 

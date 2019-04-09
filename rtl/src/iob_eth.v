@@ -45,9 +45,11 @@ module iob_eth (
    reg                                  tx_wr;
    reg                                  tx_send;
    wire                                 tx_ready;
-
+   reg                                  tx_nbytes_en;
+   reg [10:0]                           tx_nbytes;
+   
    //rx signals
-   reg                                  tx_rst;
+   reg                                  rx_rst;
    
    wire [10:0]                          rx_wr_addr;
    wire [7:0]                           rx_wr_data;
@@ -55,7 +57,7 @@ module iob_eth (
    wire                                 rx_ready;
    reg                                  rx_ready_clr;
    
-   //dummy signals
+   //dummy register
    reg [31:0]                           dummy_reg;
    reg                                  dummy_reg_en;
 
@@ -96,8 +98,8 @@ module iob_eth (
       rx_ready_clr = 1'b0;
 
       case (addr)
-	`ETH_RCVD: data_out = { {30{1'b0}}, rx_ready, tx_ready};
-	`ETH_SEND: tx_send = sel&we&data_in[0];
+	`ETH_STATUS: data_out = {30'b0, rx_ready, tx_ready};
+	`ETH_CONTROL: tx_send = sel&we&data_in[0];
 	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
 	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
         `ETH_DUMMY: begin
@@ -106,6 +108,8 @@ module iob_eth (
         end
 	`ETH_TX_RST: tx_rst = sel&we;
 	`ETH_RX_RST: rx_rst = sel&we;
+	`ETH_TX_SEND: tx_send = sel&we;
+        `ETH_TX_NBYTES: tx_nbytes_en = sel&we;
         default: begin //ETH_DATA
            if(addr[11]) begin
               tx_wr = sel&we;
@@ -122,7 +126,7 @@ module iob_eth (
    //
 
    always @ (posedge clk)
-     if(rst) begin
+     if(rst)
 	mac_addr <= `ETH_MAC_ADDR;
      else if(mac_addr_lo_en)
        mac_addr[23:0]<= data_in[23:0];
@@ -130,7 +134,9 @@ module iob_eth (
        mac_addr[47:24]<= data_in[23:0];
      else if(dummy_reg_en)
         dummy_reg <= data_in;
-        
+     else if(tx_nbytes_en)
+       tx_nbytes <= data_in[10:0];
+   
    //
    // TX and RX BUFFERS
    //
@@ -144,7 +150,7 @@ module iob_eth (
       // Back-End (written by host)
       .clk_a(clk),
       .addr_a(addr[10:0]),
-      .data_a(data_in[10:0]),
+      .data_a(data_in[7:0]),
       .we_a(tx_wr),
 
       // Front-End (read by core)
@@ -179,6 +185,8 @@ module iob_eth (
    iob_eth_tx tx (
 		  .rst			(rst | tx_rst),
 
+                  .nbytes               (tx_nbytes),
+                  .send                 (tx_send),
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
 		  .ready                (tx_ready),
