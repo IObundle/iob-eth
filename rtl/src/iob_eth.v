@@ -7,7 +7,6 @@
 
 */
 
-
 module iob_eth (
 		// CPU side
 		input                   clk,
@@ -34,37 +33,37 @@ module iob_eth (
 		);
 
    // mac addresses
-   reg [`ETH_MAC_ADDR_W-1:0]                  mac_addr;
-   reg [`ETH_MAC_ADDR_W-1:0]                  dest_mac_addr;
-   wire [`ETH_MAC_ADDR_W-1:0]                 src_mac_addr;
-   reg 					      mac_addr_lo_en;
-   reg 					      mac_addr_hi_en;
-   reg 					      dest_mac_addr_lo_en;
-   reg 					      dest_mac_addr_hi_en;
-
+   reg [47:0]                           mac_addr;
+   reg                                  mac_addr_lo_en;
+   reg                                  mac_addr_hi_en;
+ 
    //tx signals
-   wire [`ETH_BUF_ADDR_W-1:0]                 tx_rd_addr;
-   wire [`ETH_DATA_W-1:0]                     tx_rd_data;
-   reg                                        tx_wr;
-   reg                                        tx_send;
-   wire                                       tx_ready;
+   reg                                  tx_rst;
+   
+   wire [10:0]                          tx_rd_addr;
+   wire [7:0]                           tx_rd_data;
+   reg                                  tx_wr;
+   reg                                  tx_send;
+   wire                                 tx_ready;
 
    //rx signals
-   wire [`ETH_BUF_ADDR_W-1:0]                 rx_wr_addr;
-   wire [`ETH_DATA_W-1:0]                     rx_wr_data;
-   wire                                       rx_wr;
-   wire                                       rx_ready;
-   reg                                        rx_ready_clr;
-
+   reg                                  tx_rst;
+   
+   wire [10:0]                          rx_wr_addr;
+   wire [7:0]                           rx_wr_data;
+   wire                                 rx_wr;
+   wire                                 rx_ready;
+   reg                                  rx_ready_clr;
+   
    //dummy signals
-   reg [31:0]                                 dummy_reg;
-   reg                                        dummy_reg_en;
+   reg [31:0]                           dummy_reg;
+   reg                                  dummy_reg_en;
 
    // tx/rx buffers
-   wire [`ETH_DATA_W-1:0]                     rx_rd_data;
+   wire [7:0]                           rx_rd_data;
 
    // phy reset timer
-   reg [3:0]                                  phy_rst_cnt;
+   reg [3:0]                            phy_rst_cnt;
 
 
    //
@@ -81,50 +80,40 @@ module iob_eth (
       //defaults
 
       // core outputs
-      data_out = `ETH_DATA_W'd0;
+      data_out = 8'd0;
 
       // mac addresses
       mac_addr_lo_en = 1'b0;
       mac_addr_hi_en = 1'b0;
-      dest_mac_addr_lo_en = 1'b0;
-      dest_mac_addr_hi_en = 1'b0;
 
       // tx
+      tx_rst = 1'b0;
       tx_wr = 1'b0;
       tx_send = 1'b0;
 
       // rx
+      rx_rst = 1'b0;
       rx_ready_clr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = { {30{1'b0}}, rx_ready, tx_ready};
-	`ETH_CONTROL: tx_send = sel&we&data_in[0];
+	`ETH_RCVD: data_out = { {30{1'b0}}, rx_ready, tx_ready};
+	`ETH_SEND: tx_send = sel&we&data_in[0];
 	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
 	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
-	`ETH_DEST_MAC_ADDR_LO: begin
-           dest_mac_addr_lo_en = sel&we;
-           data_out = dest_mac_addr[23:0];
-        end
-	`ETH_DEST_MAC_ADDR_HI: begin
-           dest_mac_addr_hi_en = sel&we;
-           data_out = dest_mac_addr[47:24];
-        end
-	`ETH_SRC_MAC_ADDR_LO: data_out = src_mac_addr[23:0];
-	`ETH_SRC_MAC_ADDR_HI: data_out = src_mac_addr[47:24];
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
         end
-        default: begin
-           if (addr >= `ETH_TX_DATA && addr < (`ETH_TX_DATA + 2**`ETH_BUF_ADDR_W))
-	  tx_wr = sel&we;
-	   if (addr >= `ETH_RX_DATA && addr < (`ETH_RX_DATA + 2**`ETH_BUF_ADDR_W)) begin
-	      rx_ready_clr= sel&~we;
-	      data_out = {{2*`ETH_DATA_W{1'b0}},rx_rd_data};
-	   end
+	`ETH_TX_RST: tx_rst = sel&we;
+	`ETH_RX_RST: rx_rst = sel&we;
+        default: begin //ETH_DATA
+           if(addr[11]) begin
+              tx_wr = sel&we;
+	      data_out = {24'd0, rx_rd_data};
+           end
         end
       endcase
-   end // always @ *
+   end
 
 
 
@@ -132,38 +121,30 @@ module iob_eth (
    // REGISTERS
    //
 
-   // mac addresses
-
    always @ (posedge clk)
      if(rst) begin
 	mac_addr <= `ETH_MAC_ADDR;
-	dest_mac_addr <= `ETH_MAC_ADDR;
-        dummy_reg_en = 0;
-     end else if(dest_mac_addr_lo_en)
-       dest_mac_addr[23:0]<= data_in[23:0];
-     else if(dest_mac_addr_hi_en)
-       dest_mac_addr[47:24]<= data_in[23:0];
      else if(mac_addr_lo_en)
        mac_addr[23:0]<= data_in[23:0];
      else if(mac_addr_hi_en)
        mac_addr[47:24]<= data_in[23:0];
-
-
+     else if(dummy_reg_en)
+        dummy_reg <= data_in;
+        
    //
    // TX and RX BUFFERS
    //
 
-`ifdef ETH_ALT_MEM_TYPE
-
    iob_eth_alt_s2p_mem  #(
-			  .DATA_W(`ETH_DATA_W),
-			  .ADDR_W(`ETH_BUF_ADDR_W))
+			  .DATA_W(8),
+			  .ADDR_W(11)
+                          )
    tx_buffer
      (
       // Back-End (written by host)
       .clk_a(clk),
-      .addr_a(addr[`ETH_BUF_ADDR_W-1:0]),
-      .data_a(data_in[`ETH_DATA_W-1:0]),
+      .addr_a(addr[10:0]),
+      .data_a(data_in[10:0]),
       .we_a(tx_wr),
 
       // Front-End (read by core)
@@ -173,8 +154,9 @@ module iob_eth (
       );
 
    iob_eth_alt_s2p_mem  #(
-			  .DATA_W(`ETH_DATA_W),
-			  .ADDR_W(`ETH_BUF_ADDR_W))
+			  .DATA_W(8),
+			  .ADDR_W(11)
+                          )
    rx_buffer
      (
       // Front-End (written by core)
@@ -185,36 +167,25 @@ module iob_eth (
 
       // Back-End (read by host)
       .clk_b(clk),
-      .addr_b(addr[`ETH_BUF_ADDR_W-1:0]),
+      .addr_b(addr[10:0]),
       .data_b(rx_rd_data)
       );
 
-`endif
 
    //
    //TRANSMITTER
    //
 
-
    iob_eth_tx tx (
-		  .rst			(rst),
+		  .rst			(rst | tx_rst),
 
-		  //frontend
-		  .TX_CLK		(TX_CLK),
-		  .TX_EN		(TX_EN),
-		  .TX_DATA		(TX_DATA),
-
-		  //backend
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
-		  .send	                (tx_send),
-		  .src_mac_addr         (mac_addr),
-		  .dest_mac_addr        (dest_mac_addr),
-
-		  //status
-		  .ready                (tx_ready)
+		  .ready                (tx_ready),
+		  .TX_CLK		(TX_CLK),
+		  .TX_EN		(TX_EN),
+		  .TX_DATA		(TX_DATA)
 		  );
-
 
 
    //
@@ -222,23 +193,17 @@ module iob_eth (
    //
 
    iob_eth_rx rx (
-		  .rst			(rst | rx_ready_clr),
+		  .rst			(rst | rx_rst),
 
-		  //frontend
-		  .RX_CLK		(RX_CLK),
-		  .RX_DATA		(RX_DATA[3:0]),
-		  .RX_DV		(RX_DV),
-
-		  //backend
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr[10:0]),
 		  .data		        (rx_wr_data[7:0]),
-		  .src_mac_addr         (src_mac_addr),
 		  .mac_addr             (mac_addr),
-
-		  .ready	        (rx_ready)
+		  .ready	        (rx_ready),
+                  .RX_CLK		(RX_CLK),
+		  .RX_DATA		(RX_DATA[3:0]),
+		  .RX_DV		(RX_DV)
 		  );
-
 
 
    //
@@ -255,10 +220,4 @@ module iob_eth (
 	ETH_RESETN <= (phy_rst_cnt == 4'd15);
      end
 
-   // DUMMY REG
-   always @(posedge clk)
-     if(rst)
-        dummy_reg <= 32'b0;
-     else if(dummy_reg_en)
-        dummy_reg <= data_in;
 endmodule
