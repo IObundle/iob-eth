@@ -20,13 +20,16 @@ module iob_eth_tx(
    reg 				    tx_rst, tx_rst_1;
    
    //state
-   reg [3:0] 			    pc;
+   reg [2:0] 			    pc;
    
    //crc
    reg                              crc_en;
    wire [31:0]                      crc_value;
 
    reg [10:0]                       nbytes_sync, nbytes_sync1;
+
+   reg                              send_sync, send_sync1;
+   
    
    //
    // TRANSMITTER PROGRAM
@@ -36,7 +39,8 @@ module iob_eth_tx(
          pc <= 0;
          crc_en <= 0;
          addr <= 0;
-         ready <= 1;      
+         ready <= 1;   
+         TX_EN <= 0;   
       end else begin
 
          pc <= pc + 1;
@@ -44,27 +48,27 @@ module iob_eth_tx(
 
          case(pc)
 
-           0: if(send) begin
-              TX_EN <= 1;
-              TX_DATA <= 4'd5;
+           0: if(send_sync)
               ready <= 0;
-           end else
+           else
              pc <= pc;
-           
-           1: if(addr != 7)
-             pc <= pc-1;
-           
-           2: begin TX_DATA <= 4'd5;
-              addr <= 0;
+
+           1: begin
+              TX_EN <= 1;
+              TX_DATA <= data[3:0];
            end
-           3: TX_DATA <= 4'hD;
 
-           4: TX_DATA <= data[3:0];
-
-           5: if(addr != (13+nbytes_sync)) begin
-             TX_DATA <= data[7:0];
-             pc <= pc-1;
+           2: begin
+              TX_DATA <= data[7:4];
+              if(addr >= 8) 
+                crc_en <= 1;
+           end
+           3: if(addr != (21 + nbytes_sync)) begin
+              TX_DATA <= data[3:0];
+              pc <= pc-1;
+              crc_en <= 0;
            end else begin
+              crc_en <= 0;
               TX_EN <= 0;
               pc <= 0;
               ready <= 1;
@@ -74,7 +78,7 @@ module iob_eth_tx(
       end
   
   
-   //sync reset
+   //reset sync
    always @ (posedge TX_CLK, posedge rst)
      if(rst) begin
 	tx_rst <= 1'b1;
@@ -83,7 +87,18 @@ module iob_eth_tx(
 	tx_rst <= tx_rst_1;
 	tx_rst_1 <= 1'b0;
      end
+  
+   //send sync
+   always @ (posedge TX_CLK, posedge send)
+     if(send) begin
+        send_sync <= 1;
+        send_sync1 <= 1;
+     end else begin
+        send_sync <= send_sync1;
+        send_sync1 <= 0;
+     end
 
+   //nbytes sync
    always @ (posedge TX_CLK, posedge rst)
      if(rst) begin
         nbytes_sync <= 0;

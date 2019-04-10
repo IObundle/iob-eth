@@ -16,11 +16,5 @@
 `define ETH_PHY_RST          `ETH_ADDR_W'd4
 `define ETH_DUMMY            `ETH_ADDR_W'd5
 
-`define ETH_TX_RST          `ETH_ADDR_W'd6
-`define ETH_TX_SEND         `ETH_ADDR_W'd7
-`define ETH_TX_NBYTES       `ETH_ADDR_W'd8
-
-`define ETH_RX_RST          `ETH_ADDR_W'd9
-
 `define ETH_DATA          `ETH_ADDR_W'd2048
 

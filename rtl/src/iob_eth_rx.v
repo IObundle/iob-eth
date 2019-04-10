@@ -2,22 +2,23 @@
 `include "iob_eth_defs.vh"
 
 module iob_eth_rx(
-		  input         rst,
+		  input             rst,
 
 		   //phy side
-		  input         RX_CLK,
-		  input         RX_DV,
-		  input [3:0]   RX_DATA,
+		  input             RX_CLK,
+		  input             RX_DV,
+		  input [3:0]       RX_DATA,
 
 		   //cpu_side
-		  output [10:0] addr,
-		  output [7:0]  data,
-		  output reg    wr,
+		  output reg [10:0] addr,
+		  output [7:0]      data,
+		  output            wr,
 
-		  input [47:0]  mac_addr,
-
+		  input [47:0]      mac_addr,
+                  input             receive,
+        
 		  //status
-		  output reg    ready
+		  output reg        ready
 		  );
 
    //rx reset
@@ -25,80 +26,106 @@ module iob_eth_rx(
 
    //state
    reg [3:0] 					   pc;
-   reg [10:0]                                      byte_cnt;
    reg [47:0]                                      dest_mac_addr;
 
    //rx nibble
-   reg [3:0]                                       rx_nibble;
+   reg [3:0]                                       rx_nibble, rx_nibble_reg;
    
    //crc
    wire [31:0] 					   crc_value;
 
- 
-   assign data = {RX_DATA, rx_nibble};
+
+   //received data byte
+   assign data = {rx_nibble, rx_nibble_reg};
    
 
    //
    // RECEIVER STATE MACHINE
    //
    always @(negedge RX_CLK, negedge rx_rstn)
-      if(!rx_rstn) begin
+
+      if(~rx_rstn) begin
+
          pc <= 0;
-         byte_cnt <= 0;
-         wr <=0;
+         addr <= 0;
+         ready <= 0;
+         dest_mac_addr  <= 0;
+
       end else if (RX_DV) begin
+ 
          pc <= pc+1;
-         wr <= pc[0];
-         byte_cnt <= byte_cnt+pc[0];
+         addr <= addr + pc[0];
          
          case(pc)
 	   0 : if(data != 8'hD5)
-             pc <= pc;
-
-           1:;
-
-           2: dest_mac_addr <= {data, dest_mac_addr >> 8};
-
-           3: if(byte_cnt != 6)
-             pc <= pc-1;
-           else
-             byte_cnt <= 0;
+              pc <= pc;
+    
+           1: ;
            
-           4: if(dest_mac_addr != mac_addr)
-             pc <= 0;
-           
-           5: if(byte_cnt != 8)
+
+           2: dest_mac_addr <= {data, dest_mac_addr[47:8]};
+          
+           3: if(addr != 6)
              pc <= pc-1;
-           else
-             byte_cnt <= 0;
+           
+           4: if(dest_mac_addr != mac_addr) begin
+              pc <= 0;
+              addr <= 0;
+           end
+           
+           5: if(addr != 14)
+             pc <= pc-1;
 
            6:;
 
-           7: if(byte_cnt != `ETH_SIZE)
+           7: if(addr != (14+`ETH_SIZE+4))
              pc <= pc - 1;
-           else begin
-              byte_cnt <= 0;
-              wr <= 0;
-           end
-           
-           8: if(crc_value)
-             pc <= 0;
-           else begin
-              ready <= 1;
-              pc <= pc;
-           end
-           
-           default:;
-           
-         endcase
-      end 
+           else 
+             addr <= 0;
 
+           default: begin
+              pc <= 0;
+              addr <= 0;
+              ready <= 0;
+           end
+         endcase 
+      end else begin // if (RX_DV)
+         case (pc)
+           8: if(!crc_value)
+               ready <= 1;
+             else begin
+                pc <= 0;
+                addr <= 0;
+             end
+           9: begin
+              ready <= 1;
+              if(!receive)
+                pc <= pc;
+              else begin
+                 pc <= 0;
+                 addr <= 0;
+                 ready <= 0;
+              end
+           end
+           default: begin
+              pc <= 0;
+              addr <= 0;
+              ready <= 0;
+           end
+         endcase // case (pc)
+      end // else: !if(RX_DV)
+
+   assign wr = (!pc && data == 8'hD5 || pc && !pc[0]);
+   
    // capture nibble
    always @(negedge RX_CLK, negedge rx_rstn)
-     if(!rx_rstn)
-       rx_nibble <= 0;
-     else if(RX_DV)
-       rx_nibble <= RX_DATA;
+     if(~rx_rstn) begin
+        rx_nibble <= 0;
+        rx_nibble_reg <= 0;
+     end else if(RX_DV) begin
+        rx_nibble_reg <= rx_nibble;
+        rx_nibble <= RX_DATA;
+     end
    
    //reset sync
    always @ (posedge rst, negedge RX_CLK)

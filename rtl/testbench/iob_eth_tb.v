@@ -15,7 +15,6 @@ module iob_eth_tb;
    reg 			 we;
    reg [31:0]            data_in;
    wire [31:0]           data_out;
-   wire                  interrupt;
 
    reg [31:0]            cpu_reg;
 
@@ -36,8 +35,12 @@ module iob_eth_tb;
    integer               i;
 
    // data vector
-   reg [7:0] data[`ETH_SIZE-1:0];
+   reg [7:0] data[`ETH_SIZE+22-1:0];
 
+   // mac_addr
+   reg [47:0] mac_addr = `ETH_MAC_ADDR;
+   
+   
    // Instantiate the Unit Under Test (UUT)
 
    iob_eth uut (
@@ -75,9 +78,33 @@ module iob_eth_tb;
       $dumpvars;
 `endif
 
+      //preamble
+      for(i=0; i < 7; i= i+1)
+         data[i] = 8'h55;
+
+      //sfd
+      data[7] = 8'hD5;
+      
+      //dest mac address
+      mac_addr = `ETH_MAC_ADDR;
+      for(i=0; i < 6; i= i+1) begin
+         data[i+8] = mac_addr[7:0];
+         mac_addr = mac_addr>>8;
+      end
+      //source mac address
+      mac_addr = `ETH_MAC_ADDR;
+      for(i=0; i < 6; i= i+1) begin
+         data[i+14] = mac_addr[7:0];
+         mac_addr = mac_addr>>8;
+      end
+
+      //eth type
+      data[20] = 8'h08;
+      data[21] = 8'h00;
+                   
       // generate test data
       for(i=0; i < `ETH_SIZE; i= i+1)
-	data[i]  = i+1;
+	data[i+22]  = (i+1);
 	//data[i]  = $random;
 
       rst = 1;
@@ -90,27 +117,26 @@ module iob_eth_tb;
       #100 @(posedge clk) rst = 0;
 
 
+
       // wait until tx ready
       cpu_read(`ETH_STATUS, cpu_reg);
       while(!cpu_reg)
         cpu_read(`ETH_STATUS, cpu_reg);
-
+      
       // write data to send
-      for(i=0; i < `ETH_SIZE; i= i+1)
+      for(i=0; i < (`ETH_SIZE+22); i= i+1)
 	cpu_write(`ETH_DATA + i, data[i]);
 
       // start sending
-      cpu_write(`ETH_CONTROL, 1);
-
+      cpu_write(`ETH_CONTROL, {16'd`ETH_SIZE, 15'd0, 1'b1});
 
       // wait until rx ready
       cpu_read (`ETH_STATUS, cpu_reg);
       while(!cpu_reg[1])
         cpu_read (`ETH_STATUS, cpu_reg);
 
-
-      // read and check received data
-      for(i=0; i < `ETH_SIZE; i= i+1) begin
+       // read and check received data
+      for(i=0; i < (14+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
 	 if (cpu_reg != data[i]) begin
 	    $display("Test failed on vector %d", i);
@@ -118,7 +144,10 @@ module iob_eth_tb;
 	 end
       end
 
-      $display("Test complete!");
+      // send receive command
+      cpu_write(`ETH_CONTROL, {16'd`ETH_SIZE, 14'd0, 1'b1, 1'b0});
+      
+      $display("Test completed.");
       $finish;
 
    end // initial begin
