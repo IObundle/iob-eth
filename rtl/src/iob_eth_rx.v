@@ -12,7 +12,7 @@ module iob_eth_rx(
 		   //cpu_side
 		  output reg [10:0] addr,
 		  output [7:0]      data,
-		  output            wr,
+		  output reg        wr,
 
 		  input [47:0]      mac_addr,
                   input             receive,
@@ -27,10 +27,12 @@ module iob_eth_rx(
    //state
    reg [3:0] 					   pc;
    reg [47:0]                                      dest_mac_addr;
-
-   //rx nibble
-   reg [3:0]                                       rx_nibble, rx_nibble_reg;
+   reg                                             rcvd;
    
+   //data
+   reg [3:0]                                       rx_nibble, rx_nibble_reg;
+   reg [1:0]                                       rx_dv;
+
    //crc
    wire [31:0] 					   crc_value;
 
@@ -48,84 +50,84 @@ module iob_eth_rx(
 
          pc <= 0;
          addr <= 0;
-         ready <= 0;
+         rcvd <= 0;
          dest_mac_addr  <= 0;
+         wr <= 0;
+         
 
-      end else if (RX_DV) begin
+      end else if (rx_dv[1]) begin
  
          pc <= pc+1;
          addr <= addr + pc[0];
+         wr <= 0;
          
          case(pc)
-	   0 : if(data != 8'hD5)
-              pc <= pc;
-    
-           1: ;
            
+	   0 : if(data != 8'hD5)
+             pc <= pc;
+    
+           1: begin
+              wr <= 1;
+              addr <= 0;
+           end
 
-           2: dest_mac_addr <= {data, dest_mac_addr[47:8]};
+           2: dest_mac_addr <= {dest_mac_addr[40:0], data};
           
-           3: if(addr != 6)
-             pc <= pc-1;
+           3: begin
+              wr <= 1;
+              if(addr != 7) 
+                pc <= pc-1;
+           end
            
            4: if(dest_mac_addr != mac_addr) begin
               pc <= 0;
               addr <= 0;
            end
            
-           5: if(addr != 14)
-             pc <= pc-1;
+           5: begin
+              wr <= 1;
+              if(addr != 15)
+                pc <= pc-1;
+           end
 
            6:;
 
-           7: if(addr != (14+`ETH_SIZE+4))
-             pc <= pc - 1;
-           else 
-             addr <= 0;
-
-           default: begin
+           7: if(addr != (17+`ETH_SIZE)) begin
+              wr <= 1;
+              pc <= pc - 1;
+           end else begin
+              wr <= 0;
               pc <= 0;
               addr <= 0;
-              ready <= 0;
+              rcvd <= 1;
            end
-         endcase 
-      end else begin // if (RX_DV)
-         case (pc)
-           8: if(!crc_value)
-               ready <= 1;
-             else begin
-                pc <= 0;
-                addr <= 0;
-             end
-           9: begin
-              ready <= 1;
-              if(!receive)
-                pc <= pc;
-              else begin
-                 pc <= 0;
-                 addr <= 0;
-                 ready <= 0;
-              end
-           end
-           default: begin
-              pc <= 0;
-              addr <= 0;
-              ready <= 0;
-           end
-         endcase // case (pc)
-      end // else: !if(RX_DV)
-
-   assign wr = (!pc && data == 8'hD5 || pc && !pc[0]);
+ 
+           default: ;
+           
+         endcase
+      end // if (rx_dv[1])
    
+   //check FCS and manage ready
+   always @(negedge RX_CLK, negedge rx_rstn)
+      if(!rx_rstn)
+        ready <= 0;
+      else if(!ready && rcvd && crc_value == 32'hC704DD7B)
+        ready <=1;
+      else if(ready && receive)
+        ready <= 0;
+      
    // capture nibble
    always @(negedge RX_CLK, negedge rx_rstn)
      if(~rx_rstn) begin
         rx_nibble <= 0;
         rx_nibble_reg <= 0;
+        rx_dv <= 2'b0;
      end else if(RX_DV) begin
         rx_nibble_reg <= rx_nibble;
         rx_nibble <= RX_DATA;
-     end
+        rx_dv <= {rx_dv[0], RX_DV};
+     end else
+        rx_dv <= {rx_dv[0], 1'b0};
    
    //reset sync
    always @ (posedge rst, negedge RX_CLK)
@@ -143,7 +145,7 @@ module iob_eth_rx(
    //
   iob_eth_crc crc_rx (
 		      .rst(~rx_rstn),
-		      .clk(RX_CLK),
+		      .clk(~RX_CLK),
 		      .start(pc == 0),
 		      .data_in(data),
 		      .data_en(wr),

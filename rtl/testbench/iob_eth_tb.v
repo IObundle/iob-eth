@@ -88,14 +88,14 @@ module iob_eth_tb;
       //dest mac address
       mac_addr = `ETH_MAC_ADDR;
       for(i=0; i < 6; i= i+1) begin
-         data[i+8] = mac_addr[7:0];
-         mac_addr = mac_addr>>8;
+         data[i+8] = mac_addr[47:40];
+         mac_addr = mac_addr<<8;
       end
       //source mac address
       mac_addr = `ETH_MAC_ADDR;
       for(i=0; i < 6; i= i+1) begin
-         data[i+14] = mac_addr[7:0];
-         mac_addr = mac_addr>>8;
+         data[i+14] = mac_addr[47:40];
+         mac_addr = mac_addr<<8;
       end
 
       //eth type
@@ -107,6 +107,10 @@ module iob_eth_tb;
 	data[i+22]  = (i+1);
 	//data[i]  = $random;
 
+      //print data for debug
+      for(i=0; i < (`ETH_SIZE+22); i= i+1)
+        $display("%x", data[i]);
+      
       rst = 1;
       clk = 1;
       RX_CLK = 1;
@@ -138,8 +142,8 @@ module iob_eth_tb;
        // read and check received data
       for(i=0; i < (14+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg != data[i]) begin
-	    $display("Test failed on vector %d", i);
+	 if (cpu_reg[7:0] != data[i+8]) begin
+	    $display("Test failed: %x / %x", cpu_reg[7:0], data[i+8]);
 	    $finish;
 	 end
       end
