@@ -8,7 +8,7 @@
 #define ETH_TYPE_H 0x08
 #define ETH_TYPE_L 0x00
 
-ETH_MAC_ADDR 0x00aa0062c606
+#define ETH_MAC_ADDR 0x00aa0062c606
 
 // Custom frame size
 //#define ETH_SIZE 1152
