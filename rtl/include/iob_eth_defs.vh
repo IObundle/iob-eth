@@ -1,4 +1,4 @@
-`define VCD
+//`define VCD
 
 //`define ETH_SIZE 8'd20
 `define ETH_ADDR_W 12
