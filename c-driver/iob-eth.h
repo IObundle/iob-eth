@@ -6,7 +6,7 @@
 
 // Frame type
 #define ETH_TYPE_H 0x08
-#define ETH_TYPE_H 0x00
+#define ETH_TYPE_L 0x00
 
 ETH_MAC_ADDR 48'h00aa0062c606
 
