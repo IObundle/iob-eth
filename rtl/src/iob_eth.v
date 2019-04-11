@@ -36,6 +36,12 @@ module iob_eth (
    //dummy
    reg [31:0]                           dummy_reg;
    reg                                  dummy_reg_en;
+   //tx_nbytes
+   reg [10:0]                           tx_nbytes_reg;
+   reg                                  tx_nbytes_reg_en;
+   //rx_nbytes
+   reg [10:0]                           rx_nbytes_reg;
+   reg                                  rx_nbytes_reg_en;
    //control
    reg [31:0]                           control_reg;
    reg                                  control_reg_en;
@@ -74,7 +80,11 @@ module iob_eth (
 
       //defaults
       control_reg_en = 0;
+      dummy_reg_en = 0;
+      tx_nbytes_reg_en = 0;
+      rx_nbytes_reg_en = 0;
       
+                     
       // core outputs
       data_out = 8'd0;
 
@@ -93,6 +103,8 @@ module iob_eth (
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
         end
+        `ETH_TX_NBYTES: tx_nbytes_reg_en = sel&we;
+        `ETH_RX_NBYTES: rx_nbytes_reg_en = sel&we;
         default: begin //ETH_DATA
            if(addr[11] && sel) begin
               if(we)
@@ -120,6 +132,10 @@ module iob_eth (
         dummy_reg <= data_in;
       else if(control_reg_en)
         control_reg <= data_in;
+      else if(tx_nbytes_reg_en)
+        tx_nbytes_reg <= data_in[10:0];
+      else if(rx_nbytes_reg_en)
+        rx_nbytes_reg <= data_in[10:0];
 
       //self clearing control bits
       if(control_reg[1:0])
@@ -173,12 +189,12 @@ module iob_eth (
 
    iob_eth_tx tx (
 		  .rst			(rst),
-
-                  .nbytes               (control_reg[26:16]),
+                  .nbytes               (tx_nbytes_reg),
                   .send                 (control_reg[0]),
+		  .ready                (tx_ready),
+
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
-		  .ready                (tx_ready),
 		  .TX_CLK		(TX_CLK),
 		  .TX_EN		(TX_EN),
 		  .TX_DATA		(TX_DATA)
@@ -191,13 +207,14 @@ module iob_eth (
 
    iob_eth_rx rx (
 		  .rst			(rst),
+                  .nbytes               (rx_nbytes_reg),
+		  .ready	        (rx_ready),
+                  .receive              (control_reg[1]),
+		  .mac_addr             (mac_addr),
 
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
 		  .data		        (rx_wr_data),
-		  .mac_addr             (mac_addr),
-                  .receive              (control_reg[1]),
-		  .ready	        (rx_ready),
                   .RX_CLK		(RX_CLK),
 		  .RX_DATA		(RX_DATA),
 		  .RX_DV		(RX_DV)

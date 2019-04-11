@@ -3,22 +3,22 @@
 
 module iob_eth_rx(
 		  input             rst,
+                  input [10:0]      nbytes,
+                  input             receive,
 
-		   //phy side
-		  input             RX_CLK,
-		  input             RX_DV,
-		  input [3:0]       RX_DATA,
+                  //TODO: add sync
+		  output reg        ready,
 
-		   //cpu_side
+		  //RX_CLK domain
 		  output reg [10:0] addr,
 		  output [7:0]      data,
 		  output reg        wr,
 
 		  input [47:0]      mac_addr,
-                  input             receive,
-        
-		  //status
-		  output reg        ready
+
+		  input             RX_CLK,
+		  input             RX_DV,
+		  input [3:0]       RX_DATA
 		  );
 
    //rx reset
@@ -92,7 +92,7 @@ module iob_eth_rx(
 
            6:;
 
-           7: if(addr != (17+`ETH_SIZE)) begin
+           7: if(addr != (17+nbytes)) begin
               wr <= 1;
               pc <= pc - 1;
            end else begin

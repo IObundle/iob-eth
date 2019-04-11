@@ -120,19 +120,21 @@ module iob_eth_tb;
       // deassert reset
       #100 @(posedge clk) rst = 0;
 
-
-
       // wait until tx ready
       cpu_read(`ETH_STATUS, cpu_reg);
       while(!cpu_reg)
         cpu_read(`ETH_STATUS, cpu_reg);
       
+      //setup number of bytes of transaction
+      cpu_write(`ETH_TX_NBYTES, `ETH_SIZE);
+      cpu_write(`ETH_RX_NBYTES, `ETH_SIZE);
+
       // write data to send
       for(i=0; i < (`ETH_SIZE+22); i= i+1)
 	cpu_write(`ETH_DATA + i, data[i]);
 
       // start sending
-      cpu_write(`ETH_CONTROL, {16'd`ETH_SIZE, 15'd0, 1'b1});
+      cpu_write(`ETH_CONTROL, `ETH_SEND);
 
       // wait until rx ready
       cpu_read (`ETH_STATUS, cpu_reg);
@@ -149,7 +151,7 @@ module iob_eth_tb;
       end
 
       // send receive command
-      cpu_write(`ETH_CONTROL, {16'd`ETH_SIZE, 14'd0, 1'b1, 1'b0});
+      cpu_write(`ETH_CONTROL, `ETH_RCV);
       
       $display("Test completed.");
       $finish;

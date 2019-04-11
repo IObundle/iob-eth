@@ -6,26 +6,27 @@ module iob_eth_tx(
 		  input             rst,
                   input [10:0]      nbytes,
                   input             send,
+                  //TODO: add sync
+		  output reg        ready,
 
 		  //TX_CLK domain
 		  output reg [10:0] addr,
 		  input [7:0]       data,
-		  output reg        ready,
 		  input wire        TX_CLK,
 		  output reg        TX_EN,
 		  output reg [3:0]  TX_DATA
 		  );
 
    function [7:0] reverse_byte;
-      input [7:0]        word;
-      integer                     i;
+      input [7:0]                   word;
+      integer                       i;
 
       begin
          for (i=0; i < 8; i=i+1)
            reverse_byte[i]=word[7 - i];
       end
    endfunction
-
+   
   //tx reset
    reg 				    tx_rst, tx_rst_1;
    
