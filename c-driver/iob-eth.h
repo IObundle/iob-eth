@@ -5,7 +5,10 @@
 #define ETH_SFD 0xD5
 
 // Frame type
-#define ETH_TYPE 0x08
+#define ETH_TYPE_H 0x08
+#define ETH_TYPE_H 0x00
+
+ETH_MAC_ADDR 48'h00aa0062c606
 
 // Custom frame size
 //#define ETH_SIZE 1152
@@ -14,20 +17,13 @@
 #define ETH_STATUS           0
 #define ETH_CONTROL          1
 
-#define ETH_MAC_ADDR_LO      3
-#define ETH_MAC_ADDR_HI      4
+#define ETH_MAC_ADDR_LO      2
+#define ETH_MAC_ADDR_HI      3
 
-#define ETH_DEST_MAC_ADDR_LO 5
-#define ETH_DEST_MAC_ADDR_HI 6
+#define ETH_RES_PHY          4
+#define ETH_DUMMY            5
 
-#define ETH_SRC_MAC_ADDR_LO  7
-#define ETH_SRC_MAC_ADDR_HI  8
+#define ETH_DATA          2048
 
-#define ETH_RES_PHY          9
-#define ETH_DUMMY            10
-
-#define ETH_TX_DATA          20
-#define ETH_RX_DATA          1520
-
-/*Return 0 in case of successful init or -1 in case of failure*/
+//init and test routine
 int ethInit(unsigned int);
