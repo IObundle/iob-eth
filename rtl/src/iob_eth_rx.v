@@ -25,7 +25,7 @@ module iob_eth_rx(
    reg 						   rx_rstn, rx_rstn_1;
 
    //state
-   reg [3:0] 					   pc;
+   reg [2:0] 					   pc;
    reg [47:0]                                      dest_mac_addr;
    reg                                             rcvd;
    
@@ -75,7 +75,7 @@ module iob_eth_rx(
           
            3: begin
               wr <= 1;
-              if(addr != 7) 
+              if(addr != 5) 
                 pc <= pc-1;
            end
            
@@ -84,15 +84,7 @@ module iob_eth_rx(
               addr <= 0;
            end
            
-           5: begin
-              wr <= 1;
-              if(addr != 15)
-                pc <= pc-1;
-           end
-
-           6:;
-
-           7: if(addr != (17+nbytes)) begin
+           5: if(addr != (17+nbytes)) begin
               wr <= 1;
               pc <= pc - 1;
            end else begin

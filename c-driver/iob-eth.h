@@ -8,7 +8,11 @@
 #define ETH_TYPE_H 0x08
 #define ETH_TYPE_L 0x00
 
-#define ETH_MAC_ADDR 0x00aa0062c606
+#define ETH_MAC_ADDR 0x00aa0062c606LL
+
+//commands
+#define ETH_SEND 1
+#define ETH_RCV 2
 
 // Custom frame size
 //#define ETH_SIZE 1152
@@ -21,7 +25,7 @@
 #define ETH_MAC_ADDR_HI      3
 
 #define ETH_RES_PHY          4
-#define ETH_DUMMY            5
+#define ETH_DUMMY          5
 
 #define ETH_TX_NBYTES        6
 #define ETH_RX_NBYTES        7
