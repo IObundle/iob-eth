@@ -14,3 +14,4 @@ int ethInit(unsigned int base)
     return -1;
   return 0;
 }
+
