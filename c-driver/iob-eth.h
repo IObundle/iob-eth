@@ -33,4 +33,7 @@
 #define ETH_DATA          2048
 
 //init and test routine
-int ethInit(unsigned int);
+int ethInit(unsigned int base, unsigned int, unsigned int );
+
+void send_frame(char data_to_send[]);
+void rcv_frame(char data_rcv[]);
