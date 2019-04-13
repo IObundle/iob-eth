@@ -43,7 +43,6 @@ module iob_eth (
    reg [10:0]                           rx_nbytes_reg;
    reg                                  rx_nbytes_reg_en;
    //control
-   reg [31:0]                           control_reg;
    reg                                  control_reg_en;
    
    // mac addresses
@@ -55,23 +54,25 @@ module iob_eth (
    wire [10:0]                          tx_rd_addr;
    wire [7:0]                           tx_rd_data;
    reg                                  tx_wr;
-   wire                                 tx_ready;
+   reg                                  tx_ready;
+   reg [1:0]                            tx_ready_sync;
+   wire                                 tx_ready_int;
    
    //rx signals
    wire [10:0]                          rx_wr_addr;
    wire [7:0]                           rx_wr_data;
    wire                                 rx_wr;
-   wire                                 rx_ready;
+   reg                                  rx_ready;
+   reg [1:0]                            rx_ready_sync;
+   wire                                 rx_ready_int;
    wire [7:0]                           rx_rd_data;
 
    // phy reset timer
-   reg [3:0]                            phy_rst_cnt;
+   reg [5:0]                            phy_rst_cnt;
 
    //
    // ASSIGNMENTS
    //
-
-   //assign GTX_CLK = 1'b0; //this will force 10/100 negotiation
 
    //
    // ADDRESS DECODER
@@ -96,7 +97,7 @@ module iob_eth (
 
       case (addr)
 	`ETH_STATUS: data_out = {30'b0, rx_ready, tx_ready};
-	`ETH_CONTROL: control_reg_en = sel&we&data_in[0];
+	`ETH_CONTROL: control_reg_en = sel&we;
 	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
 	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
         `ETH_DUMMY: begin
@@ -120,27 +121,34 @@ module iob_eth (
    // REGISTERS
    //
 
-   always @ (posedge clk, posedge rst) begin
-      if(rst) begin
-         control_reg <= 0;
+   always @ (posedge clk, posedge rst)
+      if(rst)
 	 mac_addr <= `ETH_MAC_ADDR;
-      end else if(mac_addr_lo_en)
+      else if(mac_addr_lo_en)
         mac_addr[23:0]<= data_in[23:0];
       else if(mac_addr_hi_en)
         mac_addr[47:24]<= data_in[23:0];
       else if(dummy_reg_en)
         dummy_reg <= data_in;
-      else if(control_reg_en)
-        control_reg <= data_in;
       else if(tx_nbytes_reg_en)
         tx_nbytes_reg <= data_in[10:0];
       else if(rx_nbytes_reg_en)
         rx_nbytes_reg <= data_in[10:0];
+  
+   //sync ready
+   always @ (posedge clk, posedge rst)
+      if(rst) begin
+         tx_ready <= 0;
+         rx_ready <= 0;
+         tx_ready_sync <= 0;
+         rx_ready_sync <= 0;
+      end else begin
+         tx_ready <= ETH_RESETN & tx_ready_sync[1];
+         rx_ready <= ETH_RESETN & rx_ready_sync[1];
+         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int};
+         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int};
+      end 
 
-      //self clearing control bits
-      if(control_reg[1:0])
-        control_reg[1:0] <= 0;
-   end
    
    //
    // TX and RX BUFFERS
@@ -190,8 +198,8 @@ module iob_eth (
    iob_eth_tx tx (
 		  .rst			(rst),
                   .nbytes               (tx_nbytes_reg),
-                  .send                 (control_reg[0]),
-		  .ready                (tx_ready),
+                  .send                 (control_reg_en & data_in[0]),
+		  .ready                (tx_ready_int),
 
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
@@ -208,8 +216,8 @@ module iob_eth (
    iob_eth_rx rx (
 		  .rst			(rst),
                   .nbytes               (rx_nbytes_reg),
-		  .ready	        (rx_ready),
-                  .receive              (control_reg[1]),
+		  .ready	        (rx_ready_int),
+                  .receive              (control_reg_en & data_in[1]),
 		  .mac_addr             (mac_addr),
 
 		  .wr                   (rx_wr),
@@ -225,14 +233,14 @@ module iob_eth (
    //  PHY RESET
    //
 
-   always @ (posedge RX_CLK)
+   always @ (posedge clk)
      if(rst) begin
-        phy_rst_cnt <= 4'd0;
-	ETH_RESETN <= 1'b0;
-     end else begin
-	if((phy_rst_cnt != 4'd15))
+        phy_rst_cnt <= 0;
+	ETH_RESETN <= 0;
+     end else if((phy_rst_cnt != 63))
 	  phy_rst_cnt <= phy_rst_cnt+1'b1;
-	ETH_RESETN <= (phy_rst_cnt == 4'd15);
-     end
+     else 
+	ETH_RESETN <= (phy_rst_cnt == 63);
+   
 
 endmodule

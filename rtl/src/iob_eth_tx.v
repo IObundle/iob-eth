@@ -6,7 +6,7 @@ module iob_eth_tx(
 		  input             rst,
                   input [10:0]      nbytes,
                   input             send,
-                  //TODO: add sync
+
 		  output reg        ready,
 
 		  //TX_CLK domain
@@ -54,7 +54,7 @@ module iob_eth_tx(
          TX_EN <= 0;   
       end else begin
 
-         pc <= pc + 1;
+         pc <= pc + 1'b1;
          addr <= addr + pc[0];
          crc_en <= 0;
          
@@ -73,7 +73,7 @@ module iob_eth_tx(
            2: begin
               TX_DATA <= data[7:4];
               if(addr != 8)
-                pc <= pc-1;
+                pc <= pc-1'b1;
               else
                 crc_en <= 1;
            end
@@ -84,7 +84,7 @@ module iob_eth_tx(
               TX_DATA <= data[7:4];
               if(addr <= (21 + nbytes_sync)) begin
                  crc_en <= 1;
-                 pc <= pc-1;
+                 pc <= pc-1'b1;
               end
            end
            
@@ -143,6 +143,7 @@ module iob_eth_tx(
         nbytes_sync <= nbytes_sync1;
         nbytes_sync1 <= nbytes;
      end
+
 
    //
    // CRC MODULE

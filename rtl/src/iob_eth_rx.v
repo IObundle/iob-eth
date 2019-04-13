@@ -6,7 +6,6 @@ module iob_eth_rx(
                   input [10:0]      nbytes,
                   input             receive,
 
-                  //TODO: add sync
 		  output reg        ready,
 
 		  //RX_CLK domain
@@ -57,7 +56,7 @@ module iob_eth_rx(
 
       end else if (rx_dv[1]) begin
  
-         pc <= pc+1;
+         pc <= pc+1'b1;
          addr <= addr + pc[0];
          wr <= 0;
          
@@ -71,12 +70,12 @@ module iob_eth_rx(
               addr <= 0;
            end
 
-           2: dest_mac_addr <= {dest_mac_addr[40:0], data};
+           2: dest_mac_addr <= {dest_mac_addr[39:0], data};
           
            3: begin
               wr <= 1;
               if(addr != 5) 
-                pc <= pc-1;
+                pc <= pc-1'b1;
            end
            
            4: if(dest_mac_addr != mac_addr) begin
@@ -86,7 +85,7 @@ module iob_eth_rx(
            
            5: if(addr != (17+nbytes)) begin
               wr <= 1;
-              pc <= pc - 1;
+              pc <= pc - 1'b1;
            end else begin
               wr <= 0;
               pc <= 0;
