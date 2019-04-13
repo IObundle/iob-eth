@@ -4,6 +4,7 @@
 `define ETH_ADDR_W 12
 
 `define ETH_MAC_ADDR 48'h00aa0062c606
+`define ETH_RMAC_ADDR 48'h00aa0062c606
 //`define ETH_MAC_ADDR 48'hFF00FF00FF00
 
 //commands

@@ -46,7 +46,7 @@ module iob_eth_rx(
    //
    always @(negedge RX_CLK, negedge rx_rstn)
 
-      if(~rx_rstn) begin
+      if(!rx_rstn) begin
 
          pc <= 0;
          addr <= 0;
