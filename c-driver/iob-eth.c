@@ -1,15 +1,15 @@
+#include <stdint.h>
 #include "system.h"
 #include "iob-eth.h"
 #include "iob-uart.h"
 
 
 char TX_FRAME [22];
-unsigned int TX_NBYTES;
-unsigned int RX_NBYTES;
 
-bool eth_init(unsigned int tx_size, unsigned int rx_size)
+bool eth_init()
 {
   int i;
+  uint64_t mac_addres;
 
   //Preamble
   for(i=0; i < 7; i= i+1)
@@ -18,23 +18,15 @@ bool eth_init(unsigned int tx_size, unsigned int rx_size)
   //SFD
   TX_FRAME[7] = 0xD5;
 
-  //frame sizes
-  TX_NBYTES = tx_size;
-  RX_NBYTES = rx_size;
-
-  //set lengths of TX and RX
-  MEMSET(ETH_BASE, ETH_TX_NBYTES, TX_NBYTES);
-  MEMSET(ETH_BASE, ETH_RX_NBYTES, RX_NBYTES);
-
   //dest mac address
-  unsigned long long int mac_addr = ETH_RMAC_ADDR;
+  mac_addres = ETH_RMAC_ADDR;
   for(i=0; i < 6; i= i+1) {
     TX_FRAME[i+8] = mac_addr>>40;
     mac_addr = mac_addr<<8;
   }
 
   //source mac address
-  mac_addr = ETH_MAC_ADDR;
+  mac_addres = ETH_MAC_ADDR;
   for(i=0; i < 6; i= i+1) {
     TX_FRAME[i+14] = mac_addr>>40;
     mac_addr = mac_addr<<8;
@@ -56,7 +48,7 @@ bool eth_init(unsigned int tx_size, unsigned int rx_size)
     return true;
 }
 
-void eth_send_frame(char *data) {
+void eth_send_frame(char *data, unsigned int size) {
   int i;
   //wait for ready
   while(! (MEMGET(ETH_BASE, ETH_STATUS)&1)   );
@@ -66,7 +58,7 @@ void eth_send_frame(char *data) {
     MEMSET(ETH_BASE, (ETH_DATA + i), TX_FRAME[i]);
   }
 
-  for(i=0; i < TX_NBYTES; i = i+1) {
+  for(i=0; i < size; i = i+1) {
     MEMSET(ETH_BASE, (ETH_DATA + 22 + i), data[i]);
   }
 
@@ -74,12 +66,12 @@ void eth_send_frame(char *data) {
   MEMSET(ETH_BASE, ETH_CONTROL, ETH_SEND);
 }
 
-void eth_rcv_frame(char *data_rcv) {
+void eth_rcv_frame(char *data_rcv, unsigned int size) {
   int i;
   // wait until rx ready
   while(!((MEMGET(ETH_BASE, ETH_STATUS)>>1)&1));
 
-  for(i=0; i < RX_NBYTES; i = i+1)
+  for(i=0; i < size; i = i+1)
     data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i +14));
 
   // send receive command

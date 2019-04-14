@@ -3,8 +3,8 @@
 //`define ETH_SIZE 8'd20
 `define ETH_ADDR_W 12
 
-`define ETH_MAC_ADDR 48'h00aa0062c606
-`define ETH_RMAC_ADDR 48'h00aa0062c606
+`define ETH_MAC_ADDR 48'h01606e11020f
+`define ETH_RMAC_ADDR 48'h309c231e624b
 //`define ETH_MAC_ADDR 48'hFF00FF00FF00
 
 //commands
@@ -15,8 +15,8 @@
 `define ETH_STATUS           `ETH_ADDR_W'd0
 `define ETH_CONTROL          `ETH_ADDR_W'd1
 
-`define ETH_MAC_ADDR_LO      `ETH_ADDR_W'd2
-`define ETH_MAC_ADDR_HI      `ETH_ADDR_W'd3
+`define ETH_RMAC_ADDR_LO      `ETH_ADDR_W'd2
+`define ETH_RMAC_ADDR_HI      `ETH_ADDR_W'd3
 
 `define ETH_PHY_RST          `ETH_ADDR_W'd4
 `define ETH_DUMMY            `ETH_ADDR_W'd5

@@ -46,9 +46,9 @@ module iob_eth (
    reg                                  control_reg_en;
    
    // mac addresses
-   reg [47:0]                           mac_addr;
-   reg                                  mac_addr_lo_en;
-   reg                                  mac_addr_hi_en;
+   reg [47:0]                           rmac_addr;
+   reg                                  rmac_addr_lo_en;
+   reg                                  rmac_addr_hi_en;
  
    //tx signals
    wire [10:0]                          tx_rd_addr;
@@ -91,16 +91,16 @@ module iob_eth (
       data_out = 8'd0;
 
       // mac addresses
-      mac_addr_lo_en = 1'b0;
-      mac_addr_hi_en = 1'b0;
+      rmac_addr_lo_en = 1'b0;
+      rmac_addr_hi_en = 1'b0;
 
       tx_wr = 1'b0;
 
       case (addr)
 	`ETH_STATUS: data_out = {30'b0, rx_ready, tx_ready};
 	`ETH_CONTROL: control_reg_en = sel&we;
-	`ETH_MAC_ADDR_LO: mac_addr_lo_en = sel&we;
-	`ETH_MAC_ADDR_HI: mac_addr_hi_en = sel&we;
+	`ETH_RMAC_ADDR_LO: rmac_addr_lo_en = sel&we;
+	`ETH_RMAC_ADDR_HI: rmac_addr_hi_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
@@ -124,11 +124,11 @@ module iob_eth (
 
    always @ (posedge clk, posedge rst)
       if(rst)
-	 mac_addr <= `ETH_MAC_ADDR;
+	 rmac_addr <= `ETH_RMAC_ADDR;
       else if(mac_addr_lo_en)
-        mac_addr[23:0]<= data_in[23:0];
+        rmac_addr[23:0]<= data_in[23:0];
       else if(mac_addr_hi_en)
-        mac_addr[47:24]<= data_in[23:0];
+        rmac_addr[47:24]<= data_in[23:0];
       else if(dummy_reg_en)
         dummy_reg <= data_in;
       else if(tx_nbytes_reg_en)
@@ -197,11 +197,12 @@ module iob_eth (
    //
 
    iob_eth_tx tx (
+                  //cpu side
 		  .rst			(rst),
                   .nbytes               (tx_nbytes_reg),
                   .send                 (control_reg_en & data_in[0]),
 		  .ready                (tx_ready_int),
-
+                  //mii side 
 		  .addr	       	        (tx_rd_addr),
 		  .data	       	        (tx_rd_data),
 		  .TX_CLK		(TX_CLK),
@@ -215,12 +216,12 @@ module iob_eth (
    //
 
    iob_eth_rx rx (
+                  //cpu side
 		  .rst			(rst),
                   .nbytes               (rx_nbytes_reg),
 		  .ready	        (rx_ready_int),
                   .receive              (control_reg_en & data_in[1]),
-		  .mac_addr             (mac_addr),
-
+                  //mii side
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
 		  .data		        (rx_wr_data),

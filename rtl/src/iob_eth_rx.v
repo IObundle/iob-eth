@@ -5,16 +5,12 @@ module iob_eth_rx(
 		  input             rst,
                   input [10:0]      nbytes,
                   input             receive,
-
 		  output reg        ready,
 
 		  //RX_CLK domain
 		  output reg [10:0] addr,
 		  output [7:0]      data,
 		  output reg        wr,
-
-		  input [47:0]      mac_addr,
-
 		  input             RX_CLK,
 		  input             RX_DV,
 		  input [3:0]       RX_DATA
@@ -78,7 +74,7 @@ module iob_eth_rx(
                 pc <= pc-1'b1;
            end
            
-           4: if(dest_mac_addr != mac_addr) begin
+           4: if(dest_mac_addr != `ETH_MAC_ADDR) begin
               pc <= 0;
               addr <= 0;
            end

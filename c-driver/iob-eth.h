@@ -8,15 +8,12 @@
 #define ETH_TYPE_H 0x08
 #define ETH_TYPE_L 0x00
 
-#define ETH_MAC_ADDR 0x00aa0062c606LL
-#define ETH_RMAC_ADDR 0x00aa0062c606LL
+#define ETH_MAC_ADDR 0x01606e11020f
+#define ETH_RMAC_ADDR 0x309c231e624b
 
 //commands
 #define ETH_SEND 1
 #define ETH_RCV 2
-
-// Custom frame size
-//#define ETH_SIZE 1152
 
 // Memory map
 #define ETH_STATUS           0
@@ -28,13 +25,10 @@
 #define ETH_RES_PHY          4
 #define ETH_DUMMY            5
 
-#define ETH_TX_NBYTES        6
-#define ETH_RX_NBYTES        7
-
 #define ETH_DATA          2048
 
 //init and test routine
-bool eth_init(unsigned int tx_size, unsigned int rx_size);
+bool eth_init(void);
 
-void eth_send_frame(char data_to_send[]);
-void eth_rcv_frame(char data_rcv[]);
+void eth_send_frame(char *data_to_send, unsigned int size);
+void eth_rcv_frame(char *data_rcv, unsigned int size);
