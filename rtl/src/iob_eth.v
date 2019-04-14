@@ -69,6 +69,7 @@ module iob_eth (
 
    // phy reset timer
    reg [5:0]                            phy_rst_cnt;
+   reg                                  phy_ready;
 
    //
    // ASSIGNMENTS
@@ -145,8 +146,8 @@ module iob_eth (
       end else begin
          tx_ready <= ETH_RESETN & tx_ready_sync[1];
          rx_ready <= ETH_RESETN & rx_ready_sync[1];
-         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int};
-         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int};
+         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int&phy_ready};
+         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int&phy_ready};
       end 
 
    
@@ -232,15 +233,20 @@ module iob_eth (
    //
    //  PHY RESET
    //
-
-   always @ (posedge clk)
+   
+   always @ (posedge clk, posedge rst)
      if(rst) begin
         phy_rst_cnt <= 0;
 	ETH_RESETN <= 0;
      end else if((phy_rst_cnt != 63))
-	  phy_rst_cnt <= phy_rst_cnt+1'b1;
-     else 
-	ETH_RESETN <= (phy_rst_cnt == 63);
-   
+        phy_rst_cnt <= phy_rst_cnt+1'b1;
+     else
+       ETH_RESETN <= 1;
 
+   always @ (posedge RX_CLK, posedge rst)
+     if(rst)
+       phy_ready <= 0;
+     else
+       phy_ready <= 1;
+   
 endmodule
