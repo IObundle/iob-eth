@@ -5,7 +5,6 @@
 
 `define ETH_MAC_ADDR 48'h01606e11020f
 `define ETH_RMAC_ADDR 48'h309c231e624b
-//`define ETH_MAC_ADDR 48'hFF00FF00FF00
 
 //commands
 `define ETH_SEND 1

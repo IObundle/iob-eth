@@ -8,10 +8,10 @@ EFLAGS = -errormax 15 -access +wc -status
 SFLAGS = -errormax 15 -status
 
 VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
-SRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
+VSRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
 
-all: $(SRC) $(HEADERS)
-	ncvlog $(CFLAGS) $(SRC)
+all: $(VSRC) $(VHEADERS)
+	ncvlog $(CFLAGS) $(VSRC)
 	ncelab $(EFLAGS) worklib.iob_eth_tb:module
 	ncsim  $(SFLAGS) worklib.iob_eth_tb:module
 

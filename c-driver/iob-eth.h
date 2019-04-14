@@ -25,10 +25,14 @@
 #define ETH_RES_PHY          4
 #define ETH_DUMMY            5
 
+#define ETH_TX_NBYTES        6
+#define ETH_RX_NBYTES        7
+
+
 #define ETH_DATA          2048
 
 //init and test routine
-bool eth_init(void);
+int eth_init(void);
 
 void eth_send_frame(char *data_to_send, unsigned int size);
 void eth_rcv_frame(char *data_rcv, unsigned int size);

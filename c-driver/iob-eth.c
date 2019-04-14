@@ -6,10 +6,10 @@
 
 char TX_FRAME [22];
 
-bool eth_init()
+int eth_init()
 {
   int i;
-  uint64_t mac_addres;
+  uint64_t mac_addr;
 
   //Preamble
   for(i=0; i < 7; i= i+1)
@@ -19,14 +19,18 @@ bool eth_init()
   TX_FRAME[7] = 0xD5;
 
   //dest mac address
-  mac_addres = ETH_RMAC_ADDR;
+#ifdef LOOPBACK
+  mac_addr = ETH_MAC_ADDR;
+#else
+  mac_addr = ETH_RMAC_ADDR;
+#endif
   for(i=0; i < 6; i= i+1) {
     TX_FRAME[i+8] = mac_addr>>40;
     mac_addr = mac_addr<<8;
   }
 
   //source mac address
-  mac_addres = ETH_MAC_ADDR;
+  mac_addr = ETH_MAC_ADDR;
   for(i=0; i < 6; i= i+1) {
     TX_FRAME[i+14] = mac_addr>>40;
     mac_addr = mac_addr<<8;
@@ -36,6 +40,9 @@ bool eth_init()
   TX_FRAME[20] = 0x08;
   TX_FRAME[21] = 0x00;
 
+  //set initial payload size to Ethernet minimum excluding FCS
+  MEMSET(ETH_BASE, ETH_TX_NBYTES, 42);
+  MEMSET(ETH_BASE, ETH_RX_NBYTES, 42);
 
   // check processor interface
   // write dummy register
@@ -43,9 +50,9 @@ bool eth_init()
 
   // read and check result
   if (MEMGET(ETH_BASE, ETH_DUMMY) != 0xDEADBEEF)
-    return false;
+    return -1;
   else 
-    return true;
+    return 0;
 }
 
 void eth_send_frame(char *data, unsigned int size) {
@@ -53,11 +60,15 @@ void eth_send_frame(char *data, unsigned int size) {
   //wait for ready
   while(! (MEMGET(ETH_BASE, ETH_STATUS)&1)   );
 
+  //set frame size
+  MEMSET(ETH_BASE, ETH_TX_NBYTES, size);
+
   //write data to send
+  //header
   for(i=0; i < 22; i = i+1) {
     MEMSET(ETH_BASE, (ETH_DATA + i), TX_FRAME[i]);
   }
-
+  //payload
   for(i=0; i < size; i = i+1) {
     MEMSET(ETH_BASE, (ETH_DATA + 22 + i), data[i]);
   }
@@ -70,6 +81,9 @@ void eth_rcv_frame(char *data_rcv, unsigned int size) {
   int i;
   // wait until rx ready
   while(!((MEMGET(ETH_BASE, ETH_STATUS)>>1)&1));
+
+  //set frame size
+  MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
 
   for(i=0; i < size; i = i+1)
     data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i +14));

@@ -125,9 +125,9 @@ module iob_eth (
    always @ (posedge clk, posedge rst)
       if(rst)
 	 rmac_addr <= `ETH_RMAC_ADDR;
-      else if(mac_addr_lo_en)
+      else if(rmac_addr_lo_en)
         rmac_addr[23:0]<= data_in[23:0];
-      else if(mac_addr_hi_en)
+      else if(rmac_addr_hi_en)
         rmac_addr[47:24]<= data_in[23:0];
       else if(dummy_reg_en)
         dummy_reg <= data_in;
