@@ -19,10 +19,6 @@
 #define ETH_STATUS           0
 #define ETH_CONTROL          1
 
-#define ETH_MAC_ADDR_LO      2
-#define ETH_MAC_ADDR_HI      3
-
-#define ETH_RES_PHY          4
 #define ETH_DUMMY            5
 
 #define ETH_TX_NBYTES        6

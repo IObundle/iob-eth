@@ -45,11 +45,6 @@ module iob_eth (
    //control
    reg                                  control_reg_en;
    
-   // mac addresses
-   reg [47:0]                           rmac_addr;
-   reg                                  rmac_addr_lo_en;
-   reg                                  rmac_addr_hi_en;
- 
    //tx signals
    wire [10:0]                          tx_rd_addr;
    wire [7:0]                           tx_rd_data;
@@ -90,17 +85,11 @@ module iob_eth (
       // core outputs
       data_out = 8'd0;
 
-      // mac addresses
-      rmac_addr_lo_en = 1'b0;
-      rmac_addr_hi_en = 1'b0;
-
       tx_wr = 1'b0;
 
       case (addr)
 	`ETH_STATUS: data_out = {30'b0, rx_ready, tx_ready};
 	`ETH_CONTROL: control_reg_en = sel&we;
-	`ETH_RMAC_ADDR_LO: rmac_addr_lo_en = sel&we;
-	`ETH_RMAC_ADDR_HI: rmac_addr_hi_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
@@ -122,14 +111,8 @@ module iob_eth (
    // REGISTERS
    //
 
-   always @ (posedge clk, posedge rst)
-      if(rst)
-	 rmac_addr <= `ETH_RMAC_ADDR;
-      else if(rmac_addr_lo_en)
-        rmac_addr[23:0]<= data_in[23:0];
-      else if(rmac_addr_hi_en)
-        rmac_addr[47:24]<= data_in[23:0];
-      else if(dummy_reg_en)
+   always @ (posedge clk)
+      if(dummy_reg_en)
         dummy_reg <= data_in;
       else if(tx_nbytes_reg_en)
         tx_nbytes_reg <= data_in[10:0];
