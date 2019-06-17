@@ -96,14 +96,11 @@ module iob_eth (
         end
         `ETH_TX_NBYTES: tx_nbytes_reg_en = sel&we;
         `ETH_RX_NBYTES: rx_nbytes_reg_en = sel&we;
-        default: begin //ETH_DATA
-           if(addr[11] && sel) begin
-              if(we)
-                tx_wr = 1;
-              else
-	        data_out = {24'd0, rx_rd_data};
-           end
+        `ETH_DATA: begin 
+    	   data_out = {24'd0, rx_rd_data};
+           tx_write = sel&we;
         end
+        default:;
       endcase
    end
 
