@@ -124,6 +124,7 @@ module iob_eth_tb;
       cpu_read(`ETH_STATUS, cpu_reg);
       while(!cpu_reg)
         cpu_read(`ETH_STATUS, cpu_reg);
+      $display("TX is ready");
       
       //setup number of bytes of transaction
       cpu_write(`ETH_TX_NBYTES, `ETH_SIZE);
@@ -140,12 +141,13 @@ module iob_eth_tb;
       cpu_read (`ETH_STATUS, cpu_reg);
       while(!cpu_reg[1])
         cpu_read (`ETH_STATUS, cpu_reg);
+      $display("RX is ready");
 
        // read and check received data
       for(i=0; i < (14+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg[7:0] != data[i+8]) begin
-	    $display("Test failed: %x / %x", cpu_reg[7:0], data[i+8]);
+	 if (cpu_reg[7:0] != data[i+7]) begin
+	    $display("Test failed: %x / %x", cpu_reg[7:0], data[i+7]);
 	    $finish;
 	 end
       end

@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module iob_eth_crc (
                     input             rst,
                     input             clk,

@@ -68,29 +68,20 @@ module iob_eth_rx(
               wr <= 1;
            end
            
-           3: begin
-              if(addr != 6) 
-                pc <= pc-1'b1;
+           3: if(addr != 6) 
+             pc <= pc-1'b1;
+           else if (dest_mac_addr != `ETH_MAC_ADDR) begin
+              pc <= 0;
+              addr <= 0;
            end
            
-           4: if(dest_mac_addr == `ETH_MAC_ADDR) begin
-              pc <= pc;
-              wr <= 1;
-              addr <= 0;
-              //debug
-              rcvd <= 1;
-              
-           end
+           4: wr <= 1;
            
            5: if(addr != (17+nbytes)) begin
-              wr <= 1;
               pc <= pc - 1'b1;
            end else begin
-              wr <= 0;
-//              pc <= 0;
-              pc <= pc;
-//              addr <= 0;
-              addr <= addr;
+              pc <= 0;
+              addr <= 0;
               rcvd <= 1;
            end
  
@@ -135,7 +126,7 @@ module iob_eth_rx(
    // CRC MODULE
    //
   iob_eth_crc crc_rx (
-		      .rst(rx_rst),
+		      .rst(rx_rst[1]),
 		      .clk(RX_CLK),
 		      .start(pc == 0),
 		      .data_in(data),
