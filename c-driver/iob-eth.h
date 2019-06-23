@@ -32,3 +32,4 @@ int eth_init(void);
 
 void eth_send_frame(char *data_to_send, unsigned int size);
 void eth_rcv_frame(char *data_rcv, unsigned int size);
+void eth_printstatus(void);

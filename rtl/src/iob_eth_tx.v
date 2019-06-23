@@ -136,7 +136,7 @@ module iob_eth_tx(
 
    //nbytes sync
    always @ (posedge TX_CLK, posedge tx_rst)
-     if(rst) begin
+     if(tx_rst) begin
         nbytes_sync <= 0;
         nbytes_sync1 <= 0;
      end else begin

@@ -63,7 +63,11 @@ module iob_eth (
    wire [7:0]                           rx_rd_data;
 
    // phy reset timer
-   reg [5:0]                            phy_rst_cnt;
+   reg [19:0]                            phy_rst_cnt;
+   reg                                   phy_clk_detected;
+   reg                                   phy_dv_detected;
+   reg [1:0]                             phy_clk_detected_sync;
+   reg [1:0]                             phy_dv_detected_sync;
 
    //
    // ASSIGNMENTS
@@ -87,19 +91,18 @@ module iob_eth (
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {30'b0, rx_ready, tx_ready};
+	`ETH_STATUS: data_out = {29'b0, phy_dv_detected_sync[1], rx_ready, tx_ready};
 	`ETH_CONTROL: control_reg_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
         end
-        `ETH_TX_NBYTES: tx_nbytes_reg_en = sel&we;
-        `ETH_RX_NBYTES: rx_nbytes_reg_en = sel&we;
-        `ETH_DATA: begin 
+        `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
+        `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
+        default: begin //ETH_DATA
     	   data_out = {24'd0, rx_rd_data};
-           tx_write = sel&we;
+           tx_wr = addr[11] & sel & we;
         end
-        default:;
       endcase
    end
 
@@ -115,7 +118,7 @@ module iob_eth (
       else if(rx_nbytes_reg_en)
         rx_nbytes_reg <= data_in[10:0];
   
-   //sync ready
+   //tx sync ready
    always @ (posedge clk, posedge rst)
       if(rst) begin
          tx_ready <= 0;
@@ -125,8 +128,8 @@ module iob_eth (
       end else begin
          tx_ready <= ETH_RESETN & tx_ready_sync[1];
          rx_ready <= ETH_RESETN & rx_ready_sync[1];
-         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int};
-         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int};
+         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int & phy_clk_detected_sync[1]};
+         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int & phy_clk_detected_sync[1]};
       end 
 
    
@@ -214,13 +217,35 @@ module iob_eth (
    //  PHY RESET
    //
    
+   always @ (posedge clk) begin
+      phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
+      phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
+   end
+
    always @ (posedge clk, posedge rst)
      if(rst) begin
         phy_rst_cnt <= 0;
 	ETH_RESETN <= 0;
-     end else if((phy_rst_cnt != 63))
+     end else if(phy_rst_cnt != 20'hFFFFF)
         phy_rst_cnt <= phy_rst_cnt+1'b1;
      else
        ETH_RESETN <= 1;
+
+   reg [1:0] rx_rst;
+   always @ (posedge RX_CLK, posedge rst)
+     if(rst)
+       rx_rst <= 2'b11;
+     else
+       rx_rst <= {rx_rst[0], 1'b0};
+   
+   always @ (posedge RX_CLK, posedge rx_rst[1])
+     if(rx_rst[1]) begin
+       phy_clk_detected <= 1'b0;
+       phy_dv_detected <= 1'b0;
+     end else begin 
+        phy_clk_detected <= 1'b1;
+        if(RX_DV)
+          phy_dv_detected <= 1'b1;
+     end
    
 endmodule

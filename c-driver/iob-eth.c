@@ -3,7 +3,6 @@
 #include "iob-eth.h"
 #include "iob-uart.h"
 
-
 char TX_FRAME [22];
 
 int eth_init()
@@ -86,8 +85,16 @@ void eth_rcv_frame(char *data_rcv, unsigned int size) {
   MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
 
   for(i=0; i < size; i = i+1)
-    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i +14));
+    //    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i +14));
+    //debug
+    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i));
 
   // send receive command
   MEMSET(ETH_BASE, ETH_CONTROL, ETH_RCV);
 }
+
+void eth_printstatus(){
+  while(!(MEMGET(ETH_BASE, ETH_STATUS)>>2));
+  uart_puts("RX_DV has been asserted.\n");
+}
+

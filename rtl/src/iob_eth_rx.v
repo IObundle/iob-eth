@@ -9,7 +9,7 @@ module iob_eth_rx(
 
 		  //RX_CLK domain
 		  output reg [10:0] addr,
-		  output [7:0]      data,
+		  output reg [7:0]  data,
 		  output reg        wr,
 		  input             RX_CLK,
 		  input             RX_DV,
@@ -17,31 +17,27 @@ module iob_eth_rx(
 		  );
 
    //rx reset
-   reg 						   rx_rstn, rx_rstn_1;
+   reg [1:0]                        rx_rst;
 
    //state
-   reg [2:0] 					   pc;
-   reg [47:0]                                      dest_mac_addr;
-   reg                                             rcvd;
+   reg [2:0]                        pc;
+   reg [47:0]                       dest_mac_addr;
+   reg                              rcvd;
    
    //data
-   reg [3:0]                                       rx_nibble, rx_nibble_reg;
-   reg [1:0]                                       rx_dv;
-
-   //crc
-   wire [31:0] 					   crc_value;
-
-
-   //received data byte
-   assign data = {rx_nibble, rx_nibble_reg};
+   reg                              RX_DV_reg;
+   wire [7:0]                       data_int;
    
+   //crc
+   wire [31:0]                      crc_value;
+
 
    //
    // RECEIVER STATE MACHINE
    //
-   always @(negedge RX_CLK, negedge rx_rstn)
+   always @(posedge RX_CLK, posedge rx_rst[1])
 
-      if(!rx_rstn) begin
+      if(rx_rst[1]) begin
 
          pc <= 0;
          addr <= 0;
@@ -50,7 +46,7 @@ module iob_eth_rx(
          wr <= 0;
          
 
-      end else if (rx_dv[1]) begin
+      end else if (RX_DV_reg) begin
  
          pc <= pc+1'b1;
          addr <= addr + pc[0];
@@ -58,25 +54,32 @@ module iob_eth_rx(
          
          case(pc)
            
-	   0 : if(data != 8'hD5)
-             pc <= pc;
-    
-           1: begin
+           //debug
+           0 : if(data_int != 8'hD5) begin 
+	   //0 : if(addr < nbytes) begin
+              pc <= pc;
+           end else                  
               wr <= 1;
-              addr <= 0;
-           end
+           
+           1:;
 
-           2: dest_mac_addr <= {dest_mac_addr[39:0], data};
-          
-           3: begin
+           2: begin
+              dest_mac_addr <= {dest_mac_addr[39:0], data_int};
               wr <= 1;
-              if(addr != 5) 
+           end
+           
+           3: begin
+              if(addr != 6) 
                 pc <= pc-1'b1;
            end
            
-           4: if(dest_mac_addr != `ETH_MAC_ADDR) begin
-              pc <= 0;
+           4: if(dest_mac_addr == `ETH_MAC_ADDR) begin
+              pc <= pc;
+              wr <= 1;
               addr <= 0;
+              //debug
+              rcvd <= 1;
+              
            end
            
            5: if(addr != (17+nbytes)) begin
@@ -84,55 +87,56 @@ module iob_eth_rx(
               pc <= pc - 1'b1;
            end else begin
               wr <= 0;
-              pc <= 0;
-              addr <= 0;
+//              pc <= 0;
+              pc <= pc;
+//              addr <= 0;
+              addr <= addr;
               rcvd <= 1;
            end
  
            default: ;
            
          endcase
-      end // if (rx_dv[1])
+      end
    
    //check FCS and manage ready
-   always @(negedge RX_CLK, negedge rx_rstn)
-      if(!rx_rstn)
+   always @(posedge RX_CLK, posedge rx_rst[1])
+      if(rx_rst[1])
         ready <= 0;
-      else if(!ready && rcvd && crc_value == 32'hC704DD7B)
+      else if(!ready && rcvd)// && crc_value == 32'hC704DD7B)
         ready <=1;
       else if(ready && receive)
         ready <= 0;
-      
-   // capture nibble
-   always @(negedge RX_CLK, negedge rx_rstn)
-     if(~rx_rstn) begin
-        rx_nibble <= 0;
-        rx_nibble_reg <= 0;
-        rx_dv <= 2'b0;
-     end else if(RX_DV) begin
-        rx_nibble_reg <= rx_nibble;
-        rx_nibble <= RX_DATA;
-        rx_dv <= {rx_dv[0], RX_DV};
-     end else
-        rx_dv <= {rx_dv[0], 1'b0};
+
+   //capture RX_DV      
+   always @(posedge RX_CLK, posedge rx_rst[1])
+     if(rx_rst[1])
+       RX_DV_reg <= 0;
+     else
+       RX_DV_reg <= RX_DV;
+   
+   // capture RX_DATA
+   assign data_int = {RX_DATA, data[7:4]};
+   always @(posedge RX_CLK, posedge rx_rst[1])
+     if(rx_rst[1])
+       data <= 0;
+     else
+       data <= data_int;
    
    //reset sync
-   always @ (posedge rst, negedge RX_CLK)
-     if(rst) begin
-	rx_rstn <= 1'b0;
-	rx_rstn_1 <= 1'b0;
-     end else begin
-	rx_rstn <= rx_rstn_1;
-	rx_rstn_1 <= 1'b1;
-     end
+   always @ (posedge RX_CLK, posedge rst)
+     if(rst)
+       rx_rst <= 2'b11;
+     else
+       rx_rst <= {rx_rst[0], 1'b0};
 
 
    //
    // CRC MODULE
    //
   iob_eth_crc crc_rx (
-		      .rst(~rx_rstn),
-		      .clk(~RX_CLK),
+		      .rst(rx_rst),
+		      .clk(RX_CLK),
 		      .start(pc == 0),
 		      .data_in(data),
 		      .data_en(wr),
