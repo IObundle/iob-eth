@@ -145,8 +145,8 @@ module iob_eth_tb;
        // read and check received data
       for(i=0; i < (22+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg[7:0] != data[i+15]) begin
-	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+16]);
+	 if (cpu_reg[7:0] != data[i+14]) begin
+	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+14]);
 	    $finish;
 	 end
       end

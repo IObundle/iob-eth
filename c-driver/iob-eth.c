@@ -85,9 +85,7 @@ void eth_rcv_frame(char *data_rcv, unsigned int size) {
   MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
 
   for(i=0; i < size; i = i+1)
-    //    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i +14));
-    //debug
-    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i));
+    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + 14 + i));
 
   // send receive command
   MEMSET(ETH_BASE, ETH_CONTROL, ETH_RCV);

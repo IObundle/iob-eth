@@ -57,23 +57,22 @@ module iob_eth_rx(
            0 : if(data_int != 8'hD5)
               pc <= pc;
            
-           1:;
+           1:addr <= 0;
 
            2: begin
               dest_mac_addr <= {dest_mac_addr[39:0], data_int};
               wr <= 1;
            end
            
-           3: if(addr != 6) 
+           3: if(addr != 5) 
              pc <= pc-1'b1;
            else if (dest_mac_addr != `ETH_MAC_ADDR) begin
               pc <= 0;
-              addr <= 0;
            end
            
            4: wr <= 1;
            
-           5: if(addr != (17+nbytes)) begin
+           5: if(addr != (16+nbytes)) begin
               pc <= pc - 1'b1;
            end else begin
               rcvd <= 1;
