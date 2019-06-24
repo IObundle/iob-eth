@@ -49,16 +49,14 @@ module iob_eth (
    wire [10:0]                          tx_rd_addr;
    wire [7:0]                           tx_rd_data;
    reg                                  tx_wr;
-   reg                                  tx_ready;
-   reg [1:0]                            tx_ready_sync;
+   reg [1:0]                            tx_ready;
    wire                                 tx_ready_int;
    
    //rx signals
    wire [10:0]                          rx_wr_addr;
    wire [7:0]                           rx_wr_data;
    wire                                 rx_wr;
-   reg                                  rx_ready;
-   reg [1:0]                            rx_ready_sync;
+   reg [1:0]                            rx_ready;
    wire                                 rx_ready_int;
    wire [7:0]                           rx_rd_data;
 
@@ -91,7 +89,7 @@ module iob_eth (
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {29'b0, phy_dv_detected_sync[1], rx_ready, tx_ready};
+	`ETH_STATUS: data_out = {28'b0, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_ready[1], tx_ready[1]};
 	`ETH_CONTROL: control_reg_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
@@ -123,13 +121,9 @@ module iob_eth (
       if(rst) begin
          tx_ready <= 0;
          rx_ready <= 0;
-         tx_ready_sync <= 0;
-         rx_ready_sync <= 0;
       end else begin
-         tx_ready <= ETH_RESETN & tx_ready_sync[1];
-         rx_ready <= ETH_RESETN & rx_ready_sync[1];
-         tx_ready_sync[1:0] <= {tx_ready_sync[0], tx_ready_int & phy_clk_detected_sync[1]};
-         rx_ready_sync[1:0] <= {rx_ready_sync[0], rx_ready_int & phy_clk_detected_sync[1]};
+         tx_ready <= {tx_ready[0], tx_ready_int & ETH_RESETN};
+         rx_ready <= {rx_ready[0], rx_ready_int & ETH_RESETN};
       end 
 
    
@@ -217,10 +211,14 @@ module iob_eth (
    //  PHY RESET
    //
    
-   always @ (posedge clk) begin
-      phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
-      phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
-   end
+   always @ (posedge clk, posedge rst)
+     if(rst) begin
+        phy_clk_detected_sync <= 0;
+        phy_dv_detected_sync <= 0;
+     end else begin
+        phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
+        phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
+     end
 
    always @ (posedge clk, posedge rst)
      if(rst) begin

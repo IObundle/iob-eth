@@ -20,7 +20,6 @@ module iob_eth_tb;
 
 
    // ETH SIDE
-   wire                  GTX_CLK;
    wire                  ETH_RESETN;
 
    wire                  TX_CLK;
@@ -35,7 +34,7 @@ module iob_eth_tb;
    integer               i;
 
    // data vector
-   reg [7:0] data[`ETH_SIZE+22-1:0];
+   reg [7:0] data[`ETH_SIZE+30-1:0];
 
    // mac_addr
    reg [47:0] mac_addr = `ETH_MAC_ADDR;
@@ -79,36 +78,36 @@ module iob_eth_tb;
 `endif
 
       //preamble
-      for(i=0; i < 7; i= i+1)
+      for(i=0; i < 15; i= i+1)
          data[i] = 8'h55;
 
       //sfd
-      data[7] = 8'hD5;
+      data[15] = 8'hD5;
       
       //dest mac address
       mac_addr = `ETH_MAC_ADDR;
       for(i=0; i < 6; i= i+1) begin
-         data[i+8] = mac_addr[47:40];
+         data[i+16] = mac_addr[47:40];
          mac_addr = mac_addr<<8;
       end
       //source mac address
       mac_addr = `ETH_MAC_ADDR;
       for(i=0; i < 6; i= i+1) begin
-         data[i+14] = mac_addr[47:40];
+         data[i+22] = mac_addr[47:40];
          mac_addr = mac_addr<<8;
       end
 
       //eth type
-      data[20] = 8'h08;
-      data[21] = 8'h00;
+      data[28] = 8'h08;
+      data[29] = 8'h00;
                    
       // generate test data
       for(i=0; i < `ETH_SIZE; i= i+1)
-	data[i+22]  = (i+1);
+	data[i+30]  = (i+1);
 	//data[i]  = $random;
 
       //print data for debug
-      for(i=0; i < (`ETH_SIZE+22); i= i+1)
+      for(i=0; i < (`ETH_SIZE+30); i= i+1)
         $display("%x", data[i]);
       
       rst = 1;
@@ -122,7 +121,7 @@ module iob_eth_tb;
 
       // wait until tx ready
       cpu_read(`ETH_STATUS, cpu_reg);
-      while(!cpu_reg)
+      while(!cpu_reg[0])
         cpu_read(`ETH_STATUS, cpu_reg);
       $display("TX is ready");
       
@@ -131,7 +130,7 @@ module iob_eth_tb;
       cpu_write(`ETH_RX_NBYTES, `ETH_SIZE);
 
       // write data to send
-      for(i=0; i < (`ETH_SIZE+22); i= i+1)
+      for(i=0; i < (`ETH_SIZE+30); i= i+1)
 	cpu_write(`ETH_DATA + i, data[i]);
 
       // start sending
@@ -144,10 +143,10 @@ module iob_eth_tb;
       $display("RX is ready");
 
        // read and check received data
-      for(i=0; i < (14+`ETH_SIZE); i= i+1) begin
+      for(i=0; i < (22+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg[7:0] != data[i+7]) begin
-	    $display("Test failed: %x / %x", cpu_reg[7:0], data[i+7]);
+	 if (cpu_reg[7:0] != data[i+15]) begin
+	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+16]);
 	    $finish;
 	 end
       end

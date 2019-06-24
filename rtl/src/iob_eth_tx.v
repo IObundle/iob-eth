@@ -73,7 +73,7 @@ module iob_eth_tx(
 
            2: begin
               TX_DATA <= data[7:4];
-              if(addr != 8)
+              if(addr != 16)
                 pc <= pc-1'b1;
               else
                 crc_en <= 1;
@@ -83,7 +83,7 @@ module iob_eth_tx(
 
            4: begin 
               TX_DATA <= data[7:4];
-              if(addr <= (21 + nbytes_sync[1])) begin
+              if(addr <= (29 + nbytes_sync[1])) begin
                  crc_en <= 1;
                  pc <= pc-1'b1;
               end

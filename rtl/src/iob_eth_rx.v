@@ -54,12 +54,8 @@ module iob_eth_rx(
          
          case(pc)
            
-           //debug
-           0 : if(data_int != 8'hD5) begin 
-	   //0 : if(addr < nbytes) begin
+           0 : if(data_int != 8'hD5)
               pc <= pc;
-           end else                  
-              wr <= 1;
            
            1:;
 
@@ -80,11 +76,17 @@ module iob_eth_rx(
            5: if(addr != (17+nbytes)) begin
               pc <= pc - 1'b1;
            end else begin
-              pc <= 0;
-              addr <= 0;
               rcvd <= 1;
            end
- 
+           
+           6: begin
+              wr <= 1;
+           end
+
+           7: begin
+              pc <= pc;
+           end
+           
            default: ;
            
          endcase
@@ -94,7 +96,7 @@ module iob_eth_rx(
    always @(posedge RX_CLK, posedge rx_rst[1])
       if(rx_rst[1])
         ready <= 0;
-      else if(!ready && rcvd)// && crc_value == 32'hC704DD7B)
+      else if(!ready && rcvd && crc_value == 32'hC704DD7B)
         ready <=1;
       else if(ready && receive)
         ready <= 0;

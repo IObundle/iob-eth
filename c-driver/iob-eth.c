@@ -3,7 +3,7 @@
 #include "iob-eth.h"
 #include "iob-uart.h"
 
-char TX_FRAME [22];
+char TX_FRAME [30];
 
 int eth_init()
 {
@@ -11,11 +11,11 @@ int eth_init()
   uint64_t mac_addr;
 
   //Preamble
-  for(i=0; i < 7; i= i+1)
+  for(i=0; i < 15; i= i+1)
     TX_FRAME[i] = 0x55;
 
   //SFD
-  TX_FRAME[7] = 0xD5;
+  TX_FRAME[15] = 0xD5;
 
   //dest mac address
 #ifdef LOOPBACK
@@ -24,20 +24,20 @@ int eth_init()
   mac_addr = ETH_RMAC_ADDR;
 #endif
   for(i=0; i < 6; i= i+1) {
-    TX_FRAME[i+8] = mac_addr>>40;
+    TX_FRAME[i+16] = mac_addr>>40;
     mac_addr = mac_addr<<8;
   }
 
   //source mac address
   mac_addr = ETH_MAC_ADDR;
   for(i=0; i < 6; i= i+1) {
-    TX_FRAME[i+14] = mac_addr>>40;
+    TX_FRAME[i+22] = mac_addr>>40;
     mac_addr = mac_addr<<8;
   }
 
   //eth type
-  TX_FRAME[20] = 0x08;
-  TX_FRAME[21] = 0x00;
+  TX_FRAME[28] = 0x08;
+  TX_FRAME[29] = 0x00;
 
   //set initial payload size to Ethernet minimum excluding FCS
   MEMSET(ETH_BASE, ETH_TX_NBYTES, 42);
@@ -64,12 +64,12 @@ void eth_send_frame(char *data, unsigned int size) {
 
   //write data to send
   //header
-  for(i=0; i < 22; i = i+1) {
+  for(i=0; i < 30; i = i+1) {
     MEMSET(ETH_BASE, (ETH_DATA + i), TX_FRAME[i]);
   }
   //payload
   for(i=0; i < size; i = i+1) {
-    MEMSET(ETH_BASE, (ETH_DATA + 22 + i), data[i]);
+    MEMSET(ETH_BASE, (ETH_DATA + 30 + i), data[i]);
   }
 
   // start sending
