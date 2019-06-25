@@ -18,13 +18,10 @@
 // Memory map
 #define ETH_STATUS           0
 #define ETH_CONTROL          1
-
 #define ETH_DUMMY            5
-
 #define ETH_TX_NBYTES        6
 #define ETH_RX_NBYTES        7
-
-
+#define ETH_CRC              8
 #define ETH_DATA          2048
 
 //init and test routine

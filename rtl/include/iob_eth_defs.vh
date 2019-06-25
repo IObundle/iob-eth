@@ -13,11 +13,10 @@
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0
 `define ETH_CONTROL          `ETH_ADDR_W'd1
-
 `define ETH_DUMMY            `ETH_ADDR_W'd5
-
 `define ETH_TX_NBYTES        `ETH_ADDR_W'd6
 `define ETH_RX_NBYTES        `ETH_ADDR_W'd7
+`define ETH_CRC              `ETH_ADDR_W'd8
+`define ETH_DATA              `ETH_ADDR_W'd2048
 
-`define ETH_DATA          `ETH_ADDR_W'd2048
 

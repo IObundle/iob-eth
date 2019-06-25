@@ -59,7 +59,8 @@ module iob_eth (
    reg [1:0]                            rx_ready;
    wire                                 rx_ready_int;
    wire [7:0]                           rx_rd_data;
-
+   wire [31:0]                          crc_value;
+                      
    // phy reset timer
    reg [19:0]                            phy_rst_cnt;
    reg                                   phy_clk_detected;
@@ -89,7 +90,7 @@ module iob_eth (
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {28'b0, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_ready[1], tx_ready[1]};
+	`ETH_STATUS: data_out = {16'b0, 1'b0, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_ready[1], tx_ready[1]};
 	`ETH_CONTROL: control_reg_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
@@ -97,6 +98,7 @@ module iob_eth (
         end
         `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
         `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
+        `ETH_CRC: data_out = crc_value;
         default: begin //ETH_DATA
     	   data_out = {24'd0, rx_rd_data};
            tx_wr = addr[11] & sel & we;
@@ -203,7 +205,8 @@ module iob_eth (
 		  .data		        (rx_wr_data),
                   .RX_CLK		(RX_CLK),
 		  .RX_DATA		(RX_DATA),
-		  .RX_DV		(RX_DV)
+		  .RX_DV		(RX_DV),
+                  .crc_value            (crc_value)
 		  );
 
 

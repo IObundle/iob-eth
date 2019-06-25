@@ -85,14 +85,15 @@ void eth_rcv_frame(char *data_rcv, unsigned int size) {
   MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
 
   for(i=0; i < size; i = i+1)
-    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + 14 + i));
+    data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i));
 
   // send receive command
   MEMSET(ETH_BASE, ETH_CONTROL, ETH_RCV);
 }
 
 void eth_printstatus(){
-  while(!(MEMGET(ETH_BASE, ETH_STATUS)>>2));
+  while(!((MEMGET(ETH_BASE, ETH_STATUS)>>2)&1));
   uart_puts("RX_DV has been asserted.\n");
+  uart_printf("CRC = %x\n", MEMGET(ETH_BASE, ETH_CRC));
 }
 

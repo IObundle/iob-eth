@@ -11,6 +11,7 @@ module iob_eth_rx(
 		  output reg [10:0] addr,
 		  output reg [7:0]  data,
 		  output reg        wr,
+                  output [31:0]     crc_value,
 		  input             RX_CLK,
 		  input             RX_DV,
 		  input [3:0]       RX_DATA
@@ -27,10 +28,6 @@ module iob_eth_rx(
    //data
    reg                              RX_DV_reg;
    wire [7:0]                       data_int;
-   
-   //crc
-   wire [31:0]                      crc_value;
-
 
    //
    // RECEIVER STATE MACHINE
@@ -95,7 +92,7 @@ module iob_eth_rx(
    always @(posedge RX_CLK, posedge rx_rst[1])
       if(rx_rst[1])
         ready <= 0;
-      else if(!ready && rcvd && crc_value == 32'hC704DD7B)
+      else if(!ready && rcvd)// && crc_value == 32'hC704DD7B)
         ready <=1;
       else if(ready && receive)
         ready <= 0;
