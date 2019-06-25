@@ -42,8 +42,10 @@ module iob_eth (
    //rx_nbytes
    reg [10:0]                           rx_nbytes_reg;
    reg                                  rx_nbytes_reg_en;
+
    //control
-   reg                                  control_reg_en;
+   reg                                  send_en;
+   reg                                  rcv_ack_en;
    
    //tx signals
    wire [10:0]                          tx_rd_addr;
@@ -56,8 +58,8 @@ module iob_eth (
    wire [10:0]                          rx_wr_addr;
    wire [7:0]                           rx_wr_data;
    wire                                 rx_wr;
-   reg [1:0]                            rx_ready;
-   wire                                 rx_ready_int;
+   reg [1:0]                            rx_data_rcvd;
+   wire                                 rx_data_rcvd_int;
    wire [7:0]                           rx_rd_data;
    wire [31:0]                          crc_value;
                       
@@ -68,6 +70,12 @@ module iob_eth (
    reg [1:0]                             phy_clk_detected_sync;
    reg [1:0]                             phy_dv_detected_sync;
 
+   reg                                   rst_soft;
+
+   wire                                  rst_int;
+
+   assign rst_int = rst_soft | rst;
+   
    //
    // ASSIGNMENTS
    //
@@ -78,26 +86,29 @@ module iob_eth (
    always @* begin
 
       //defaults
-      control_reg_en = 0;
+      rst_soft = 0;
+      send_en = 0;
+      rcv_ack_en = 0;
       dummy_reg_en = 0;
       tx_nbytes_reg_en = 0;
       rx_nbytes_reg_en = 0;
-      
-                     
+                          
       // core outputs
       data_out = 8'd0;
 
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {16'b0, 1'b0, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_ready[1], tx_ready[1]};
-	`ETH_CONTROL: control_reg_en = sel&we;
+	`ETH_STATUS: data_out = {16'b0, 1'b0, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+	`ETH_SEND: send_en = sel&we;
+	`ETH_RCVACK: rcv_ack_en = sel&we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
         end
         `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
         `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
+        `ETH_SOFTRST: rst_soft  = sel & we;
         `ETH_CRC: data_out = crc_value;
         default: begin //ETH_DATA
     	   data_out = {24'd0, rx_rd_data};
@@ -110,22 +121,26 @@ module iob_eth (
    // REGISTERS
    //
 
-   always @ (posedge clk)
-      if(dummy_reg_en)
+   always @ (posedge clk, posedge rst_int)
+      if (rst_int) begin 
+        tx_nbytes_reg <= 11'd46;
+        rx_nbytes_reg <= 11'd46;
+        dummy_reg <= 0;
+      end else if(dummy_reg_en)
         dummy_reg <= data_in;
       else if(tx_nbytes_reg_en)
         tx_nbytes_reg <= data_in[10:0];
       else if(rx_nbytes_reg_en)
         rx_nbytes_reg <= data_in[10:0];
   
-   //tx sync ready
-   always @ (posedge clk, posedge rst)
-      if(rst) begin
+   //synchronizers 
+   always @ (posedge clk, posedge rst_int)
+      if(rst_int) begin
          tx_ready <= 0;
-         rx_ready <= 0;
+         rx_data_rcvd <= 0;
       end else begin
          tx_ready <= {tx_ready[0], tx_ready_int & ETH_RESETN};
-         rx_ready <= {rx_ready[0], rx_ready_int & ETH_RESETN};
+         rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_RESETN};
       end 
 
    
@@ -176,9 +191,9 @@ module iob_eth (
 
    iob_eth_tx tx (
                   //cpu side
-		  .rst			(rst),
+		  .rst			(rst_int),
                   .nbytes               (tx_nbytes_reg),
-                  .send                 (control_reg_en & data_in[0]),
+                  .send                 (send_en & data_in[0]),
 		  .ready                (tx_ready_int),
                   //mii side 
 		  .addr	       	        (tx_rd_addr),
@@ -195,10 +210,10 @@ module iob_eth (
 
    iob_eth_rx rx (
                   //cpu side
-		  .rst			(rst),
+		  .rst			(rst_int),
                   .nbytes               (rx_nbytes_reg),
-		  .ready	        (rx_ready_int),
-                  .receive              (control_reg_en & data_in[1]),
+		  .data_rcvd	        (rx_data_rcvd_int),
+                  .rcv_ack              (rcv_ack_en & data_in[1]),
                   //mii side
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
@@ -214,8 +229,8 @@ module iob_eth (
    //  PHY RESET
    //
    
-   always @ (posedge clk, posedge rst)
-     if(rst) begin
+   always @ (posedge clk, posedge rst_int)
+     if(rst_int) begin
         phy_clk_detected_sync <= 0;
         phy_dv_detected_sync <= 0;
      end else begin
@@ -223,8 +238,8 @@ module iob_eth (
         phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
      end
 
-   always @ (posedge clk, posedge rst)
-     if(rst) begin
+   always @ (posedge clk, posedge rst_int)
+     if(rst_int) begin
         phy_rst_cnt <= 0;
 	ETH_RESETN <= 0;
      end else if(phy_rst_cnt != 20'hFFFFF)
@@ -233,8 +248,8 @@ module iob_eth (
        ETH_RESETN <= 1;
 
    reg [1:0] rx_rst;
-   always @ (posedge RX_CLK, posedge rst)
-     if(rst)
+   always @ (posedge RX_CLK, posedge rst_int)
+     if(rst_int)
        rx_rst <= 2'b11;
      else
        rx_rst <= {rx_rst[0], 1'b0};

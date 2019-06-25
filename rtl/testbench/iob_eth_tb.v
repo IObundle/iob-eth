@@ -134,25 +134,25 @@ module iob_eth_tb;
 	cpu_write(`ETH_DATA + i, data[i]);
 
       // start sending
-      cpu_write(`ETH_CONTROL, `ETH_SEND);
+      cpu_write(`ETH_SEND, 1);
 
       // wait until rx ready
       cpu_read (`ETH_STATUS, cpu_reg);
       while(!cpu_reg[1])
         cpu_read (`ETH_STATUS, cpu_reg);
-      $display("RX is ready");
+      $display("RX received data");
 
        // read and check received data
       for(i=0; i < (22+`ETH_SIZE); i= i+1) begin
 	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg[7:0] != data[i+14]) begin
-	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+14]);
+	 if (cpu_reg[7:0] != data[i+16]) begin
+	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+16]);
 	    $finish;
 	 end
       end
 
       // send receive command
-      cpu_write(`ETH_CONTROL, `ETH_RCV);
+      cpu_write(`ETH_RCVACK, 1);
       
       $display("Test completed.");
       $finish;

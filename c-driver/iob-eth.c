@@ -5,7 +5,7 @@
 
 char TX_FRAME [30];
 
-int eth_init()
+void eth_init()
 {
   int i;
   uint64_t mac_addr;
@@ -39,9 +39,12 @@ int eth_init()
   TX_FRAME[28] = 0x08;
   TX_FRAME[29] = 0x00;
 
+  //reset core
+  //MEMSET(ETH_BASE, ETH_SOFTRST, 1);
+
   //set initial payload size to Ethernet minimum excluding FCS
-  MEMSET(ETH_BASE, ETH_TX_NBYTES, 42);
-  MEMSET(ETH_BASE, ETH_RX_NBYTES, 42);
+  MEMSET(ETH_BASE, ETH_TX_NBYTES, 46);
+  MEMSET(ETH_BASE, ETH_RX_NBYTES, 46);
 
   // check processor interface
   // write dummy register
@@ -49,9 +52,9 @@ int eth_init()
 
   // read and check result
   if (MEMGET(ETH_BASE, ETH_DUMMY) != 0xDEADBEEF)
-    return -1;
-  else 
-    return 0;
+    uart_puts("Ethernet Init failed\n");
+  else
+    uart_puts("Ethernet Core Initialized\n");
 }
 
 void eth_send_frame(char *data, unsigned int size) {
@@ -73,7 +76,7 @@ void eth_send_frame(char *data, unsigned int size) {
   }
 
   // start sending
-  MEMSET(ETH_BASE, ETH_CONTROL, ETH_SEND);
+  MEMSET(ETH_BASE, ETH_SEND, ETH_SEND);
 }
 
 void eth_rcv_frame(char *data_rcv, unsigned int size) {
@@ -81,19 +84,25 @@ void eth_rcv_frame(char *data_rcv, unsigned int size) {
   // wait until rx ready
   while(!((MEMGET(ETH_BASE, ETH_STATUS)>>1)&1));
 
-  //set frame size
-  MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
-
-  for(i=0; i < size; i = i+1)
+  for(i=0; i < (size+18); i = i+1)
     data_rcv[i] = MEMGET(ETH_BASE, (ETH_DATA + i));
 
-  // send receive command
-  MEMSET(ETH_BASE, ETH_CONTROL, ETH_RCV);
+  // send receive ack
+  MEMSET(ETH_BASE, ETH_RCVACK, 1);
 }
 
+void eth_set_rx_payload_size(unsigned int size) {
+  //set frame size
+  MEMSET(ETH_BASE, ETH_RX_NBYTES, size);
+}
+
+
 void eth_printstatus(){
-  while(!((MEMGET(ETH_BASE, ETH_STATUS)>>2)&1));
-  uart_puts("RX_DV has been asserted.\n");
+  uart_printf("tx_ready = %x\n", (MEMGET(ETH_BASE, ETH_STATUS)>>0)&1);
+  uart_printf("rx_ready = %x\n", (MEMGET(ETH_BASE, ETH_STATUS)>>1)&1);
+  uart_printf("phy_dv_detected = %x\n", (MEMGET(ETH_BASE, ETH_STATUS)>>2)&1);
+  uart_printf("phy_clk_detected = %x\n", (MEMGET(ETH_BASE, ETH_STATUS)>>3)&1);
+  uart_printf("rx_wr_addr = %x\n", (MEMGET(ETH_BASE, ETH_STATUS)>>4)&0xFFF0);
   uart_printf("CRC = %x\n", MEMGET(ETH_BASE, ETH_CRC));
 }
 
