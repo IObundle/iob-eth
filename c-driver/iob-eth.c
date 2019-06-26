@@ -40,7 +40,10 @@ void eth_init()
   TX_FRAME[29] = 0x00;
 
   //reset core
-  //MEMSET(ETH_BASE, ETH_SOFTRST, 1);
+  MEMSET(ETH_BASE, ETH_SOFTRST, 1);
+
+  //wait for PHY to produce clock 
+  while(!((MEMGET(ETH_BASE, ETH_STATUS)>>3)&1));
 
   //set initial payload size to Ethernet minimum excluding FCS
   MEMSET(ETH_BASE, ETH_TX_NBYTES, 46);

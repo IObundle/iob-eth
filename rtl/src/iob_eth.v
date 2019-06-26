@@ -248,8 +248,8 @@ module iob_eth (
        ETH_RESETN <= 1;
 
    reg [1:0] rx_rst;
-   always @ (posedge RX_CLK, posedge rst_int)
-     if(rst_int)
+   always @ (posedge RX_CLK, negedge ETH_RESETN)
+     if(!ETH_RESETN)
        rx_rst <= 2'b11;
      else
        rx_rst <= {rx_rst[0], 1'b0};
