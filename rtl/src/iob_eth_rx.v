@@ -72,13 +72,18 @@ module iob_eth_rx(
            
            6: begin
               pc <= pc;
-              data_rcvd <= 1;
-              if(rcv_ack && crc_value == 32'hC704DD7B) begin
-                 pc <= 0;
-                 addr <= 0;
-                 data_rcvd <= 0;
-              end
-           end
+              if(crc_value == 32'hc704dd7b) begin
+//              if(crc_value) begin
+                 data_rcvd <= 1;
+                 if(rcv_ack) begin
+                    pc <= 0;
+                    addr <= 0;
+                    data_rcvd <= 0;
+                 end
+              end else
+                wr <= 1;
+              
+           end 
            
            default: ;
            

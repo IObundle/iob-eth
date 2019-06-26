@@ -6,10 +6,6 @@
 `define ETH_MAC_ADDR 48'h01606e11020f
 `define ETH_RMAC_ADDR 48'h309c231e624b
 
-//commands
-`define ETH_SEND 1
-`define ETH_RCV 2
-
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0
 `define ETH_SEND             `ETH_ADDR_W'd1

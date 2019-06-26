@@ -35,6 +35,7 @@ module iob_eth_tb;
 
    // data vector
    reg [7:0] data[`ETH_SIZE+30-1:0];
+   reg [8*`ETH_SIZE-1:0] data_tmp;
 
    // mac_addr
    reg [47:0] mac_addr = `ETH_MAC_ADDR;
@@ -102,13 +103,28 @@ module iob_eth_tb;
       data[29] = 8'h00;
                    
       // generate test data
-      for(i=0; i < `ETH_SIZE; i= i+1)
-	data[i+30]  = (i+1);
-	//data[i]  = $random;
 
+
+      data_tmp = {8*`ETH_SIZE{1'b0}};
+            
+      data_tmp[8*`ETH_SIZE-1-:9*8] = "Hello PC!";
+ 
+      $display("%x", data_tmp);
+      
+      $display("%x", data_tmp[8*`ETH_SIZE-1-0*8 -: 8]);
+      
+      
+      for(i=0; i < `ETH_SIZE; i= i+1)
+        data[i+30]  = data_tmp[8*`ETH_SIZE-i*8-1 -: 8];
+       //data[i]  = $random;
+      
+      
       //print data for debug
       for(i=0; i < (`ETH_SIZE+30); i= i+1)
         $display("%x", data[i]);
+
+      //$finish;
+
       
       rst = 1;
       clk = 1;
