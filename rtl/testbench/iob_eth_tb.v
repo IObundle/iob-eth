@@ -54,8 +54,11 @@ module iob_eth_tb;
 		.data_in		(data_in),
 		.data_out		(data_out),
 
-		// PHY
-		.ETH_RESETN		(ETH_RESETN),
+                //PLL
+                .PLL_LOCKED(1'b1),
+                
+		//PHY
+		.ETH_PHY_RESETN		(ETH_RESETN),
 
 		.TX_CLK			(TX_CLK),
 		.TX_DATA		(TX_DATA),
