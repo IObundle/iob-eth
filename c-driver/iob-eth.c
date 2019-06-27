@@ -42,8 +42,13 @@ void eth_init()
   //reset core
   MEMSET(ETH_BASE, ETH_SOFTRST, 1);
 
-  //wait for PHY to produce clock 
+  //wait for PHY to produce rx clock 
   while(!((MEMGET(ETH_BASE, ETH_STATUS)>>3)&1));
+  uart_puts("Ethernet RX clock detected\n");
+
+  //wait for PLL to lock and produce tx clock 
+  while(!((MEMGET(ETH_BASE, ETH_STATUS)>>15)&1));
+  uart_puts("Ethernet TX PLL locked\n");
 
   //set initial payload size to Ethernet minimum excluding FCS
   MEMSET(ETH_BASE, ETH_TX_NBYTES, 46);
@@ -84,7 +89,7 @@ void eth_send_frame(char *data, unsigned int size) {
 
 void eth_rcv_frame(char *data_rcv, unsigned int size) {
   int i;
-  // wait until rx ready
+  // wait until data received
   while(!((MEMGET(ETH_BASE, ETH_STATUS)>>1)&1));
 
   for(i=0; i < (size+18); i = i+1)

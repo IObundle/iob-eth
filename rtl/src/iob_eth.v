@@ -18,7 +18,10 @@ module iob_eth (
 		input [31:0]            data_in,
 
 		// MII side
-		output reg              ETH_RESETN,
+		output reg              ETH_PHY_RESETN,
+
+                // PLL
+                input                   PLL_LOCKED,
 
 		// RX
 		input                   RX_CLK,
@@ -99,7 +102,7 @@ module iob_eth (
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {16'b0, 1'b0, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+	`ETH_STATUS: data_out = {16'b0, PLL_LOCKED, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
 	`ETH_SEND: send_en = sel&we;
 	`ETH_RCVACK: rcv_ack_en = sel&we;
         `ETH_DUMMY: begin
@@ -139,8 +142,8 @@ module iob_eth (
          tx_ready <= 0;
          rx_data_rcvd <= 0;
       end else begin
-         tx_ready <= {tx_ready[0], tx_ready_int & ETH_RESETN};
-         rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_RESETN};
+         tx_ready <= {tx_ready[0], tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED};
+         rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_PHY_RESETN};
       end 
 
    
@@ -241,15 +244,15 @@ module iob_eth (
    always @ (posedge clk, posedge rst_int)
      if(rst_int) begin
         phy_rst_cnt <= 0;
-	ETH_RESETN <= 0;
+	ETH_PHY_RESETN <= 0;
      end else if(phy_rst_cnt != 20'hFFFFF)
         phy_rst_cnt <= phy_rst_cnt+1'b1;
      else
-       ETH_RESETN <= 1;
+       ETH_PHY_RESETN <= 1;
 
    reg [1:0] rx_rst;
-   always @ (posedge RX_CLK, negedge ETH_RESETN)
-     if(!ETH_RESETN)
+   always @ (posedge RX_CLK, negedge ETH_PHY_RESETN)
+     if(!ETH_PHY_RESETN)
        rx_rst <= 2'b11;
      else
        rx_rst <= {rx_rst[0], 1'b0};
