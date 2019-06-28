@@ -86,7 +86,7 @@ void eth_send_frame(int base, char *data, unsigned int size) {
   MEMSET(base, ETH_SEND, ETH_SEND);
 }
 
-void eth_rcv_frame(int base char *data_rcv, unsigned int size) {
+void eth_rcv_frame(int base, char *data_rcv, unsigned int size) {
   int i;
   // wait until data received
   while(!((MEMGET(base, ETH_STATUS)>>1)&1));

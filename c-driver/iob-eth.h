@@ -30,3 +30,7 @@ void eth_send_frame(int base, char *data_to_send, unsigned int size);
 void eth_rcv_frame(int base, char *data_rcv, unsigned int size);
 void eth_set_rx_payload_size(int base, unsigned int size);
 void eth_printstatus(int base);
+
+#define MEMSET(base, location, value) *((volatile int*) (base + ((sizeof(int)) * location))) = value
+#define MEMGET(base, location) *((volatile int*) (base + ((sizeof(int)) * location)))
+
