@@ -15,7 +15,7 @@ ncsim:
 	make -C simulation/ncsim
 
 clean:
-	#make -C $(GT_DIR) clean
+	make -C $(GT_DIR) clean
 	make -C simulation/icarus clean
 	make -C simulation/ncsim clean
 	#make -C simulation/verilator clean
