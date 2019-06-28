@@ -11,7 +11,6 @@ all: $(VSRC) $(INCLUDE) iob_eth-iob_eth.qxp
 
 iob_eth-iob_eth.qxp: top
 	quartus_cdb iob_eth -c iob_eth --incremental_compilation_export=iob_eth.qxp --incremental_compilation_export_partition_name=Top --incremental_compilation_export_post_synth=on --incremental_compilation_export_post_fit=off --incremental_compilation_export_routing=on --incremental_compilation_export_flatten=on
-	cp iob_eth.qxp ../../../../../iob-2es-mp3-e/hardware/cyclone_v_gt/netlists/
 
 top:
 	quartus_map --read_settings_files=on --write_settings_files=off iob_eth -c iob_eth
