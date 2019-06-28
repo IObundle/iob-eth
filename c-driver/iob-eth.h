@@ -25,8 +25,8 @@
 #define ETH_DATA          2048
 
 //core functions
-void eth_init(void);
-void eth_send_frame(char *data_to_send, unsigned int size);
-void eth_rcv_frame(char *data_rcv, unsigned int size);
-void eth_set_rx_payload_size(unsigned int size);
-void eth_printstatus(void);
+void eth_init(int base);
+void eth_send_frame(int base, char *data_to_send, unsigned int size);
+void eth_rcv_frame(int base, char *data_rcv, unsigned int size);
+void eth_set_rx_payload_size(int base, unsigned int size);
+void eth_printstatus(int base);
