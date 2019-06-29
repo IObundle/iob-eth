@@ -5,7 +5,7 @@ GT_DIR=fpga/altera/cyclone_v_gt/quartus_18.0
 #
 # Build and run the system
 #
-fpga:
+all:
 	make -C $(GT_DIR)
 
 icarus:
@@ -21,4 +21,4 @@ clean:
 	#make -C simulation/verilator clean
 	$(RM) *~
 
-.PHONY: hw sw clean
+.PHONY: all icarus ncsim clean
