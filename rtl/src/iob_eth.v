@@ -216,7 +216,7 @@ module iob_eth (
 		  .rst			(rst_int),
                   .nbytes               (rx_nbytes_reg),
 		  .data_rcvd	        (rx_data_rcvd_int),
-                  .rcv_ack              (rcv_ack_en & data_in[1]),
+                  .rcv_ack              (rcv_ack_en),
                   //mii side
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
