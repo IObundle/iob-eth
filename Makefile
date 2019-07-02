@@ -21,4 +21,4 @@ clean:
 	#make -C simulation/verilator clean
 	$(RM) *~
 
-.PHONY: hw sw clean
+.PHONY: fpga icarus ncsim clean
