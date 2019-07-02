@@ -27,6 +27,10 @@ module iob_eth_rx(
    //data
    wire [7:0]                       data_int;
 
+   //receive ack
+   reg [1:0]                        rcv_ack_sync;
+   
+   
    //
    // RECEIVER STATE MACHINE
    //
@@ -73,9 +77,8 @@ module iob_eth_rx(
            6: begin
               pc <= pc;
               if(crc_value == 32'hc704dd7b) begin
-//              if(crc_value) begin
                  data_rcvd <= 1;
-                 if(rcv_ack) begin
+                 if(rcv_ack_sync[1]) begin
                     pc <= 0;
                     addr <= 0;
                     data_rcvd <= 0;
@@ -118,5 +121,11 @@ module iob_eth_rx(
 		      .data_en(wr),
 		      .crc_out(crc_value)
 		      );
+
+   always @(posedge RX_CLK, posedge rcv_ack)
+     if(rcv_ack)
+       rcv_ack_sync <= 2'b11;
+     else
+       rcv_ack_sync <= {rcv_ack_sync[0], 1'b0};
 
 endmodule
