@@ -1,13 +1,14 @@
-#include <stdint.h>
 #include "iob-eth.h"
-#include "iob-uart.h"
 
-char TX_FRAME [30];
+static int base;
 
-void eth_init(int base)
+void eth_init(int base_address)
 {
   int i;
   uint64_t mac_addr;
+
+  //set base address
+  base = base_address;
   
   //Preamble
   for(i=0; i < 15; i= i+1)
@@ -64,7 +65,7 @@ void eth_init(int base)
     uart_puts("Ethernet Core Initialized\n");
 }
 
-void eth_send_frame(int base, char *data, unsigned int size) {
+void eth_send_frame(char *data, unsigned int size) {
   int i;
   //wait for ready
   while(! (MEMGET(base, ETH_STATUS)&1)   );
@@ -86,7 +87,7 @@ void eth_send_frame(int base, char *data, unsigned int size) {
   MEMSET(base, ETH_SEND, ETH_SEND);
 }
 
-void eth_rcv_frame(int base, char *data_rcv, unsigned int size) {
+void eth_rcv_frame(char *data_rcv, unsigned int size) {
   int i;
   // wait until data received
   while(!((MEMGET(base, ETH_STATUS)>>1)&1));
@@ -98,13 +99,13 @@ void eth_rcv_frame(int base, char *data_rcv, unsigned int size) {
   MEMSET(base, ETH_RCVACK, 1);
 }
 
-void eth_set_rx_payload_size(int base, unsigned int size) {
+void eth_set_rx_payload_size(unsigned int size) {
   //set frame size
   MEMSET(base, ETH_RX_NBYTES, size);
 }
 
 
-void eth_printstatus(int base) {
+void eth_printstatus() {
   uart_printf("tx_ready = %x\n", (MEMGET(base, ETH_STATUS)>>0)&1);
   uart_printf("rx_ready = %x\n", (MEMGET(base, ETH_STATUS)>>1)&1);
   uart_printf("phy_dv_detected = %x\n", (MEMGET(base, ETH_STATUS)>>2)&1);
