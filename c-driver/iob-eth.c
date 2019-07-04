@@ -87,16 +87,22 @@ void eth_send_frame(char *data, unsigned int size) {
   MEMSET(base, ETH_SEND, ETH_SEND);
 }
 
-void eth_rcv_frame(char *data_rcv, unsigned int size) {
+int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   // wait until data received
-  while(!((MEMGET(base, ETH_STATUS)>>1)&1));
+  while(!((MEMGET(base, ETH_STATUS)>>1)&1)) {
+     timeout--;
+     if (timeout==0)
+       return -1;
+  }
 
   for(i=0; i < (size+18); i = i+1)
     data_rcv[i] = MEMGET(base, (ETH_DATA + i));
 
   // send receive ack
   MEMSET(base, ETH_RCVACK, 1);
+  
+  return 0;
 }
 
 void eth_set_rx_payload_size(unsigned int size) {
