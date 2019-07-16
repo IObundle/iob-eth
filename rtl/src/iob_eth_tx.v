@@ -43,6 +43,33 @@ module iob_eth_tx(
    reg [1:0]                        send_sync;
 
 
+   //SYNCHRONIZERS   
+
+   //reset sync
+   always @ (posedge TX_CLK, posedge rst)
+     if(rst)
+	tx_rst <= 2'b11;
+     else
+	tx_rst <= {tx_rst[0], 1'b0};
+  
+   //send sync
+   always @ (posedge TX_CLK, posedge send)
+     if(send)
+        send_sync <= 2'b11;
+     else
+        send_sync <= {send_sync[0], 1'b0};
+
+   //nbytes sync
+   always @ (posedge TX_CLK, posedge tx_rst[1])
+     if(tx_rst[1]) begin
+        nbytes_sync[0] <= 0;
+        nbytes_sync[1] <= 0;
+     end else begin
+        nbytes_sync[1] <= nbytes_sync[0];
+        nbytes_sync[0] <= nbytes;
+     end
+
+   
    //
    // TRANSMITTER PROGRAM
    //
@@ -115,31 +142,6 @@ module iob_eth_tx(
          endcase
       end // else: !if(tx_rst[1])
         
-   //reset sync
-   always @ (posedge TX_CLK, posedge rst)
-     if(rst)
-	tx_rst <= 2'b11;
-     else
-	tx_rst <= {tx_rst[0], 1'b0};
-  
-   //send sync
-   always @ (posedge TX_CLK, posedge send)
-     if(send)
-        send_sync <= 2'b11;
-     else
-        send_sync <= {send_sync[0], 1'b0};
-
-   //nbytes sync
-   always @ (posedge TX_CLK, posedge tx_rst[1])
-     if(tx_rst[1]) begin
-        nbytes_sync[0] <= 0;
-        nbytes_sync[1] <= 0;
-     end else begin
-        nbytes_sync[1] <= nbytes_sync[0];
-        nbytes_sync[0] <= nbytes;
-     end
-
-
    //
    // CRC MODULE
    //

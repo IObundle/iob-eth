@@ -17,7 +17,7 @@ module iob_eth (
 		output reg [31:0]       data_out,
 		input [31:0]            data_in,
 
-		// MII side
+		// PHY side
 		output reg              ETH_PHY_RESETN,
 
                 // PLL
@@ -51,20 +51,17 @@ module iob_eth (
    reg                                  rcv_ack_en;
    
    //tx signals
-   wire [10:0]                          tx_rd_addr;
-   wire [7:0]                           tx_rd_data;
    reg                                  tx_wr;
    reg [1:0]                            tx_ready;
+   reg [1:0]                            tx_clk_pll_locked;
    wire                                 tx_ready_int;
    
    //rx signals
-   wire [10:0]                          rx_wr_addr;
-   wire [7:0]                           rx_wr_data;
-   wire                                 rx_wr;
    reg [1:0]                            rx_data_rcvd;
    wire                                 rx_data_rcvd_int;
    wire [7:0]                           rx_rd_data;
-   wire [31:0]                          crc_value;
+   reg [10:0]                          rx_wr_addr_cpu[1:0];
+   reg [31:0]                           crc_value_cpu[1:0];
                       
    // phy reset timer
    reg [19:0]                            phy_rst_cnt;
@@ -74,14 +71,44 @@ module iob_eth (
    reg [1:0]                             phy_dv_detected_sync;
 
    reg                                   rst_soft;
-
    wire                                  rst_int;
 
+   //ETH CLOCK DOMAIN
+   wire [10:0]                          tx_rd_addr;
+   wire [7:0]                           tx_rd_data;
+
+   wire [10:0]                          rx_wr_addr;
+   wire [7:0]                           rx_wr_data;
+   wire                                 rx_wr;
+   wire [31:0]                          crc_value;
+
+   
+   //RESET soft + hard 
    assign rst_int = rst_soft | rst;
    
-   //
-   // ASSIGNMENTS
-   //
+   //SYNCHRONIZERS 
+   always @ (posedge clk, posedge rst_int)
+      if(rst_int) begin
+         tx_ready <= 0;
+         tx_clk_pll_locked <= 0;
+         rx_data_rcvd <= 0;
+         rx_wr_addr_cpu[0] <= 0;
+         rx_wr_addr_cpu[1] <= 0;         
+         crc_value_cpu[0] <= 0;
+         crc_value_cpu[1] <= 0;         
+         phy_clk_detected_sync <= 0;
+         phy_dv_detected_sync <= 0;
+      end else begin
+         tx_clk_pll_locked <= {tx_clk_pll_locked[0], PLL_LOCKED};
+         tx_ready <= {tx_ready[0], tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED};
+         rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_PHY_RESETN};
+         rx_wr_addr_cpu[0] <= rx_wr_addr;
+         rx_wr_addr_cpu[1] <= rx_wr_addr_cpu[0];         
+         crc_value_cpu[0] <= crc_value;
+         crc_value_cpu[1] <= crc_value_cpu[0];         
+         phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
+         phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
+      end 
 
    //
    // ADDRESS DECODER
@@ -95,16 +122,14 @@ module iob_eth (
       dummy_reg_en = 0;
       tx_nbytes_reg_en = 0;
       rx_nbytes_reg_en = 0;
-                          
-      // core outputs
+      // default core outputs
       data_out = 8'd0;
-
       tx_wr = 1'b0;
 
       case (addr)
-	`ETH_STATUS: data_out = {16'b0, PLL_LOCKED, rx_wr_addr, phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
-	`ETH_SEND: send_en = sel&we;
-	`ETH_RCVACK: rcv_ack_en = sel&we;
+	`ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+	`ETH_SEND: send_en = sel & we;
+	`ETH_RCVACK: rcv_ack_en = sel & we;
         `ETH_DUMMY: begin
             data_out = dummy_reg;
             dummy_reg_en = sel&we;
@@ -112,7 +137,7 @@ module iob_eth (
         `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
         `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
         `ETH_SOFTRST: rst_soft  = sel & we;
-        `ETH_CRC: data_out = crc_value;
+        `ETH_CRC: data_out = crc_value_cpu[1];
         default: begin //ETH_DATA
     	   data_out = {24'd0, rx_rd_data};
            tx_wr = addr[11] & sel & we;
@@ -136,16 +161,6 @@ module iob_eth (
       else if(rx_nbytes_reg_en)
         rx_nbytes_reg <= data_in[10:0];
   
-   //synchronizers 
-   always @ (posedge clk, posedge rst_int)
-      if(rst_int) begin
-         tx_ready <= 0;
-         rx_data_rcvd <= 0;
-      end else begin
-         tx_ready <= {tx_ready[0], tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED};
-         rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_PHY_RESETN};
-      end 
-
    
    //
    // TX and RX BUFFERS
@@ -196,7 +211,7 @@ module iob_eth (
                   //cpu side
 		  .rst			(rst_int),
                   .nbytes               (tx_nbytes_reg),
-                  .send                 (send_en & data_in[0]),
+                  .send                 (send_en),
 		  .ready                (tx_ready_int),
                   //mii side 
 		  .addr	       	        (tx_rd_addr),
@@ -232,15 +247,6 @@ module iob_eth (
    //  PHY RESET
    //
    
-   always @ (posedge clk, posedge rst_int)
-     if(rst_int) begin
-        phy_clk_detected_sync <= 0;
-        phy_dv_detected_sync <= 0;
-     end else begin
-        phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
-        phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
-     end
-
    always @ (posedge clk, posedge rst_int)
      if(rst_int) begin
         phy_rst_cnt <= 0;

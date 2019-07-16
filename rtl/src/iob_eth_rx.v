@@ -2,7 +2,11 @@
 `include "iob_eth_defs.vh"
 
 module iob_eth_rx(
+
+                  //async reset 
 		  input             rst,
+
+                  //system clock domain
                   input [10:0]      nbytes,
                   input             rcv_ack,
 		  output reg        data_rcvd,
@@ -12,6 +16,7 @@ module iob_eth_rx(
 		  output reg [7:0]  data,
 		  output reg        wr,
                   output [31:0]     crc_value,
+                  
 		  input             RX_CLK,
 		  input             RX_DV,
 		  input [3:0]       RX_DATA
@@ -29,10 +34,25 @@ module iob_eth_rx(
 
    //receive ack
    reg [1:0]                        rcv_ack_sync;
+
+   reg [10:0]                       nbytes_eth[1:0];
    
    
+   //SYNCHRONIZERS   
+   always @(posedge RX_CLK, posedge rcv_ack)
+     if(rcv_ack)
+       rcv_ack_sync <= 2'b11;
+     else
+       rcv_ack_sync <= {rcv_ack_sync[0], 1'b0};
+
+   always @(posedge RX_CLK) begin
+      nbytes_eth[0] <= nbytes;
+      nbytes_eth[1] <= nbytes_eth[0];
+   end
+
+
    //
-   // RECEIVER STATE MACHINE
+   // RECEIVER PROGRAM
    //
    always @(posedge RX_CLK, posedge rx_rst[1])
 
@@ -70,7 +90,7 @@ module iob_eth_rx(
            
            4: wr <= 1;
            
-           5: if(addr != (17+nbytes)) begin
+           5: if(addr != (17+nbytes_eth[1])) begin
               pc <= pc - 1'b1;
            end
            
@@ -121,11 +141,5 @@ module iob_eth_rx(
 		      .data_en(wr),
 		      .crc_out(crc_value)
 		      );
-
-   always @(posedge RX_CLK, posedge rcv_ack)
-     if(rcv_ack)
-       rcv_ack_sync <= 2'b11;
-     else
-       rcv_ack_sync <= {rcv_ack_sync[0], 1'b0};
 
 endmodule
