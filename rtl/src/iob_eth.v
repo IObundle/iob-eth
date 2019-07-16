@@ -60,7 +60,7 @@ module iob_eth (
    reg [1:0]                            rx_data_rcvd;
    wire                                 rx_data_rcvd_int;
    wire [7:0]                           rx_rd_data;
-   reg [10:0]                          rx_wr_addr_cpu[1:0];
+   reg [10:0]                           rx_wr_addr_cpu[1:0];
    reg [31:0]                           crc_value_cpu[1:0];
                       
    // phy reset timer
@@ -70,6 +70,7 @@ module iob_eth (
    reg [1:0]                             phy_clk_detected_sync;
    reg [1:0]                             phy_dv_detected_sync;
 
+   reg                                   rst_soft_en;
    reg                                   rst_soft;
    wire                                  rst_int;
 
@@ -84,6 +85,12 @@ module iob_eth (
 
    
    //RESET soft + hard 
+   always @ (posedge clk, posedge rst)
+     if(rst)
+       rst_soft <= 1'b0;
+     else if (rst_soft_en)
+       rst_soft <= data_in[0];
+   
    assign rst_int = rst_soft | rst;
    
    //SYNCHRONIZERS 
@@ -116,7 +123,7 @@ module iob_eth (
    always @* begin
 
       //defaults
-      rst_soft = 0;
+      rst_soft_en = 0;
       send_en = 0;
       rcv_ack_en = 0;
       dummy_reg_en = 0;
@@ -136,7 +143,7 @@ module iob_eth (
         end
         `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
         `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
-        `ETH_SOFTRST: rst_soft  = sel & we;
+        `ETH_SOFTRST: rst_soft_en  = sel & we;
         `ETH_CRC: data_out = crc_value_cpu[1];
         default: begin //ETH_DATA
     	   data_out = {24'd0, rx_rd_data};

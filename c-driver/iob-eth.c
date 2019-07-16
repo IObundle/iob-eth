@@ -41,6 +41,7 @@ void eth_init(int base_address)
 
   //reset core
   MEMSET(base, ETH_SOFTRST, 1);
+  MEMSET(base, ETH_SOFTRST, 0);
 
   //wait for PHY to produce rx clock 
   while(!((MEMGET(base, ETH_STATUS)>>3)&1));
