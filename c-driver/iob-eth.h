@@ -28,8 +28,6 @@
 #define ETH_MAC_ADDR 0x01606e11020f
 #define ETH_RMAC_ADDR 0x309c231e624b
 
-static char TX_FRAME [30];
-
 //driver functions
 void eth_init(int base);
 

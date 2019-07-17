@@ -1,6 +1,7 @@
 #include "iob-eth.h"
 
 static int base;
+static char TX_FRAME[30];
 
 void eth_init(int base_address)
 {
