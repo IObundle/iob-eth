@@ -31,7 +31,7 @@
 //driver functions
 void eth_init(int base);
 
-void eth_send_frame(char *data_to_send, unsigned int size);
+void eth_send_frame(unsigned char *data_to_send, unsigned int size);
 
 /* Function name: eth_rcv_frame
  * Inputs:
@@ -42,7 +42,7 @@ void eth_send_frame(char *data_to_send, unsigned int size);
  * 	- Return -1 if timeout occurs (no data received), or 0 if data is
  * 	successfully received
  */
-int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
+int eth_rcv_frame(unsigned char *data_rcv, unsigned int size, int timeout);
 
 void eth_set_rx_payload_size(unsigned int size);
 
