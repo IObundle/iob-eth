@@ -137,8 +137,7 @@ module iob_eth (
           `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
           `ETH_SOFTRST: rst_soft_en  = 1'b1;
-          `ETH_DATA: tx_wr = addr[11] & 1'b1;
-          default:;
+          default: tx_wr = addr[11] & 1'b1; //ETH_DATA
         endcase
    end
 
@@ -150,8 +149,7 @@ module iob_eth (
 	  `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
           `ETH_DUMMY: data_out = dummy_reg;
           `ETH_CRC: data_out = crc_value_cpu[1];
-          `ETH_DATA: data_out = {24'd0, rx_rd_data};
-          default: data_out = 0;
+          default: data_out = {24'd0, rx_rd_data}; //ETH_DATA
         endcase
       else
         data_out = 0;
