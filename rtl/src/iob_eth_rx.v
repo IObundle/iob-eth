@@ -39,12 +39,22 @@ module iob_eth_rx(
    
    
    //SYNCHRONIZERS   
+
+   //reset sync
+   always @ (posedge RX_CLK, posedge rst)
+     if(rst)
+       rx_rst <= 2'b11;
+     else
+       rx_rst <= {rx_rst[0], 1'b0};
+
+   //receive ack preset 
    always @(posedge RX_CLK, posedge rcv_ack)
      if(rcv_ack)
        rcv_ack_sync <= 2'b11;
      else
        rcv_ack_sync <= {rcv_ack_sync[0], 1'b0};
 
+   //number of bytes to receive
    always @(posedge RX_CLK) begin
       nbytes_eth[0] <= nbytes;
       nbytes_eth[1] <= nbytes_eth[0];
@@ -122,14 +132,6 @@ module iob_eth_rx(
      else if (RX_DV)
        data <= data_int;
    
-   //reset sync
-   always @ (posedge RX_CLK, posedge rst)
-     if(rst)
-       rx_rst <= 2'b11;
-     else
-       rx_rst <= {rx_rst[0], 1'b0};
-
-
    //
    // CRC MODULE
    //

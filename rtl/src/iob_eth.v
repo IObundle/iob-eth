@@ -48,7 +48,10 @@ module iob_eth (
 
    //control
    reg                                  send_en;
+   reg                                  send;
+
    reg                                  rcv_ack_en;
+   reg                                  rcv_ack;
    
    //tx signals
    reg                                  tx_wr;
@@ -84,13 +87,6 @@ module iob_eth (
    wire [31:0]                          crc_value;
 
    
-   //RESET soft + hard 
-   always @ (posedge clk, posedge rst)
-     if(rst)
-       rst_soft <= 1'b0;
-     else if (rst_soft_en)
-       rst_soft <= data_in[0];
-   
    assign rst_int = rst_soft | rst;
    
    //SYNCHRONIZERS 
@@ -120,6 +116,8 @@ module iob_eth (
    //
    // ADDRESS DECODER
    //
+
+   //write 
    always @* begin
 
       //defaults
@@ -129,32 +127,66 @@ module iob_eth (
       dummy_reg_en = 0;
       tx_nbytes_reg_en = 0;
       rx_nbytes_reg_en = 0;
-      // default core outputs
-      data_out = 8'd0;
       tx_wr = 1'b0;
 
-      case (addr)
-	`ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
-	`ETH_SEND: send_en = sel & we;
-	`ETH_RCVACK: rcv_ack_en = sel & we;
-        `ETH_DUMMY: begin
-            data_out = dummy_reg;
-            dummy_reg_en = sel&we;
-        end
-        `ETH_TX_NBYTES: tx_nbytes_reg_en = sel & we;
-        `ETH_RX_NBYTES: rx_nbytes_reg_en = sel & we;
-        `ETH_SOFTRST: rst_soft_en  = sel & we;
-        `ETH_CRC: data_out = crc_value_cpu[1];
-        default: begin //ETH_DATA
-    	   data_out = {24'd0, rx_rd_data};
-           tx_wr = addr[11] & sel & we;
-        end
-      endcase
+      if(sel & we)
+        case (addr)
+	  `ETH_SEND: send_en = 1'b1;
+	  `ETH_RCVACK: rcv_ack_en = 1'b1;
+          `ETH_DUMMY: dummy_reg_en = 1'b1;
+          `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
+          `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
+          `ETH_SOFTRST: rst_soft_en  = 1'b1;
+          `ETH_DATA: tx_wr = addr[11] & 1'b1;
+          default:;
+        endcase
+   end
+
+
+   //read 
+   always @* begin
+      if(sel & ~we)
+        case (addr)
+	  `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+          `ETH_DUMMY: data_out = dummy_reg;
+          `ETH_CRC: data_out = crc_value_cpu[1];
+          `ETH_DATA: data_out = {24'd0, rx_rd_data};
+          default: data_out = 0;
+        endcase
+      else
+        data_out = 0;
    end
 
    //
    // REGISTERS
    //
+
+   //soft reset self-clearing register
+   always @ (posedge clk, posedge rst)
+     if (rst)
+       rst_soft <= 1'b1;
+     else if (rst_soft_en && !rst_soft)
+       rst_soft <= 1'b1;
+     else
+       rst_soft <= 1'b0;
+
+   //tx send self-clearing register
+   always @ (posedge clk, posedge rst_int)
+     if (rst_int)
+       send <= 1'b0;
+     else if (send_en && !send)
+       send <= 1'b1;
+     else
+       send <= 1'b0;
+
+   //rx rcv ack self-clearing register
+   always @ (posedge clk, posedge rst_int)
+     if (rst_int)
+       rcv_ack <= 1'b0;
+     else if (rcv_ack_en && !rcv_ack)
+       rcv_ack <= 1'b1;
+     else
+       rcv_ack <= 1'b0;
 
    always @ (posedge clk, posedge rst_int)
       if (rst_int) begin 
@@ -218,7 +250,7 @@ module iob_eth (
                   //cpu side
 		  .rst			(rst_int),
                   .nbytes               (tx_nbytes_reg),
-                  .send                 (send_en),
+                  .send                 (send),
 		  .ready                (tx_ready_int),
                   //mii side 
 		  .addr	       	        (tx_rd_addr),
@@ -238,7 +270,7 @@ module iob_eth (
 		  .rst			(rst_int),
                   .nbytes               (rx_nbytes_reg),
 		  .data_rcvd	        (rx_data_rcvd_int),
-                  .rcv_ack              (rcv_ack_en),
+                  .rcv_ack              (rcv_ack),
                   //mii side
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
