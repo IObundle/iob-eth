@@ -67,7 +67,7 @@ void eth_init(int base_address)
     uart_puts("Ethernet Core Initialized\n");
 }
 
-void eth_send_frame(unsigned char *data, unsigned int size) {
+void eth_send_frame(char *data, unsigned int size) {
   int i;
   //wait for ready
   while(! (MEMGET(base, ETH_STATUS)&1)   );
@@ -89,13 +89,13 @@ void eth_send_frame(unsigned char *data, unsigned int size) {
   MEMSET(base, ETH_SEND, ETH_SEND);
 }
 
-int eth_rcv_frame(unsigned char *data_rcv, unsigned int size, int timeout) {
+int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   // wait until data received
   while(!((MEMGET(base, ETH_STATUS)>>1)&1)) {
      timeout--;
      if (timeout==0)
-       return -1;
+       return ETH_NO_DATA;
   }
 
   for(i=0; i < (size+18); i = i+1)
@@ -104,7 +104,7 @@ int eth_rcv_frame(unsigned char *data_rcv, unsigned int size, int timeout) {
   // send receive ack
   MEMSET(base, ETH_RCVACK, 1);
   
-  return 0;
+  return ETH_DATA_RCV;
 }
 
 void eth_set_rx_payload_size(unsigned int size) {
