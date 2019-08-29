@@ -27,7 +27,7 @@
 
 #define ETH_MAC_ADDR 0x01606e11020f
 #ifdef XILINX
- #define ETH_RMAC_ADDR 0x001e373ae02e
+ #define ETH_RMAC_ADDR 0x00e04c690ba0
 #else
  #define ETH_RMAC_ADDR 0x309c231e624b
 #endif

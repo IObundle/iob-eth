@@ -5,7 +5,7 @@
 
 `define ETH_MAC_ADDR 48'h01606e11020f
 `ifdef XILINX
- `define ETH_RMAC_ADDR 48'h001e373ae02e
+ `define ETH_RMAC_ADDR 48'h00e04c690ba0
 `else
  `define ETH_RMAC_ADDR 48'h309c231e624b
 `endif
