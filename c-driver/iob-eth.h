@@ -26,7 +26,11 @@
 #define ETH_TYPE_L 0x00
 
 #define ETH_MAC_ADDR 0x01606e11020f
-#define ETH_RMAC_ADDR 0x309c231e624b
+#ifdef XILINX
+ #define ETH_RMAC_ADDR 0x001e373ae02e
+#else
+ #define ETH_RMAC_ADDR 0x309c231e624b
+#endif
 
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
