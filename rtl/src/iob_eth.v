@@ -288,7 +288,12 @@ module iob_eth (
      if(rst_int) begin
         phy_rst_cnt <= 0;
 	ETH_PHY_RESETN <= 0;
-     end else if(phy_rst_cnt != 20'hFFFFF)
+     end else 
+`ifdef SIM //Faster for simulation
+     if(phy_rst_cnt != 20'h000FF)
+`else
+     if(phy_rst_cnt != 20'hFFFFF)
+`endif
         phy_rst_cnt <= phy_rst_cnt+1'b1;
      else
        ETH_PHY_RESETN <= 1;
