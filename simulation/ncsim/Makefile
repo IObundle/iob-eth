@@ -11,9 +11,7 @@ VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
 VSRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
 
 all: $(VSRC) $(VHEADERS)
-	ncvlog $(CFLAGS) $(VSRC)
-	ncelab $(EFLAGS) worklib.iob_eth_tb:module
-	ncsim  $(SFLAGS) worklib.iob_eth_tb:module
+	VSRC="$(VSRC)" CFLAGS="$(CFLAGS)" EFLAGS="$(EFLAGS)" SFLAGS="$(SFLAGS)" ./setup.sh
 
 clean:
 	@rm -f *#
@@ -23,5 +21,6 @@ clean:
 	@rm -f *~ 
 	@rm -rf INCA_libs
 	@rm -f *.vcd
+	@rm -rf xcelium.d
 
 .phony: all clean
