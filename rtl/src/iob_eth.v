@@ -7,7 +7,10 @@
 
 */
 
-module iob_eth (
+module iob_eth #(
+                   parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
+                ) (
+		
 		// CPU side
 		input                   clk,
 		input                   rst,
@@ -271,7 +274,11 @@ module iob_eth (
    //RECEIVER
    //
 
-   iob_eth_rx rx (
+   iob_eth_rx #(
+                 .ETH_MAC_ADDR(ETH_MAC_ADDR)
+               )
+
+		rx (
                   //cpu side
 		  .rst			(rst_int),
                   .nbytes               (rx_nbytes_reg),
