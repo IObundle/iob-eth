@@ -12,6 +12,7 @@ module iob_eth (
 		input                   clk,
 		input                   rst,
 		input                   sel,
+		output reg		ready,
 		input                   we,
 		input [`ETH_ADDR_W-1:0] addr,
 		output reg [31:0]       data_out,
@@ -112,6 +113,13 @@ module iob_eth (
          phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
          phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
       end 
+
+   // cpu interface ready signal
+   always @(posedge clk, posedge rst)
+      if(rst)
+         ready <= 1'b0;
+      else 
+         ready <= sel;
 
    //
    // ADDRESS DECODER
