@@ -4,11 +4,6 @@
 `define ETH_ADDR_W 12
 
 `define ETH_MAC_ADDR 48'h01606e11020f
-`ifdef XILINX
- `define ETH_RMAC_ADDR 48'h00e04c690ba0
-`else
- `define ETH_RMAC_ADDR 48'h309c231e624b
-`endif
 
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0
@@ -20,5 +15,3 @@
 `define ETH_RX_NBYTES        `ETH_ADDR_W'd7
 `define ETH_CRC              `ETH_ADDR_W'd8
 `define ETH_DATA             `ETH_ADDR_W'd2048
-
-

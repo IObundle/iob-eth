@@ -26,11 +26,6 @@
 #define ETH_TYPE_L 0x00
 
 #define ETH_MAC_ADDR 0x01606e11020f
-#ifdef XILINX
- #define ETH_RMAC_ADDR 0x00e04c690ba0
-#else
- #define ETH_RMAC_ADDR 0x309c231e624b
-#endif
 
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
@@ -54,4 +49,3 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
 void eth_set_rx_payload_size(unsigned int size);
 
 void eth_printstatus();
-

@@ -10,8 +10,13 @@ SFLAGS = -errormax 15 -status
 VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
 VSRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
 
-all: $(VSRC) $(VHEADERS)
+all: rmac $(VSRC) $(VHEADERS)
 	VSRC="$(VSRC)" CFLAGS="$(CFLAGS)" EFLAGS="$(EFLAGS)" SFLAGS="$(SFLAGS)" ./setup.sh
+
+rmac:
+	sed -i "/ETH_RMAC_ADDR/d" ../../c-driver/iob-eth.h ../../rtl/include/iob_eth_defs.vh
+	ifconfig -a | grep -B 1 "ether" | sed '/inet/,+2d' | grep -A 1 ^"en" | grep "ether" | awk '{print $$2}' | sed 's/://g' | sed "s/^/#define ETH_RMAC_ADDR 0x/" >> ../../c-driver/iob-eth.h
+	ifconfig -a | grep -B 1 "ether" | sed '/inet/,+2d' | grep -A 1 ^"en" | grep "ether" | awk '{print $$2}' | sed 's/://g' | sed "s/^/\`define ETH_RMAC_ADDR 48'h/" >> ../../rtl/include/iob_eth_defs.vh
 
 clean:
 	@rm -f *#
@@ -22,5 +27,6 @@ clean:
 	@rm -rf INCA_libs
 	@rm -f *.vcd
 	@rm -rf xcelium.d
+	sed -i "/ETH_RMAC_ADDR/d" ../../c-driver/iob-eth.h ../../rtl/include/iob_eth_defs.vh
 
 .phony: all clean
