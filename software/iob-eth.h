@@ -49,3 +49,4 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
 void eth_set_rx_payload_size(unsigned int size);
 
 void eth_printstatus();
+#define ETH_RMAC_ADDR 0x0123456789AB

@@ -94,10 +94,17 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   // wait until data received
   while(!((MEMGET(base, ETH_STATUS)>>1)&1)) {
      timeout--;
-     if (timeout==0)
+     if (timeout==0){
        return ETH_NO_DATA;
+     }
   }
 
+  uart_puts("MSG Received, checking CRC\n");
+  if( MEMGET(base, ETH_CRC) != 0xc704dd7b) {
+    MEMSET(base, ETH_RCVACK, 1);
+    return ETH_NO_DATA;
+  }
+  uart_puts("Correct CRC\n");
   for(i=0; i < (size+18); i = i+1)
     data_rcv[i] = MEMGET(base, (ETH_DATA + i));
 
