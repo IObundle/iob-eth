@@ -37,6 +37,9 @@ module iob_eth_rx #(
    //receive ack
    reg [1:0]                        rcv_ack_sync;
 
+   //delayed rx dv
+   reg [1:0]                        rx_dv;
+
    reg [10:0]                       nbytes_eth[1:0];
    
    
@@ -69,13 +72,17 @@ module iob_eth_rx #(
    always @(posedge RX_CLK, posedge rx_rst[1])
 
       if(rx_rst[1]) begin
-
          pc <= 0;
          addr <= 0;
          dest_mac_addr <= 0;
          wr <= 0;
          data_rcvd <= 0;
-
+      end else if (!(RX_DV|rx_dv[1])) begin 
+         pc <= 0;
+         addr <= 0;
+         dest_mac_addr <= 0;
+         wr <= 0;
+         data_rcvd <= 0;
       end else begin
  
          pc <= pc+1'b1;
@@ -133,6 +140,14 @@ module iob_eth_rx #(
        data <= 0;
      else if (RX_DV)
        data <= data_int;
+
+   //delay rx dv
+   always @(posedge RX_CLK, posedge rx_rst[1])
+     if(rx_rst[1])
+       rx_dv <= 2'b0;
+     else
+       rx_dv <= {rx_dv[0], RX_DV};
+
    
    //
    // CRC MODULE
