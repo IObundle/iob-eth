@@ -1,24 +1,22 @@
 #
 # IObundle, lda: ethernet core
 #
-GT_DIR=fpga/altera/cyclone_v_gt/quartus_18.0
+SIM_DIR = simulation/icarus
+#SIM_DIR = simulation/ncsim
+FPGA_DIR=fpga/altera/cyclone_v_gt/quartus_18.0
 #
 # Build and run the system
 #
-all:
+sim:
+	make -C $(SIM_DIR)
+
+fpga:
 	make -C $(GT_DIR)
-
-icarus:
-	make -C simulation/icarus
-
-ncsim:
-	make -C simulation/ncsim
 
 clean:
 	make -C $(GT_DIR) clean
 	make -C simulation/icarus clean
 	make -C simulation/ncsim clean
-	#make -C simulation/verilator clean
 	$(RM) *~
 
-.PHONY: all icarus ncsim clean
+.PHONY: sim fpga clean
