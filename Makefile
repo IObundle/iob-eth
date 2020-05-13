@@ -14,9 +14,8 @@ fpga:
 	make -C $(GT_DIR)
 
 clean:
-	make -C $(GT_DIR) clean
-	make -C simulation/icarus clean
-	make -C simulation/ncsim clean
+	make -C $(SIM_DIR) clean
+	make -C $(FPGA_DIR) clean
 	$(RM) *~
 
 .PHONY: sim fpga clean

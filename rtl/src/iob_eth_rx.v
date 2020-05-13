@@ -122,9 +122,13 @@ module iob_eth_rx #(
                     addr <= 0;
                     data_rcvd <= 0;
                  end
-              end else
-                wr <= 1;
-              
+              end else begin 
+                 pc <= 0;
+                 addr <= 0;
+                 dest_mac_addr <= 0;
+                 wr <= 0;
+                 data_rcvd <= 0; 
+              end  
            end 
            
            default: ;
