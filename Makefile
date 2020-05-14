@@ -11,7 +11,7 @@ sim:
 	make -C $(SIM_DIR)
 
 fpga:
-	make -C $(GT_DIR)
+	make -C $(FPGA_DIR)
 
 clean:
 	make -C $(SIM_DIR) clean

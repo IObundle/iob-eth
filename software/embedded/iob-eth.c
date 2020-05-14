@@ -91,6 +91,7 @@ void eth_send_frame(char *data, unsigned int size) {
 
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
+
   // wait until data received
   while(!((MEMGET(base, ETH_STATUS)>>1)&1)) {
      timeout--;
@@ -99,12 +100,12 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
      }
   }
 
-  uart_puts("MSG Received, checking CRC\n");
   if( MEMGET(base, ETH_CRC) != 0xc704dd7b) {
+    uart_puts("Bad CRC\n");
     MEMSET(base, ETH_RCVACK, 1);
     return ETH_NO_DATA;
   }
-  uart_puts("Correct CRC\n");
+
   for(i=0; i < (size+18); i = i+1)
     data_rcv[i] = MEMGET(base, (ETH_DATA + i));
 
