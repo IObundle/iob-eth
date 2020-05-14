@@ -113,7 +113,7 @@ module iob_eth_rx #(
                     addr <= 0;
                     data_rcvd <= 0;
                  end 
-              end else begin 
+              end else if (!RX_DV) begin 
                  pc <= 0;
                  addr <= 0;
                  dest_mac_addr <= 0; 
