@@ -82,7 +82,7 @@ module iob_eth_rx #(
          
          case(pc)
            
-           0 : if(data_int != 8'hD5)
+           0 : if(data_int != 8'hD5 || !RX_DV)
               pc <= pc;
            
            1: addr <= 0;
@@ -106,22 +106,19 @@ module iob_eth_rx #(
            
            6: begin
               pc <= pc;
-              if(crc_value == 32'hc704dd7b) begin
+              if(crc_value == 32'hc704dd7b && !RX_DV) begin
                  data_rcvd <= 1;
                  if(rcv_ack_sync[1]) begin
                     pc <= 0;
                     addr <= 0;
                     data_rcvd <= 0;
-                 end
+                 end 
               end else begin 
                  pc <= 0;
                  addr <= 0;
-                 dest_mac_addr <= 0;
-                 wr <= 0;
-                 data_rcvd <= 0; 
-              end  
-           end 
-           
+                 dest_mac_addr <= 0; 
+              end 
+           end
            default: ;
            
          endcase
