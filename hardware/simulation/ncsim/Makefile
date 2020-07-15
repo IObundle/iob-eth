@@ -1,16 +1,15 @@
-RTL_DIR := ../../src
-INCLUDE_DIR := ../../include
-TB_DIR := ../../testbench
-TOP := $(TB_DIR)/iob_eth_tb.v
+ETHERNET_DIR:=../../..
 
-CFLAGS = -errormax 15 -incdir $(INCLUDE_DIR) -status -update -linedebug -sv -define ETH_SIZE=20 -define VCD
+define:=-define 
+incdir:=-incdir 
+
+include ../simulation.mk
+
+CFLAGS = -errormax 15 $(INCLUDE) -status -update -linedebug -sv -define ETH_SIZE=20 -define VCD
 EFLAGS = -errormax 15 -access +wc -status
 SFLAGS = -errormax 15 -status
 
-VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
-VSRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
-
-all: rmac $(VSRC) $(VHEADERS)
+all: rmac $(VSRC) $(VHDR)
 	VSRC="$(VSRC)" CFLAGS="$(CFLAGS)" EFLAGS="$(EFLAGS)" SFLAGS="$(SFLAGS)" ./setup.sh
 
 #define ETH_RMAC_ADDR for verilog, needs env variable RMAC_INTERFACE

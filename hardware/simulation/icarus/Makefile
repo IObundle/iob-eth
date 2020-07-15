@@ -1,16 +1,15 @@
-RTL_DIR := ../../src
-INCLUDE_DIR := ../../include
-TB_DIR := ../../testbench
-TOP := $(TB_DIR)/iob_eth_tb.v
+ETHERNET_DIR:=../../..
+
+define:=-D
+incdir:=-I
+
+include ../simulation.mk
 
 VC = iverilog
-CFLAGS := -W all -I$(INCLUDE_DIR)  -g2005-sv -DVCD
+CFLAGS := -W all -g2005-sv $(INCLUDE) -DVCD
 
-VHEADERS := $(shell find $(INCLUDE_DIR) -name '*.vh')
-SRC := $(shell find $(RTL_DIR) -name '*.v') $(TOP)
-
-all: rmac $(SRC) $(VHEADERS)
-	$(VC) $(CFLAGS) $(SRC)
+all: rmac $(VSRC) $(VHDR)
+	$(VC) $(CFLAGS) $(VSRC)
 	./a.out
 
 #define ETH_RMAC_ADDR for verilog, needs env variable RMAC_INTERFACE

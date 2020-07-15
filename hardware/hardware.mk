@@ -5,7 +5,7 @@ ETHERNET_INC_DIR:=$(ETHERNET_HW_DIR)/include
 INCLUDE+=$(incdir) $(ETHERNET_INC_DIR)
 
 #headers
-VHDR+=$(wildcard $(ETHETNET_INC_DIR)/*.vh)
+VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
 
 #sources
 ETHERNET_SRC_DIR:=$(ETHERNET_HW_DIR)/src
