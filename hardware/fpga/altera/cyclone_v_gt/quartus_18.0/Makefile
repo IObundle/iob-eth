@@ -1,11 +1,11 @@
 VSRC := \
-../../../../rtl/src/iob_eth.v \
-../../../../rtl/src/iob_eth_crc.v\
-../../../../rtl/src/iob_eth_rx.v \
-../../../../rtl/src/iob_eth_tx.v \
+../../../../src/iob_eth.v \
+../../../../src/iob_eth_crc.v\
+../../../../src/iob_eth_rx.v \
+../../../../src/iob_eth_tx.v \
 
 INCLUDE := \
-../../../../rtl/include/iob_eth_defs.vh\
+../../../../include/iob_eth_defs.vh\
 
 all: iob_eth-iob_eth.qxp
 

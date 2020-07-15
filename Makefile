@@ -1,9 +1,9 @@
 #
 # IObundle, lda: ethernet core
 #
-SIM_DIR = simulation/icarus
-#SIM_DIR = simulation/ncsim
-FPGA_DIR=fpga/altera/cyclone_v_gt/quartus_18.0
+SIM_DIR = hardware/simulation/icarus
+#SIM_DIR = hardware/simulation/ncsim
+FPGA_DIR= hardware/fpga/altera/cyclone_v_gt/quartus_18.0
 #
 # Build and run the system
 #

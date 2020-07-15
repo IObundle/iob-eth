@@ -1,6 +1,6 @@
-RTL_DIR := ../../rtl/src
-INCLUDE_DIR := ../../rtl/include
-TB_DIR := ../../rtl/testbench
+RTL_DIR := ../../src
+INCLUDE_DIR := ../../include
+TB_DIR := ../../testbench
 TOP := $(TB_DIR)/iob_eth_tb.v
 
 CFLAGS = -errormax 15 -incdir $(INCLUDE_DIR) -status -update -linedebug -sv -define ETH_SIZE=20 -define VCD
