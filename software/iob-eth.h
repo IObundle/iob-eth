@@ -1,8 +1,13 @@
 #include <stdint.h>
 #include "iob-uart.h"
 
-#define MEMSET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)
-#define MEMGET(base, location)        (*((volatile int*) (base + (sizeof(int)) * location)))
+#ifndef IO_SET
+#define IO_SET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)
+#endif
+
+#ifndef IO_GET
+#define IO_GET(base, location)        (*((volatile int*) (base + (sizeof(int)) * location)))
+#endif
 
 //memory map
 #define ETH_STATUS           0
