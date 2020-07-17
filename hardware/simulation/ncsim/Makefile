@@ -9,15 +9,8 @@ CFLAGS = -errormax 15 $(INCLUDE) -status -update -linedebug -sv -define ETH_SIZE
 EFLAGS = -errormax 15 -access +wc -status
 SFLAGS = -errormax 15 -status
 
-all: rmac $(VSRC) $(VHDR)
+all: $(VSRC) $(VHDR)
 	VSRC="$(VSRC)" CFLAGS="$(CFLAGS)" EFLAGS="$(EFLAGS)" SFLAGS="$(SFLAGS)" ./setup.sh
-
-#define ETH_RMAC_ADDR for verilog, needs env variable RMAC_INTERFACE
-rmac:
-	$(eval RMAC = $(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed "s/://g"))
-	$(eval PREFACE = "-DETH_RMAC_ADDR=48")
-	$(eval RMAC_DEFINE = $(PREFACE)\'$(RMAC))
-	$(eval CFLAGS = $(CFLAGS) $(RMAC_DEFINE))
 
 clean:
 	@rm -f *#
