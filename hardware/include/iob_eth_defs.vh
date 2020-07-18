@@ -4,7 +4,7 @@
 `define ETH_ADDR_W 12
 
 `define ETH_MAC_ADDR 48'h01606e11020f
-`define ETH_TESTER_MAC 48'h0123456789ab
+`define ETH_RMAC_ADDR 48'h0123456789ab
 
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0
