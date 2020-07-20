@@ -7,5 +7,8 @@ INCLUDE+=-I$(ETHERNET_SW_DIR)
 HDR+=$(ETHERNET_SW_DIR)/*.h
 
 #define ETH_RMAC_ADDR
+ifneq ($(SIM),)
+DEFINE+=$(define)ETH_RMAC_ADDR=0x0123456789ab
+else
 DEFINE+=$(define)ETH_RMAC_ADDR=0x$(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed "s/://g")
-
+endif
