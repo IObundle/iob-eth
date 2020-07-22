@@ -10,5 +10,5 @@ HDR+=$(ETHERNET_SW_DIR)/*.h
 ifneq ($(SIM),)
 DEFINE+=$(define)ETH_RMAC_ADDR=0x0123456789ab
 else
-DEFINE+=$(define)ETH_RMAC_ADDR=0x$(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed "s/://g")
+DEFINE+=$(define)ETH_RMAC_ADDR=0x$(RMAC_ADDR)
 endif
