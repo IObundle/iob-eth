@@ -101,8 +101,8 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   }
 
   if( IO_GET(base, ETH_CRC) != 0xc704dd7b) {
-    uart_puts("Bad CRC\n");
     IO_SET(base, ETH_RCVACK, 1);
+    uart_puts("Bad CRC\n");
     return ETH_NO_DATA;
   }
 
