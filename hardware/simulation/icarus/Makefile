@@ -1,6 +1,6 @@
 ETHERNET_DIR:=../../..
 
-define:=-D
+defmacro:=-D
 incdir:=-I
 
 include ../simulation.mk
