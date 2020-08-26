@@ -46,11 +46,13 @@ void eth_init(int base_address)
 
   //wait for PHY to produce rx clock 
   while(!((IO_GET(base, ETH_STATUS)>>3)&1));
-  uart_puts("Ethernet RX clock detected\n");
+  char RX_clk_msg[30] = "Ethernet RX clock detected\n";
+  uart_puts(RX_clk_msg);
 
   //wait for PLL to lock and produce tx clock 
   while(!((IO_GET(base, ETH_STATUS)>>15)&1));
-  uart_puts("Ethernet TX PLL locked\n");
+  char TX_pll_msg[25] = "Ethernet TX PLL locked\n";
+  uart_puts(TX_pll_msg);
 
   //set initial payload size to Ethernet minimum excluding FCS
   IO_SET(base, ETH_TX_NBYTES, 46);
@@ -61,10 +63,14 @@ void eth_init(int base_address)
   IO_SET(base, ETH_DUMMY, 0xDEADBEEF);
 
   // read and check result
-  if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF)
-    uart_puts("Ethernet Init failed\n");
-  else
-    uart_puts("Ethernet Core Initialized\n");
+  if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF){
+    char init_fail_msg[25] = "Ethernet Init failed\n";
+    uart_puts(init_fail_msg);
+  }
+  else{
+    char init_success_msg[30] = "Ethernet Core Initialized\n";
+    uart_puts(init_success_msg);
+  }
 }
 
 void eth_send_frame(char *data, unsigned int size) {
@@ -91,6 +97,8 @@ void eth_send_frame(char *data, unsigned int size) {
 
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
+  char bad_crc_msg[10] = "Bad CRC\n";
+
 
   // wait until data received
   while(!((IO_GET(base, ETH_STATUS)>>1)&1)) {
@@ -102,7 +110,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if( IO_GET(base, ETH_CRC) != 0xc704dd7b) {
     IO_SET(base, ETH_RCVACK, 1);
-    uart_puts("Bad CRC\n");
+    uart_puts(bad_crc_msg);
     return ETH_NO_DATA;
   }
 
