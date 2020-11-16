@@ -155,15 +155,12 @@ module iob_eth #(
 
    //read 
    always @* begin
-      if(sel & ~we)
-        case (addr)
-	  `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
-          `ETH_DUMMY: data_out = dummy_reg;
-          `ETH_CRC: data_out = crc_value_cpu[1];
-          default: data_out = {24'd0, rx_rd_data}; //ETH_DATA
-        endcase
-      else
-        data_out = 0;
+      case (addr)
+	`ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+        `ETH_DUMMY: data_out = dummy_reg;
+        `ETH_CRC: data_out = crc_value_cpu[1];
+        default: data_out = {24'd0, rx_rd_data}; //ETH_DATA
+      endcase
    end
 
    //
