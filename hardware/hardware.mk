@@ -10,3 +10,7 @@ VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
 #sources
 ETHERNET_SRC_DIR:=$(ETHERNET_HW_DIR)/src
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
+
+ifeq ($(SIM),1)
+	DEFINE += $(defmacro) SIM
+endif
