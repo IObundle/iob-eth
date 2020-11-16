@@ -14,9 +14,9 @@ module iob_eth #(
 		// CPU side
 		input                   clk,
 		input                   rst,
-		input                   sel,
+		input                   valid,
 		output reg		ready,
-		input                   we,
+		input                   wstrb,
 		input [`ETH_ADDR_W-1:0] addr,
 		output reg [31:0]       data_out,
 		input [31:0]            data_in,
@@ -122,7 +122,7 @@ module iob_eth #(
       if(rst)
          ready <= 1'b0;
       else 
-         ready <= sel;
+         ready <= valid;
 
    //
    // ADDRESS DECODER
@@ -140,7 +140,7 @@ module iob_eth #(
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
 
-      if(sel & we)
+      if(valid & wstrb)
         case (addr)
 	  `ETH_SEND: send_en = 1'b1;
 	  `ETH_RCVACK: rcv_ack_en = 1'b1;

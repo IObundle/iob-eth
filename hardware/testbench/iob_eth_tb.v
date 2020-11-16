@@ -11,8 +11,8 @@ module iob_eth_tb;
    reg 			clk;
 
    reg [`ETH_ADDR_W-1:0] addr;
-   reg 			 sel;
-   reg 			 we;
+   reg 			 valid;
+   reg 			 wstrb;
    reg [31:0]            data_in;
    wire [31:0]           data_out;
 
@@ -48,8 +48,8 @@ module iob_eth_tb;
 		.rst			(rst),
 
 		// CPU side
-		.sel			(sel),
-		.we			(we),
+		.valid			(valid),
+		.wstrb			(wstrb),
 		.addr			(addr),
 		.data_in		(data_in),
 		.data_out		(data_out),
@@ -132,8 +132,8 @@ module iob_eth_tb;
       rst = 1;
       clk = 1;
       RX_CLK = 1;
-      we = 0;
-      sel = 0;
+      wstrb = 0;
+      valid = 0;
 
       // deassert reset
       #100 @(posedge clk) rst = 0;
@@ -201,11 +201,11 @@ module iob_eth_tb;
       input [31:0]  cpu_data;
 
       #1 addr = cpu_address;
-      sel = 1;
-      we = 1;
+      valid = 1;
+      wstrb = 1;
       data_in = cpu_data;
-      @ (posedge clk) #1 we = 0;
-      sel = 0;
+      @ (posedge clk) #1 wstrb = 0;
+      valid = 0;
    endtask
 
    // 2-cycle read
@@ -214,9 +214,9 @@ module iob_eth_tb;
       output [31:0] read_reg;
 
       #1 addr = cpu_address;
-      sel = 1;
+      valid = 1;
       @ (posedge clk) #1 read_reg = data_out;
-      @ (posedge clk) #1 sel = 0;
+      @ (posedge clk) #1 valid = 0;
    endtask
 
 endmodule
