@@ -110,7 +110,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     uart_puts("Failed in eth_rcv_frame()");
     exit(EXIT_FAILURE);
   }
-  uart_printf("Received message: ret = %d\n", ret);
+  printf("Received message: ret = %d\n", ret);
 
   return ETH_DATA_RCV;
 }
@@ -122,12 +122,12 @@ void eth_set_rx_payload_size(unsigned int size) {
 
 
 void eth_printstatus() {
-  uart_printf("PC implementation, printing dummy values\n");
-  uart_printf("tx_ready = %x\n", 1);
-  uart_printf("rx_ready = %x\n", 1);
-  uart_printf("phy_dv_detected = %x\n", 1);
-  uart_printf("phy_clk_detected = %x\n", 1);
-  uart_printf("rx_wr_addr = %x\n", 1);
-  uart_printf("CRC = %x\n", 1);
+  printf("PC implementation, printing dummy values\n");
+  printf("tx_ready = %x\n", 1);
+  printf("rx_ready = %x\n", 1);
+  printf("phy_dv_detected = %x\n", 1);
+  printf("phy_clk_detected = %x\n", 1);
+  printf("rx_wr_addr = %x\n", 1);
+  printf("CRC = %x\n", 1);
 }
 

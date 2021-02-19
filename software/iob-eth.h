@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "iob-uart.h"
+#include "printf.h"
 
 #ifndef IO_SET
 #define IO_SET(base, location, value) (*((volatile int*) (base + (sizeof(int)) * location)) = value)

@@ -124,11 +124,11 @@ void eth_set_rx_payload_size(unsigned int size) {
 
 
 void eth_printstatus() {
-  uart_printf("tx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>0)&1);
-  uart_printf("rx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>1)&1);
-  uart_printf("phy_dv_detected = %x\n", (IO_GET(base, ETH_STATUS)>>2)&1);
-  uart_printf("phy_clk_detected = %x\n", (IO_GET(base, ETH_STATUS)>>3)&1);
-  uart_printf("rx_wr_addr = %x\n", (IO_GET(base, ETH_STATUS)>>4)&0xFFF0);
-  uart_printf("CRC = %x\n", IO_GET(base, ETH_CRC));
+  printf("tx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>0)&1);
+  printf("rx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>1)&1);
+  printf("phy_dv_detected = %x\n", (IO_GET(base, ETH_STATUS)>>2)&1);
+  printf("phy_clk_detected = %x\n", (IO_GET(base, ETH_STATUS)>>3)&1);
+  printf("rx_wr_addr = %x\n", (IO_GET(base, ETH_STATUS)>>4)&0xFFF0);
+  printf("CRC = %x\n", IO_GET(base, ETH_CRC));
 }
 
