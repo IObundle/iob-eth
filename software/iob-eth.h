@@ -33,6 +33,7 @@
 
 #define ETH_MAC_ADDR 0x01606e11020f
 
+#define ETH_INVALID_CRC -2
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
 

@@ -10,7 +10,7 @@
       .valid(slaves_req[`valid(`ETHERNET)]),
       .addr(slaves_req[`address(`ETHERNET, `ETH_ADDR_W+2)-2]),
       .data_in(slaves_req[`wdata(`ETHERNET)]),
-      .wstrb(|(slaves_req[`wstrb(`ETHERNET)])),
+      .wstrb(slaves_req[`wstrb(`ETHERNET)]),
       .data_out(slaves_resp[`rdata(`ETHERNET)]),
       .ready(slaves_resp[`ready(`ETHERNET)]),
 

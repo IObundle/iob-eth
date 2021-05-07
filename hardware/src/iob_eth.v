@@ -16,7 +16,7 @@ module iob_eth #(
 		input                   rst,
 		input                   valid,
 		output reg		ready,
-		input                   wstrb,
+		input [3:0]             wstrb,
 		input [`ETH_ADDR_W-1:0] addr,
 		output reg [31:0]       data_out,
 		input [31:0]            data_in,
@@ -140,10 +140,10 @@ module iob_eth #(
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
 
-      if(valid & wstrb)
+      if(valid & |wstrb)
         case (addr)
-	  `ETH_SEND: send_en = 1'b1;
-	  `ETH_RCVACK: rcv_ack_en = 1'b1;
+	        `ETH_SEND: send_en = 1'b1;
+	        `ETH_RCVACK: rcv_ack_en = 1'b1;
           `ETH_DUMMY: dummy_reg_en = 1'b1;
           `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
@@ -156,7 +156,7 @@ module iob_eth #(
    //read 
    always @* begin
       case (addr)
-	`ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+	      `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
         `ETH_DUMMY: data_out = dummy_reg;
         `ETH_CRC: data_out = crc_value_cpu[1];
         default: data_out = {24'd0, rx_rd_data}; //ETH_DATA

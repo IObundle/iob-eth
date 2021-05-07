@@ -8,16 +8,16 @@ module iob_eth_rx #(
                   //async reset 
 		  input             rst,
 
-                  //system clock domain
-                  input [10:0]      nbytes,
-                  input             rcv_ack,
+      //system clock domain
+      input [10:0]      nbytes,
+      input             rcv_ack,
 		  output reg        data_rcvd,
 
 		  //RX_CLK domain
 		  output reg [10:0] addr,
 		  output reg [7:0]  data,
 		  output reg        wr,
-                  output [31:0]     crc_value,
+      output [31:0]     crc_value,
                   
 		  input             RX_CLK,
 		  input             RX_DV,
@@ -77,16 +77,17 @@ module iob_eth_rx #(
       end else begin
  
          pc <= pc+1'b1;
-         addr <= addr + pc[0];
+         //addr <= addr + pc[0];
          wr <= 0;
 
          case(pc)
            
-           0 : if(data_int != 8'hD5)
+           0 : if(data_int != 8'hD5 | !RX_DV)
               pc <= pc;
            
-           1: addr <= 0;
+           //1: addr <= 0;
 
+          /*
            2: begin
               dest_mac_addr <= {dest_mac_addr[39:0], data_int};
               wr <= 1;
@@ -96,20 +97,23 @@ module iob_eth_rx #(
              pc <= pc-1'b1;
            else if (dest_mac_addr != ETH_MAC_ADDR) begin
               pc <= 0;
+           end */
+           
+           2: begin
+            wr <= 1;
+           end
+
+           3: begin
+              addr <= addr + 1;
+              if(RX_DV)
+                  pc <= pc - 1'b1;
            end
            
-           4: wr <= 1;
-           
-           5: if(addr != (17+nbytes_eth[1])) begin
-              pc <= pc - 1'b1;
-           end
-           
-           6: begin
+           4: begin
               pc <= pc;
               data_rcvd <= 1;
               if(rcv_ack_sync[1]) begin
                  pc <= 0;
-                 addr <= 0;
                  data_rcvd <= 0;
               end
            end
