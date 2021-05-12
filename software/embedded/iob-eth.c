@@ -1,134 +1,132 @@
 #include "iob-eth.h"
+#include "iob-uart.h"
+#include "printf.h"
 
-static int base;
-static char TX_FRAME[30];
+#define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
+#define RCV_TIMEOUT 5000
 
-void eth_init(int base_address)
-{
-  int i;
-  uint64_t mac_addr;
-
-  //set base address
-  base = base_address;
-  
-  //Preamble
-  for(i=0; i < 15; i= i+1)
-    TX_FRAME[i] = 0x55;
-
-  //SFD
-  TX_FRAME[15] = 0xD5;
-
-  //dest mac address
-#ifdef LOOPBACK
-  mac_addr = ETH_MAC_ADDR;
-#else
-  mac_addr = ETH_RMAC_ADDR;
-#endif
-  for(i=0; i < 6; i= i+1) {
-    TX_FRAME[i+16] = mac_addr>>40;
-    mac_addr = mac_addr<<8;
-  }
-
-  //source mac address
-  mac_addr = ETH_MAC_ADDR;
-  for(i=0; i < 6; i= i+1) {
-    TX_FRAME[i+22] = mac_addr>>40;
-    mac_addr = mac_addr<<8;
-  }
-  
-  //eth type
-  TX_FRAME[28] = 0x08;
-  TX_FRAME[29] = 0x00;
-
-  //reset core
-  IO_SET(base, ETH_SOFTRST, 1);
-  IO_SET(base, ETH_SOFTRST, 0);
-
-  //wait for PHY to produce rx clock 
-  while(!((IO_GET(base, ETH_STATUS)>>3)&1));
-  uart_puts((char *)"Ethernet RX clock detected\n");
-
-  //wait for PLL to lock and produce tx clock 
-  while(!((IO_GET(base, ETH_STATUS)>>15)&1));
-  uart_puts((char*)"Ethernet TX PLL locked\n");
-
-  //set initial payload size to Ethernet minimum excluding FCS
-  IO_SET(base, ETH_TX_NBYTES, 46);
-  IO_SET(base, ETH_RX_NBYTES, 46);
-
-  // check processor interface
-  // write dummy register
-  IO_SET(base, ETH_DUMMY, 0xDEADBEEF);
-
-  // read and check result
-  if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF){
-    uart_puts((char*)"Ethernet Init failed\n");
-  }
-  else{
-    uart_puts((char*)"Ethernet Core Initialized\n");
-  }
-}
+char buffer[ETH_NBYTES];
 
 void eth_send_frame(char *data, unsigned int size) {
   int i;
-  //wait for ready
-  while(! (IO_GET(base, ETH_STATUS)&1)   );
 
-  //set frame size
-  IO_SET(base, ETH_TX_NBYTES, size);
+  // wait for ready
+  while(!eth_tx_ready());
 
-  //write data to send
-  //header
-  for(i=0; i < 30; i = i+1) {
-    IO_SET(base, (ETH_DATA + i), TX_FRAME[i]);
-  }
-  //payload
-  for(i=0; i < size; i = i+1) {
-    IO_SET(base, (ETH_DATA + 30 + i), data[i]);
+  // set frame size
+  eth_set_tx_payload_size(size);
+
+  // write data to send
+  // header
+  eth_set_header();
+
+  // payload
+  for (i=0; i < size; i++) {
+    //IO_SET(base, (ETH_DATA + 30 + i), data[i]);
+    eth_set_data(i, data[i]);
   }
 
   // start sending
-  IO_SET(base, ETH_SEND, ETH_SEND);
+  //IO_SET(base, ETH_SEND, ETH_SEND);
+  eth_send();
+
+  return;
 }
 
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
 
   // wait until data received
-  while(!((IO_GET(base, ETH_STATUS)>>1)&1)) {
+  while (!eth_rx_ready()) {
      timeout--;
-     if (timeout==0){
+     if (!timeout) {
        return ETH_NO_DATA;
      }
   }
 
-  if( IO_GET(base, ETH_CRC) != 0xc704dd7b) {
-    IO_SET(base, ETH_RCVACK, 1);
-    uart_puts((char*)"Bad CRC\n");
+  if(eth_get_crc() != 0xc704dd7b) {
+    eth_ack();
+    //uart_puts((char*)"Bad CRC\n");
     return ETH_NO_DATA;
   }
 
-  for(i=0; i < (size+18); i = i+1)
-    data_rcv[i] = IO_GET(base, (ETH_DATA + i));
+  for(i=0; i < (size+18); i++)
+    //data_rcv[i] = IO_GET(base, (ETH_DATA + i));
+    data_rcv[i] = eth_get_data(i);
 
   // send receive ack
-  IO_SET(base, ETH_RCVACK, 1);
+  eth_ack();
   
   return ETH_DATA_RCV;
 }
 
-void eth_set_rx_payload_size(unsigned int size) {
-  //set frame size
-  IO_SET(base, ETH_RX_NBYTES, size);
+unsigned int eth_rcv_file(char *data, int size) {
+  int num_frames = size/ETH_NBYTES;
+  unsigned int bytes_to_receive;
+  unsigned int count_bytes = 0;
+  int i, j;
+
+  if (size % ETH_NBYTES) num_frames++;
+
+  // Loop to receive intermediate data frames
+  for(j = 0; j < num_frames; j++) {
+
+     // check if it is last packet (has less data that full payload size)
+     if(j == (num_frames-1)) bytes_to_receive = size - count_bytes;
+     else bytes_to_receive = ETH_NBYTES;
+
+     // wait to receive frame
+     while(eth_rcv_frame(buffer, bytes_to_receive, RCV_TIMEOUT));
+
+     // save in DDR
+     for(i = 0; i < bytes_to_receive; i++) {
+       data[j*ETH_NBYTES + i] = buffer[14+i];
+     }
+
+     // send data back as ack
+     eth_send_frame(&buffer[14], bytes_to_receive);
+
+     // update byte counter
+     count_bytes += bytes_to_receive;
+  }
+
+  return count_bytes;
 }
 
+unsigned int eth_send_file(char *data, int size) {
+  int num_frames = size/ETH_NBYTES;
+  unsigned int bytes_to_send;
+  unsigned int count_bytes = 0;
+  int j;
 
-void eth_printstatus() {
-  printf("tx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>0)&1);
-  printf("rx_ready = %x\n", (IO_GET(base, ETH_STATUS)>>1)&1);
-  printf("phy_dv_detected = %x\n", (IO_GET(base, ETH_STATUS)>>2)&1);
-  printf("phy_clk_detected = %x\n", (IO_GET(base, ETH_STATUS)>>3)&1);
-  printf("rx_wr_addr = %x\n", (IO_GET(base, ETH_STATUS)>>4)&0xFFF0);
-  printf("CRC = %x\n", IO_GET(base, ETH_CRC));
+  if (size % ETH_NBYTES) num_frames++;
+
+  // Loop to send data
+  for(j = 0; j < num_frames; j++) {
+
+     // check if it is last packet (has less data that full payload size)
+     if(j == (num_frames-1)) bytes_to_send = size - count_bytes;
+     else bytes_to_send = ETH_NBYTES;
+
+     // send frame
+     eth_send_frame(&data[j*ETH_NBYTES], bytes_to_send);
+
+     // wait to receive frame as ack
+     if(j != (num_frames-1)) while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+
+     // update byte counter
+     count_bytes += bytes_to_send;
+  }
+
+  return count_bytes;
+}
+
+void eth_print_status(void) {
+  printf("tx_ready = %x\n", eth_tx_ready());
+  printf("rx_ready = %x\n", eth_rx_ready());
+  printf("phy_dv_detected = %x\n", eth_phy_dv());
+  printf("phy_clk_detected = %x\n", eth_phy_clk());
+  printf("rx_wr_addr = %x\n", eth_rx_wr_addr());
+  printf("CRC = %x\n", eth_get_crc());
 }
 
