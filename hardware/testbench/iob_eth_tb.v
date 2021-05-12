@@ -181,7 +181,6 @@ module iob_eth_tb;
 
       RX_DV = 0;
 
-      $display("here");
       cpu_read (`ETH_STATUS, cpu_reg);
       while(!cpu_reg[1])
         cpu_read (`ETH_STATUS, cpu_reg);
