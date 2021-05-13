@@ -2,7 +2,6 @@
 #include "iob-uart.h"
 #include "printf.h"
 
-#define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 #define RCV_TIMEOUT 5000
 
 char buffer[ETH_NBYTES];
@@ -27,7 +26,6 @@ void eth_send_frame(char *data, unsigned int size) {
   }
 
   // start sending
-  //IO_SET(base, ETH_SEND, ETH_SEND);
   eth_send();
 
   return;
@@ -35,6 +33,7 @@ void eth_send_frame(char *data, unsigned int size) {
 
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
+  int cnt = timeout;
 
   // wait until data received
   while (!eth_rx_ready()) {
@@ -50,9 +49,10 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     return ETH_NO_DATA;
   }
 
-  for(i=0; i < (size+18); i++)
+  for(i=0; i < size; i++) {
     //data_rcv[i] = IO_GET(base, (ETH_DATA + i));
     data_rcv[i] = eth_get_data(i);
+  }
 
   // send receive ack
   eth_ack();

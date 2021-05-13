@@ -1,8 +1,11 @@
 #include "stdint.h"
 #include "interconnect.h"
 #include "iob-eth.h"
+#include "eth_mem_map.h"
+#include "eth_frame_struct.h"
 #include "iob-uart.h"
 
+/*
 // memory map
 #define ETH_STATUS           0
 #define ETH_SEND             1
@@ -15,21 +18,31 @@
 #define ETH_DATA          2048
 
 // Frame structure
-#define PREAMBLE_SZ 15
-#define MAC_ADDR_SZ 6
-#define HDR_SZ      (PREAMBLE_SZ + 1 + 2*MAC_ADDR_SZ + 2)
+#define PREAMBLE_LEN 7
+#define MAC_ADDR_LEN 6
+#define HDR_LEN      (PREAMBLE_LEN + 1 + 2*MAC_ADDR_LEN + 2)
+*/
 
-#define PREAMBLE_PTR    0
-#define SDF_PTR         (PREAMBLE_PTR + PREAMBLE_SZ)
-#define MAC_DEST_PTR    (SDF_PTR + 1)
-#define MAC_SRC_PTR     (MAC_DEST_PTR + MAC_ADDR_SZ)
-//#define TAG_PTR         (MAC_SRC_PTR + MAC_ADDR_SZ) // Optional - not supported
-#define ETH_TYPE_PTR    (MAC_SRC_PTR + MAC_ADDR_SZ)
-#define PAYLOAD_PTR     (ETH_TYPE_PTR + 2)
-#define CRC(payload_sz) (PAYLOAD_PTR + (payload_sz))
+// preamble
+//#define ETH_PREAMBLE 0x55
+
+// start frame delimiter
+//#define ETH_SFD 0xD5
+
+// frame type
+//#define ETH_TYPE_H 0x08
+//#define ETH_TYPE_L 0x00
+
+#define PREAMBLE_PTR     0
+#define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
+#define MAC_DEST_PTR     (SDF_PTR + 1)
+#define MAC_SRC_PTR      (MAC_DEST_PTR + MAC_ADDR_LEN)
+//#define TAG_PTR          (MAC_SRC_PTR + MAC_ADDR_LEN) // Optional - not supported
+#define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
+#define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
 int base;
-char HEADER[HDR_SZ];
+char HEADER[HDR_LEN];
 
 void eth_init(int base_address) {
   int i;
@@ -39,7 +52,7 @@ void eth_init(int base_address) {
   base = base_address;
   
   // Preamble
-  for(i=0; i < PREAMBLE_SZ; i++)
+  for(i=0; i < PREAMBLE_LEN; i++)
     HEADER[PREAMBLE_PTR+i] = ETH_PREAMBLE;
 
   // SFD
@@ -51,14 +64,14 @@ void eth_init(int base_address) {
 #else
   mac_addr = ETH_RMAC_ADDR;
 #endif
-  for (i=0; i < MAC_ADDR_SZ; i++) {
+  for (i=0; i < MAC_ADDR_LEN; i++) {
     HEADER[MAC_DEST_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
 
   // source mac address
   mac_addr = ETH_MAC_ADDR;
-  for (i=0; i < MAC_ADDR_SZ; i++) {
+  for (i=0; i < MAC_ADDR_LEN; i++) {
     HEADER[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
@@ -135,17 +148,17 @@ int eth_get_crc(void) {
 }
 
 void eth_set_data(int i, char data) {
-  IO_SET(base, (ETH_DATA + HDR_SZ + i), data);
+  IO_SET(base, (ETH_DATA + HDR_LEN + i), data);
 }
 
 char eth_get_data(int i) {
-  return (IO_GET(base, (ETH_DATA + i)));
+  return (IO_GET(base, (ETH_DATA + 2*MAC_ADDR_LEN+2+4 + i)));
 }
 
 void eth_set_header(void) {
   int i;
 
-  for (i=0; i < HDR_SZ; i++) {
+  for (i=0; i < HDR_LEN; i++) {
     IO_SET(base, (ETH_DATA + i), HEADER[i]);
   }
 }

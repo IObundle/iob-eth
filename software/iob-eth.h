@@ -6,20 +6,12 @@
 #define ETH_RX_WR_ADDR        4
 #define ETH_TX_CLK_PLL_LOCKED 5
 
-// preamble
-#define ETH_PREAMBLE 0x55
-
-// start frame delimiter
-#define ETH_SFD 0xD5
-
-// frame type
-#define ETH_TYPE_H 0x08
-#define ETH_TYPE_L 0x00
-
 #define ETH_MAC_ADDR 0x01606e11020f
 
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
+
+#define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 
 // driver functions
 void eth_init(int base);
