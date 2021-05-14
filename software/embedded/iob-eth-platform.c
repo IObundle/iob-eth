@@ -2,36 +2,7 @@
 #include "interconnect.h"
 #include "iob-eth.h"
 #include "eth_mem_map.h"
-#include "eth_frame_struct.h"
 #include "iob-uart.h"
-
-/*
-// memory map
-#define ETH_STATUS           0
-#define ETH_SEND             1
-#define ETH_RCVACK           2
-#define ETH_SOFTRST          4
-#define ETH_DUMMY            5
-#define ETH_TX_NBYTES        6
-#define ETH_RX_NBYTES        7
-#define ETH_CRC              8
-#define ETH_DATA          2048
-
-// Frame structure
-#define PREAMBLE_LEN 7
-#define MAC_ADDR_LEN 6
-#define HDR_LEN      (PREAMBLE_LEN + 1 + 2*MAC_ADDR_LEN + 2)
-*/
-
-// preamble
-//#define ETH_PREAMBLE 0x55
-
-// start frame delimiter
-//#define ETH_SFD 0xD5
-
-// frame type
-//#define ETH_TYPE_H 0x08
-//#define ETH_TYPE_L 0x00
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
@@ -41,7 +12,10 @@
 #define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
 #define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
+// Base address
 int base;
+
+// Frame header template
 char HEADER[HDR_LEN];
 
 void eth_init(int base_address) {
@@ -86,11 +60,11 @@ void eth_init(int base_address) {
 
   // wait for PHY to produce rx clock 
   while (!((IO_GET(base, ETH_STATUS) >> 3) & 1));
-  uart_puts((char *)"Ethernet RX clock detected\n");
+  uart_puts("Ethernet RX clock detected\n");
 
   // wait for PLL to lock and produce tx clock 
   while (!((IO_GET(base, ETH_STATUS) >> 15) & 1));
-  uart_puts((char*)"Ethernet TX PLL locked\n");
+  uart_puts("Ethernet TX PLL locked\n");
 
   // set initial payload size to Ethernet minimum excluding FCS
   IO_SET(base, ETH_TX_NBYTES, 46);
@@ -105,9 +79,9 @@ void eth_init(int base_address) {
 
   // read and check result
   if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF) {
-    uart_puts((char*)"Ethernet Init failed\n");
+    uart_puts("Ethernet Init failed\n");
   } else {
-    uart_puts((char*)"Ethernet Core Initialized\n");
+    uart_puts("Ethernet Core Initialized\n");
   }
 }
 
@@ -152,7 +126,7 @@ void eth_set_data(int i, char data) {
 }
 
 char eth_get_data(int i) {
-  return (IO_GET(base, (ETH_DATA + 2*MAC_ADDR_LEN+2+4 + i)));
+  return (IO_GET(base, (ETH_DATA + i)));
 }
 
 void eth_set_header(void) {

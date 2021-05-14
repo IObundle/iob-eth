@@ -1,3 +1,5 @@
+#include "eth_frame_struct.h"
+
 // fields
 #define ETH_TX_READY          0
 #define ETH_RX_READY          1
