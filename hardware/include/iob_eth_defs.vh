@@ -19,7 +19,7 @@
 // Frame structure
 `define PREAMBLE_LEN 7
 `define MAC_ADDR_LEN 6
-`define HDR_LEN      (`PREAMBLE_LEN + 1 + 2*`MAC_ADDR_LEN + 2)
+`define HDR_LEN      (2*`MAC_ADDR_LEN + 2)
 
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0

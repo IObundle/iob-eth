@@ -112,7 +112,7 @@ module iob_eth_tx
 
           4: begin
              TX_DATA <= data[7:4];
-             if (addr <= ((`HDR_LEN-1) + nbytes_sync[1])) begin
+             if (addr <= ((`PREAMBLE_LEN + 1 + `HDR_LEN - 1) + nbytes_sync[1])) begin
                 crc_en <= 1;
                 pc <= pc-1'b1;
              end

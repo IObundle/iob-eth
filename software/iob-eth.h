@@ -38,7 +38,7 @@ void eth_set_data(int i, char data);
 
 char eth_get_data(int i);
 
-void eth_set_header(void);
+void eth_init_frame(void);
 
 void eth_send_frame(char *data_to_send, unsigned int size);
 

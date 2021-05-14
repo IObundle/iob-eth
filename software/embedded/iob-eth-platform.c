@@ -15,8 +15,8 @@
 // Base address
 int base;
 
-// Frame header template
-char HEADER[HDR_LEN];
+// Frame template
+char TEMPLATE[PREAMBLE_LEN + 1 + HDR_LEN];
 
 void eth_init(int base_address) {
   int i;
@@ -27,10 +27,10 @@ void eth_init(int base_address) {
   
   // Preamble
   for(i=0; i < PREAMBLE_LEN; i++)
-    HEADER[PREAMBLE_PTR+i] = ETH_PREAMBLE;
+    TEMPLATE[PREAMBLE_PTR+i] = ETH_PREAMBLE;
 
   // SFD
-  HEADER[SDF_PTR] = ETH_SFD;
+  TEMPLATE[SDF_PTR] = ETH_SFD;
 
   // dest mac address
 #ifdef LOOPBACK
@@ -39,20 +39,20 @@ void eth_init(int base_address) {
   mac_addr = ETH_RMAC_ADDR;
 #endif
   for (i=0; i < MAC_ADDR_LEN; i++) {
-    HEADER[MAC_DEST_PTR+i] = mac_addr >> 40;
+    TEMPLATE[MAC_DEST_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
 
   // source mac address
   mac_addr = ETH_MAC_ADDR;
   for (i=0; i < MAC_ADDR_LEN; i++) {
-    HEADER[MAC_SRC_PTR+i] = mac_addr >> 40;
+    TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
   
   // eth type
-  HEADER[ETH_TYPE_PTR]   = ETH_TYPE_H;
-  HEADER[ETH_TYPE_PTR+1] = ETH_TYPE_L;
+  TEMPLATE[ETH_TYPE_PTR]   = ETH_TYPE_H;
+  TEMPLATE[ETH_TYPE_PTR+1] = ETH_TYPE_L;
 
   // reset core
   IO_SET(base, ETH_SOFTRST, 1);
@@ -73,9 +73,6 @@ void eth_init(int base_address) {
   // check processor interface
   // write dummy register
   IO_SET(base, ETH_DUMMY, 0xDEADBEEF);
-
-  // set RX frame size
-  IO_SET(base, ETH_RX_NBYTES, ETH_NBYTES);
 
   // read and check result
   if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF) {
@@ -122,17 +119,17 @@ int eth_get_crc(void) {
 }
 
 void eth_set_data(int i, char data) {
-  IO_SET(base, (ETH_DATA + HDR_LEN + i), data);
+  IO_SET(base, (ETH_DATA + PREAMBLE_LEN + 1 + HDR_LEN + i), data);
 }
 
 char eth_get_data(int i) {
   return (IO_GET(base, (ETH_DATA + i)));
 }
 
-void eth_set_header(void) {
+void eth_init_frame(void) {
   int i;
 
-  for (i=0; i < HDR_LEN; i++) {
-    IO_SET(base, (ETH_DATA + i), HEADER[i]);
+  for (i=0; i < (PREAMBLE_LEN + 1 + HDR_LEN); i++) {
+    IO_SET(base, (ETH_DATA + i), TEMPLATE[i]);
   }
 }

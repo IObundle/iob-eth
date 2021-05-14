@@ -16,8 +16,8 @@ void eth_send_frame(char *data, unsigned int size) {
   eth_set_tx_payload_size(size);
 
   // write data to send
-  // header
-  eth_set_header();
+  // init frame
+  eth_init_frame();
 
   // payload
   for (i=0; i < size; i++) {
@@ -44,11 +44,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if(eth_get_crc() != 0xc704dd7b) {
     eth_ack();
-    uart_puts("Bad CRC\n");
+    uart_puts("Bad CRC\n\0");
     return ETH_NO_DATA;
   }
 
-  for(i=0; i < (size+2*MAC_ADDR_LEN+2); i++) {
+  for(i=0; i < (size+HDR_LEN); i++) {
     data_rcv[i] = eth_get_data(i);
   }
 
@@ -78,11 +78,11 @@ unsigned int eth_rcv_file(char *data, int size) {
 
      // save in DDR
      for(i = 0; i < bytes_to_receive; i++) {
-       data[j*ETH_NBYTES + i] = buffer[2*MAC_ADDR_LEN+2+i];
+       data[j*ETH_NBYTES + i] = buffer[HDR_LEN+i];
      }
 
      // send data back as ack
-     eth_send_frame(&buffer[2*MAC_ADDR_LEN+2], bytes_to_receive);
+     eth_send_frame(&buffer[HDR_LEN], bytes_to_receive);
 
      // update byte counter
      count_bytes += bytes_to_receive;
