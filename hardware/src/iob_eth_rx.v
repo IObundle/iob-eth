@@ -111,6 +111,7 @@ module iob_eth_rx #(
            
            4: begin
               pc <= pc;
+              addr <= 0;
               data_rcvd <= 1;
               if(rcv_ack_sync[1]) begin
                  pc <= 0;

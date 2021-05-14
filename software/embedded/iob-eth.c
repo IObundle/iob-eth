@@ -39,8 +39,8 @@ void eth_init(int base_address)
   }
   
   //eth type
-  TX_FRAME[28] = 0x60; // 0x08
-  TX_FRAME[29] = 0x00; // 0x00
+  TX_FRAME[28] = 0x60; // Use an uncommon value (0x6000) to quickly identify
+  TX_FRAME[29] = 0x00; // the source of the packet
 
   //reset core
   IO_SET(base, ETH_SOFTRST, 1);
@@ -74,7 +74,7 @@ void eth_init(int base_address)
 void eth_send_frame(char *data, unsigned int size) {
   int i;
   //wait for ready
-  while(! (IO_GET(base, ETH_STATUS)&1)   );
+  while(!(IO_GET(base, ETH_STATUS)&1));
 
   //set frame size
   IO_SET(base, ETH_TX_NBYTES, size);
@@ -104,24 +104,18 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
      }
   }
 
-  if( IO_GET(base, ETH_CRC) != 0xc704dd7b) {
-    IO_SET(base, ETH_RCVACK, 1);
+  if(IO_GET(base, ETH_CRC) != 0xc704dd7b) {
     uart_puts((char*)"Bad CRC\n");
+    IO_SET(base, ETH_RCVACK, 1);
     return ETH_INVALID_CRC;
   }
 
+  for(i=0; i < (size+18); i = i+1)
+    data_rcv[i] = IO_GET(base, (ETH_DATA + i));
+  
   // Send ACK as fast as possible
   IO_SET(base, ETH_RCVACK, 1);
 
-  //printf("%d:%d\n",readIndex,size);
-  for(i=0; i < (size+18); i = i+1){
-    data_rcv[i] = IO_GET(base, (ETH_DATA + readIndex));
-    readIndex += 1;
-    if(readIndex == 2048){
-      readIndex = 0;
-    }
-  }
-  
   return ETH_DATA_RCV;
 }
 

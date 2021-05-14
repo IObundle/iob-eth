@@ -149,7 +149,7 @@ module iob_eth_tx(
    iob_eth_crc crc_tx (
 		       .rst(tx_rst[1]),
 		       .clk(TX_CLK),
-                       .start(send_sync[1]),
+           .start(pc == 0),
 		       .data_in(data),
 		       .data_en(crc_en),
 		       .crc_out(crc_value) 

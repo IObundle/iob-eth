@@ -177,22 +177,24 @@ module iob_eth #(
        rst_soft <= 1'b0;
 
    //tx send self-clearing register
+   reg [3:0] send_counter; 
    always @ (posedge clk, posedge rst_int)
      if (rst_int)
-       send <= 1'b0;
-     else if (send_en && !send)
-       send <= 1'b1;
-     else
-       send <= 1'b0;
+       send_counter <= 4'h0;
+     else if (send_en)
+       send_counter <= 4'hf;
+     else if (|send_counter)
+       send_counter <= send_counter - 1;
 
    //rx rcv ack self-clearing register
+   reg [3:0] rcv_counter; 
    always @ (posedge clk, posedge rst_int)
      if (rst_int)
-       rcv_ack <= 1'b0;
-     else if (rcv_ack_en && !rcv_ack)
-       rcv_ack <= 1'b1;
-     else
-       rcv_ack <= 1'b0;
+       rcv_counter <= 4'h0;
+     else if (rcv_ack_en)
+       rcv_counter <= 4'hf;
+     else if (|rcv_counter)
+       rcv_counter <= rcv_counter - 1;
 
    always @ (posedge clk, posedge rst_int)
       if (rst_int) begin 
@@ -256,7 +258,7 @@ module iob_eth #(
                   //cpu side
 		  .rst			(rst_int),
                   .nbytes               (tx_nbytes_reg),
-                  .send                 (send),
+                  .send                 (|send_counter),
 		  .ready                (tx_ready_int),
                   //mii side 
 		  .addr	       	        (tx_rd_addr),
@@ -280,7 +282,7 @@ module iob_eth #(
 		  .rst			(rst_int),
                   .nbytes               (rx_nbytes_reg),
 		  .data_rcvd	        (rx_data_rcvd_int),
-                  .rcv_ack              (rcv_ack),
+                  .rcv_ack              (|rcv_counter),
                   //mii side
 		  .wr                   (rx_wr),
 		  .addr		        (rx_wr_addr),
