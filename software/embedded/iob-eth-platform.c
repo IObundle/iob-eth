@@ -88,7 +88,7 @@ int eth_get_status(void) {
 
 int eth_get_status(char field) {
   if (field == ETH_RX_WR_ADDR) {
-    return ((IO_GET(base, ETH_STATUS) >> field) & 0xFFF0);
+    return ((IO_GET(base, ETH_STATUS) >> field) & 0x7FFF);
   } else {
     return ((IO_GET(base, ETH_STATUS) >> field) & 0x0001);
   }
