@@ -77,13 +77,13 @@ module iob_eth_rx #(
         data_rcvd <= 0;
      end else begin
 
-        pc <= pc+1'b1;
+        pc <= pc + 1'b1;
         addr <= addr + pc[0];
         wr <= 0;
 
         case(pc)
 
-          0 : if (data_int != `ETH_SFD)
+          0 : if (data_int != `ETH_SFD || !RX_DV)
             pc <= pc;
 
           1: addr <= 0;
@@ -94,14 +94,14 @@ module iob_eth_rx #(
           end
 
           3: if (addr != (`MAC_ADDR_LEN-1)) begin
-             pc <= pc-1'b1;
+             pc <= pc - 1'b1;
           end else if (dest_mac_addr != ETH_MAC_ADDR) begin
              pc <= 0;
           end
 
           4: wr <= 1;
 
-          5: if (addr != ((`HDR_LEN+4-1)+nbytes_eth[1])) begin
+          5: if (RX_DV /*addr != ((`HDR_LEN+4-1)+nbytes_eth[1])*/) begin
              pc <= pc - 1'b1;
           end
 
@@ -119,7 +119,6 @@ module iob_eth_rx #(
 
         endcase
      end
-
 
    // capture RX_DATA
    assign data_int = {RX_DATA, data[7:4]};

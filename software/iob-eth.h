@@ -10,10 +10,9 @@
 
 #define ETH_MAC_ADDR 0x01606e11020f
 
+#define ETH_INVALID_CRC -2
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
-
-#define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 
 // driver functions
 void eth_init(int base);

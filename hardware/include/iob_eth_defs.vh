@@ -13,8 +13,10 @@
 `define ETH_SFD 8'hD5
 
 // frame type
-`define ETH_TYPE_H 8'h08
+`define ETH_TYPE_H 8'h60
 `define ETH_TYPE_L 8'h00
+
+`define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 
 // Frame structure
 `define PREAMBLE_LEN 7

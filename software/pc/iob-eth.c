@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #define BUFFER_SIZE ETH_DATA
-#define SOCKET_NAME "./tmpLocalSocket"
+#define SOCKET_NAME "/tmp/tmpLocalSocket"
 
 static int data_socket = -1;
 static int payload_size;
@@ -43,7 +43,7 @@ void eth_init(int base_address)
   unlink(SOCKET_NAME);
 
   /*create socket to receive connections */
-  connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+  connection_socket = socket(AF_UNIX, SOCK_STREAM, 0);
   /* check for errors */
   if(connection_socket == -1){
     perror("Failed to create socket");

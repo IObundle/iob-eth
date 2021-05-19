@@ -1,4 +1,4 @@
-ETHERNET_SW_DIR:=$(ETHERNET_DIR)/software
+include $(VERSAT_CNN_DIR)/core.mk
 
 #include
 INCLUDE+=-I$(ETHERNET_SW_DIR)
@@ -11,7 +11,7 @@ SRC+=$(ETHERNET_SW_DIR)/iob-eth.c
 
 #define ETH_RMAC_ADDR
 ifneq ($(SIM),)
-DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x0123456789ab
+DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x001200feaa00
 else
 DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x$(RMAC_ADDR)
 endif

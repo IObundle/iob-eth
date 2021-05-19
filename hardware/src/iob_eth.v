@@ -3,9 +3,7 @@
 `include "iob_eth_defs.vh"
 
 /*
-
  Ethernet Core
-
 */
 
 module iob_eth #(
@@ -52,10 +50,10 @@ module iob_eth #(
 
    // control
    reg                      send_en;
-   reg                      send;
+   wire                     send;
 
    reg                      rcv_ack_en;
-   reg                      rcv_ack;
+   wire                     rcv_ack;
 
    // tx signals
    reg                      tx_wr;
@@ -176,22 +174,26 @@ module iob_eth #(
        rst_soft <= 1'b0;
 
    // tx send self-clearing register
+   reg [3:0] send_counter;
+   assign send = |send_counter;
    always @ (posedge clk, posedge rst_int)
      if (rst_int)
-       send <= 1'b0;
-     else if (send_en && !send)
-       send <= 1'b1;
-     else
-       send <= 1'b0;
+       send_counter <= 4'h0;
+     else if (send_en & ~send)
+       send_counter <= 4'hf;
+     else if (send)
+       send_counter <= send_counter - 1'b1;
 
    // rx rcv ack self-clearing register
+   reg [3:0] rcv_counter;
+   assign rcv_ack = |rcv_counter;
    always @ (posedge clk, posedge rst_int)
      if (rst_int)
-       rcv_ack <= 1'b0;
-     else if (rcv_ack_en && !rcv_ack)
-       rcv_ack <= 1'b1;
-     else
-       rcv_ack <= 1'b0;
+       rcv_counter <= 4'h0;
+     else if (rcv_ack_en & ~rcv_ack)
+       rcv_counter <= 4'hf;
+     else if (rcv_ack)
+       rcv_counter <= rcv_counter - 1'b1;
 
    always @ (posedge clk, posedge rst_int)
      if (rst_int) begin

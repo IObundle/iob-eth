@@ -45,7 +45,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   if(eth_get_crc() != 0xc704dd7b) {
     eth_ack();
     uart_puts("Bad CRC\n\0");
-    return ETH_NO_DATA;
+    return ETH_INVALID_CRC;
   }
 
   for(i=0; i < (size+HDR_LEN); i++) {
