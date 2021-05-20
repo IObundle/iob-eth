@@ -96,7 +96,7 @@ module iob_eth_rx #(
           3: if (addr != (`MAC_ADDR_LEN-1)) begin
              pc <= pc - 1'b1;
           end else if (dest_mac_addr != ETH_MAC_ADDR) begin
-             pc <= 0;
+             pc <= 7;
           end
 
           4: wr <= 1;
@@ -114,6 +114,12 @@ module iob_eth_rx #(
                 data_rcvd <= 0;
              end
           end
+
+          // Wait for DV to deassert
+          7: if(RX_DV)
+            pc <= pc;
+          else
+            pc <= 0;
 
           default: ;
 
