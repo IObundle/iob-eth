@@ -1,4 +1,4 @@
-include $(VERSAT_CNN_DIR)/core.mk
+include $(ETHERNET_DIR)/core.mk
 
 #include
 INCLUDE+=$(incdir)$(ETHERNET_INC_DIR)
