@@ -6,6 +6,23 @@
 `define ETH_MAC_ADDR 48'h01606e11020f
 `define ETH_RMAC_ADDR 48'h0123456789ab
 
+// preamble
+`define ETH_PREAMBLE 8'h55
+
+// start frame delimiter
+`define ETH_SFD 8'hD5
+
+// frame type
+`define ETH_TYPE_H 8'h60
+`define ETH_TYPE_L 8'h00
+
+`define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
+
+// Frame structure
+`define PREAMBLE_LEN 7
+`define MAC_ADDR_LEN 6
+`define HDR_LEN      (2*`MAC_ADDR_LEN + 2)
+
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0
 `define ETH_SEND             `ETH_ADDR_W'd1
