@@ -7,11 +7,11 @@ module iob_eth_tx
    // CPU clk domain
    input             rst,
    input [10:0]      nbytes,
-   input             send,
 
    output reg        ready,
 
    // TX_CLK domain
+   input             send,
    output reg [10:0] addr,
    input [7:0]       data,
    input wire        TX_CLK,
@@ -42,8 +42,6 @@ module iob_eth_tx
 
    reg [10:0]      nbytes_sync[1:0];
 
-   reg [1:0]       send_sync;
-
 
    // SYNCHRONIZERS
 
@@ -53,13 +51,6 @@ module iob_eth_tx
        tx_rst <= 2'b11;
      else
        tx_rst <= {tx_rst[0], 1'b0};
-
-   // send sync
-   always @(posedge TX_CLK, posedge send)
-     if (send)
-       send_sync <= 2'b11;
-     else
-       send_sync <= {send_sync[0], 1'b0};
 
    // nbytes sync
    always @(posedge TX_CLK, posedge tx_rst[1])
@@ -90,7 +81,7 @@ module iob_eth_tx
         
         case(pc)
 
-          0: if (send_sync[1])
+          0: if (send)
             ready <= 0;
           else
             pc <= pc;
@@ -153,7 +144,7 @@ module iob_eth_tx
              .clk(TX_CLK),
              .rst(tx_rst[1]),
 
-             .start(send_sync[1]),
+             .start(send),
 
              .data_in(data),
              .data_en(crc_en),

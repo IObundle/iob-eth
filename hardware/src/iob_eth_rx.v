@@ -11,10 +11,10 @@ module iob_eth_rx #(
 
     // system clock domain
     input [10:0]      nbytes,
-    input             rcv_ack,
     output reg        data_rcvd,
 
     // RX_CLK domain
+    input             rcv_ack,
     output reg [10:0] addr,
     output reg [7:0]  data,
     output reg        wr,
@@ -35,9 +35,6 @@ module iob_eth_rx #(
    // data
    wire [7:0]         data_int;
 
-   // receive ack
-   reg [1:0]          rcv_ack_sync;
-
    reg [10:0]         nbytes_eth[1:0];
    
    
@@ -50,19 +47,11 @@ module iob_eth_rx #(
      else
        rx_rst <= {rx_rst[0], 1'b0};
 
-   // receive ack preset
-   always @(posedge RX_CLK, posedge rcv_ack)
-     if (rcv_ack)
-       rcv_ack_sync <= 2'b11;
-     else
-       rcv_ack_sync <= {rcv_ack_sync[0], 1'b0};
-
    // number of bytes to receive
    always @(posedge RX_CLK) begin
       nbytes_eth[0] <= nbytes;
       nbytes_eth[1] <= nbytes_eth[0];
    end
-
 
    //
    // RECEIVER PROGRAM
@@ -108,7 +97,7 @@ module iob_eth_rx #(
           6: begin
              pc <= pc;
              data_rcvd <= 1;
-             if (rcv_ack_sync[1]) begin
+             if (rcv_ack) begin
                 pc <= 0;
                 addr <= 0;
                 data_rcvd <= 0;

@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 
+`include "iob_lib.vh"
 `include "iob_eth_defs.vh"
 
 /*
@@ -50,10 +51,10 @@ module iob_eth #(
 
    // control
    reg                      send_en;
-   wire                     send;
+   reg                      send;
 
    reg                      rcv_ack_en;
-   wire                     rcv_ack;
+   reg                      rcv_ack;
 
    // tx signals
    reg                      tx_wr;
@@ -173,28 +174,6 @@ module iob_eth #(
      else
        rst_soft <= 1'b0;
 
-   // tx send self-clearing register
-   reg [3:0] send_counter;
-   assign send = |send_counter;
-   always @ (posedge clk, posedge rst_int)
-     if (rst_int)
-       send_counter <= 4'h0;
-     else if (send_en & ~send)
-       send_counter <= 4'hf;
-     else if (send)
-       send_counter <= send_counter - 1'b1;
-
-   // rx rcv ack self-clearing register
-   reg [3:0] rcv_counter;
-   assign rcv_ack = |rcv_counter;
-   always @ (posedge clk, posedge rst_int)
-     if (rst_int)
-       rcv_counter <= 4'h0;
-     else if (rcv_ack_en & ~rcv_ack)
-       rcv_counter <= 4'hf;
-     else if (rcv_ack)
-       rcv_counter <= rcv_counter - 1'b1;
-
    always @ (posedge clk, posedge rst_int)
      if (rst_int) begin
         tx_nbytes_reg <= 11'd46;
@@ -207,6 +186,14 @@ module iob_eth #(
      else if (rx_nbytes_reg_en)
        rx_nbytes_reg <= data_in[10:0];
    
+   // SYNCHRONIZERS
+   
+   // Clock cross send_en from clk to RX_CLK domain
+   `PULSE_SYNC(send_en,clk,send,RX_CLK,rst)
+
+   // Clock cross rcv_ack_en from clk to TX_CLK domain
+   `PULSE_SYNC(rcv_ack_en,clk,rcv_ack,TX_CLK,rst)
+
    //
    // TX and RX BUFFERS
    //
