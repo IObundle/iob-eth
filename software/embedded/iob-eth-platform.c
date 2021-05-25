@@ -13,10 +13,10 @@
 #define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
 // Base address
-int base;
+static int base;
 
 // Frame template
-char TEMPLATE[PREAMBLE_LEN + 1 + HDR_LEN];
+static char TEMPLATE[PREAMBLE_LEN + 1 + HDR_LEN];
 
 void eth_init(int base_address) {
   int i;
@@ -86,7 +86,7 @@ int eth_get_status(void) {
   return (IO_GET(base, ETH_STATUS));
 }
 
-int eth_get_status(char field) {
+int eth_get_status_field(char field) {
   if (field == ETH_RX_WR_ADDR) {
     return ((IO_GET(base, ETH_STATUS) >> field) & 0x7FFF);
   } else {

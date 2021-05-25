@@ -4,7 +4,7 @@
 
 #define RCV_TIMEOUT 5000
 
-char buffer[ETH_NBYTES];
+static char buffer[ETH_NBYTES+HDR_LEN];
 
 void eth_send_frame(char *data, unsigned int size) {
   int i;
@@ -44,7 +44,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if(eth_get_crc() != 0xc704dd7b) {
     eth_ack();
-    uart_puts("Bad CRC\n\0");
+    uart_puts("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
