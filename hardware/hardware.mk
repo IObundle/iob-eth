@@ -1,5 +1,7 @@
 include $(ETHERNET_DIR)/core.mk
 
+include $(DMA_DIR)/hardware/hardware.mk
+
 #include
 INCLUDE+=$(incdir)$(ETHERNET_INC_DIR)
 

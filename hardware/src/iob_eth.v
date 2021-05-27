@@ -8,18 +8,23 @@
 */
 
 module iob_eth #(
-                 parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
+                 parameter ETH_MAC_ADDR = `ETH_MAC_ADDR,
+                 parameter AXI_ADDR_W = 30, //NODOC addressable memory space (log2)
+                 parameter AXI_DATA_W = 32 //NODOC Memory data width = DMA_DATA_W
                  )
    (
     // CPU side
     input                   clk,
     input                   rst,
+
     input                   valid,
     output reg              ready,
     input                   wstrb,
     input [`ETH_ADDR_W-1:0] addr,
     output reg [31:0]       data_out,
     input [31:0]            data_in,
+
+    `include "cpu_axi4_m_if.v"
 
     // PHY side
     output reg              ETH_PHY_RESETN,
@@ -48,6 +53,12 @@ module iob_eth #(
    // rx_nbytes
    reg [10:0]               rx_nbytes_reg;
    reg                      rx_nbytes_reg_en;
+   // dma address
+   reg [31:0]               dma_address_reg;
+   reg                      dma_address_reg_en;
+
+   wire                     dma_ready;
+   wire                     dma_out_en;
 
    // control
    reg                      send_en;
@@ -89,7 +100,69 @@ module iob_eth #(
    wire                     rx_wr;
    wire [31:0]              crc_value;
 
-   
+    iob_eth_dma 
+     #(
+       .DMA_DATA_W(AXI_DATA_W),
+       .AXI_ADDR_W(AXI_ADDR_W)
+       ) dma (
+	      // system inputs
+	      .clk(clk),
+	      .rst(rst),
+
+        .out_data(rx_rd_data),
+        .out_en(dma_out_en),
+
+	      // Native i/f
+        .dma_out_addr(dma_address_reg),
+        .dma_out_len(rx_nbytes_reg),
+        .dma_out_run(1'b1),
+        .dma_ready(dma_ready),
+	      
+	      // AXI4 Master i/f
+	      // Address write
+	      .m_axi_awid(m_axi_awid), 
+	      .m_axi_awaddr(m_axi_awaddr), 
+	      .m_axi_awlen(m_axi_awlen), 
+	      .m_axi_awsize(m_axi_awsize), 
+	      .m_axi_awburst(m_axi_awburst), 
+	      .m_axi_awlock(m_axi_awlock), 
+	      .m_axi_awcache(m_axi_awcache), 
+	      .m_axi_awprot(m_axi_awprot),
+	      .m_axi_awqos(m_axi_awqos), 
+	      .m_axi_awvalid(m_axi_awvalid), 
+	      .m_axi_awready(m_axi_awready),
+	      //write
+	      .m_axi_wdata(m_axi_wdata), 
+	      .m_axi_wstrb(m_axi_wstrb), 
+	      .m_axi_wlast(m_axi_wlast), 
+	      .m_axi_wvalid(m_axi_wvalid), 
+	      .m_axi_wready(m_axi_wready), 
+	      //write response
+	      //.axi_bid(m_axi_bid), 
+	      .m_axi_bresp(m_axi_bresp), 
+	      .m_axi_bvalid(m_axi_bvalid), 
+	      .m_axi_bready(m_axi_bready),
+        //address read
+        .m_axi_arid(m_axi_arid), 
+        .m_axi_araddr(m_axi_araddr), 
+        .m_axi_arlen(m_axi_arlen), 
+        .m_axi_arsize(m_axi_arsize), 
+        .m_axi_arburst(m_axi_arburst), 
+        .m_axi_arlock(m_axi_arlock), 
+        .m_axi_arcache(m_axi_arcache), 
+        .m_axi_arprot(m_axi_arprot), 
+        .m_axi_arqos(m_axi_arqos), 
+        .m_axi_arvalid(m_axi_arvalid), 
+        .m_axi_arready(m_axi_arready), 
+        //read 
+        //.axi_rid(m_axi_rid), 
+        .m_axi_rdata(m_axi_rdata), 
+        .m_axi_rresp(m_axi_rresp), 
+        .m_axi_rlast(m_axi_rlast), 
+        .m_axi_rvalid(m_axi_rvalid),  
+        .m_axi_rready(m_axi_rready)
+	      );
+
    assign rst_int = rst_soft | rst;
    
    // SYNCHRONIZERS
@@ -137,6 +210,7 @@ module iob_eth #(
       tx_nbytes_reg_en = 0;
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
+      dma_address_reg_en = 1'b0;
 
       if(valid & wstrb)
         case (addr)
@@ -146,6 +220,7 @@ module iob_eth #(
           `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
           `ETH_SOFTRST: rst_soft_en  = 1'b1;
+          `ETH_DMA_ADDRESS: dma_address_reg_en = 1'b1;
           default: tx_wr = addr[11] & 1'b1; // ETH_DATA
         endcase
    end
@@ -179,12 +254,15 @@ module iob_eth #(
         tx_nbytes_reg <= 11'd46;
         rx_nbytes_reg <= 11'd46;
         dummy_reg <= 0;
+        dma_address_reg <= 0;
      end else if (dummy_reg_en)
        dummy_reg <= data_in;
      else if (tx_nbytes_reg_en)
        tx_nbytes_reg <= data_in[10:0];
      else if (rx_nbytes_reg_en)
        rx_nbytes_reg <= data_in[10:0];
+     else if (dma_address_reg_en)
+       dma_address_reg <= data_in;
    
    // SYNCHRONIZERS
    
