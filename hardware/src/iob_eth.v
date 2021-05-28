@@ -9,7 +9,7 @@
 
 module iob_eth #(
                  parameter ETH_MAC_ADDR = `ETH_MAC_ADDR,
-                 parameter AXI_ADDR_W = 30, //NODOC addressable memory space (log2)
+                 parameter AXI_ADDR_W = 32, //NODOC addressable memory space (log2)
                  parameter AXI_DATA_W = 32 //NODOC Memory data width = DMA_DATA_W
                  )
    (
@@ -56,9 +56,14 @@ module iob_eth #(
    // dma address
    reg [31:0]               dma_address_reg;
    reg                      dma_address_reg_en;
+   wire[10:0]               dma_address;
+
+   reg [10:0]               dma_start_index;
+   reg                      dma_start_index_en;
 
    wire                     dma_ready;
    wire                     dma_out_en;
+   reg                      dma_out_run;
 
    // control
    reg                      send_en;
@@ -104,19 +109,19 @@ module iob_eth #(
      #(
        .DMA_DATA_W(AXI_DATA_W),
        .AXI_ADDR_W(AXI_ADDR_W)
-       ) dma (
+       ) eth_dma (
 	      // system inputs
 	      .clk(clk),
 	      .rst(rst),
 
         .out_data(rx_rd_data),
-        .out_en(dma_out_en),
+        .out_addr(dma_address),
 
-	      // Native i/f
-        .dma_out_addr(dma_address_reg),
-        .dma_out_len(rx_nbytes_reg),
-        .dma_out_run(1'b1),
+        .dma_addr(dma_address_reg),
+        .dma_run(dma_out_run),
         .dma_ready(dma_ready),
+        .dma_start_index(dma_start_index),
+        .dma_end_index(rx_nbytes_reg),
 	      
 	      // AXI4 Master i/f
 	      // Address write
@@ -138,30 +143,23 @@ module iob_eth #(
 	      .m_axi_wvalid(m_axi_wvalid), 
 	      .m_axi_wready(m_axi_wready), 
 	      //write response
-	      //.axi_bid(m_axi_bid), 
 	      .m_axi_bresp(m_axi_bresp), 
 	      .m_axi_bvalid(m_axi_bvalid), 
-	      .m_axi_bready(m_axi_bready),
-        //address read
-        .m_axi_arid(m_axi_arid), 
-        .m_axi_araddr(m_axi_araddr), 
-        .m_axi_arlen(m_axi_arlen), 
-        .m_axi_arsize(m_axi_arsize), 
-        .m_axi_arburst(m_axi_arburst), 
-        .m_axi_arlock(m_axi_arlock), 
-        .m_axi_arcache(m_axi_arcache), 
-        .m_axi_arprot(m_axi_arprot), 
-        .m_axi_arqos(m_axi_arqos), 
-        .m_axi_arvalid(m_axi_arvalid), 
-        .m_axi_arready(m_axi_arready), 
-        //read 
-        //.axi_rid(m_axi_rid), 
-        .m_axi_rdata(m_axi_rdata), 
-        .m_axi_rresp(m_axi_rresp), 
-        .m_axi_rlast(m_axi_rlast), 
-        .m_axi_rvalid(m_axi_rvalid),  
-        .m_axi_rready(m_axi_rready)
+	      .m_axi_bready(m_axi_bready)
 	      );
+
+   // Disable reading, no need for now
+   assign m_axi_arid = 0;
+   assign m_axi_araddr = 0;  
+   assign m_axi_arlen = 0;   
+   assign m_axi_arsize = 0;  
+   assign m_axi_arburst = 0;
+   assign m_axi_arlock = 0; 
+   assign m_axi_arcache = 0; 
+   assign m_axi_arprot = 0;  
+   assign m_axi_arqos = 0;   
+   assign m_axi_arvalid = 0;
+   assign m_axi_rready = 0;
 
    assign rst_int = rst_soft | rst;
    
@@ -211,6 +209,8 @@ module iob_eth #(
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
       dma_address_reg_en = 1'b0;
+      dma_out_run = 1'b0;
+      dma_start_index_en = 1'b0;
 
       if(valid & wstrb)
         case (addr)
@@ -221,6 +221,8 @@ module iob_eth #(
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
           `ETH_SOFTRST: rst_soft_en  = 1'b1;
           `ETH_DMA_ADDRESS: dma_address_reg_en = 1'b1;
+          `ETH_DMA_RUN: dma_out_run = 1'b1;
+          `ETH_READ_ADDRESS: dma_start_index_en = 1'b1;
           default: tx_wr = addr[11] & 1'b1; // ETH_DATA
         endcase
    end
@@ -229,7 +231,7 @@ module iob_eth #(
    // read
    always @* begin
       case (addr)
-        `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+        `ETH_STATUS: data_out = {15'b0, dma_ready, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
         `ETH_DUMMY: data_out = dummy_reg;
         `ETH_CRC: data_out = crc_value_cpu[1];
         default: data_out = {24'd0, rx_rd_data}; // ETH_DATA
@@ -255,6 +257,7 @@ module iob_eth #(
         rx_nbytes_reg <= 11'd46;
         dummy_reg <= 0;
         dma_address_reg <= 0;
+        dma_start_index <= 0;
      end else if (dummy_reg_en)
        dummy_reg <= data_in;
      else if (tx_nbytes_reg_en)
@@ -263,6 +266,8 @@ module iob_eth #(
        rx_nbytes_reg <= data_in[10:0];
      else if (dma_address_reg_en)
        dma_address_reg <= data_in;
+     else if (dma_start_index_en)
+       dma_start_index <= data_in[10:0];
    
    // SYNCHRONIZERS
    
@@ -308,7 +313,7 @@ module iob_eth #(
 
       // Back-End (read by host)
       .clk_b(clk),
-      .addr_b(addr[10:0]),
+      .addr_b(dma_address),
       .data_b(rx_rd_data)
       );
 

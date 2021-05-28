@@ -7,6 +7,7 @@
 #define ETH_PHY_CLK           3
 #define ETH_RX_WR_ADDR        4
 #define ETH_TX_CLK_PLL_LOCKED 5
+#define ETH_DMA_READY         6
 
 #define ETH_MAC_ADDR 0x01606e11020f
 

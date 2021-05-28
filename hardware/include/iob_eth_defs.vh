@@ -33,4 +33,6 @@
 `define ETH_RX_NBYTES        `ETH_ADDR_W'd7
 `define ETH_CRC              `ETH_ADDR_W'd8
 `define ETH_DMA_ADDRESS		 `ETH_ADDR_W'd9
+`define ETH_READ_ADDRESS     `ETH_ADDR_W'd10
+`define ETH_DMA_RUN          `ETH_ADDR_W'd11
 `define ETH_DATA             `ETH_ADDR_W'd2048
