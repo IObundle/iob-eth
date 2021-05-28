@@ -4,7 +4,7 @@
 
 #define RCV_TIMEOUT 5000
 
-char buffer[ETH_NBYTES];
+char buffer[HDR_LEN+ETH_NBYTES];
 
 void eth_send_frame(char *data, unsigned int size) {
   int i;
