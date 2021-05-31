@@ -271,11 +271,11 @@ module iob_eth #(
    
    // SYNCHRONIZERS
    
-   // Clock cross send_en from clk to RX_CLK domain
-   `PULSE_SYNC(send_en,clk,send,RX_CLK,rst)
+   // Clock cross send_en from clk to TX_CLK domain
+   `PULSE_SYNC(send_en,clk,send,TX_CLK,rst)
 
-   // Clock cross rcv_ack_en from clk to TX_CLK domain
-   `PULSE_SYNC(rcv_ack_en,clk,rcv_ack,TX_CLK,rst)
+   // Clock cross rcv_ack_en from clk to RX_CLK domain
+   `PULSE_SYNC(rcv_ack_en,clk,rcv_ack,RX_CLK,rst)
 
    //
    // TX and RX BUFFERS
@@ -327,10 +327,10 @@ module iob_eth #(
          // cpu side
          .rst     (rst_int),
          .nbytes  (tx_nbytes_reg),
-         .send    (send),
          .ready   (tx_ready_int),
 
          // mii side
+         .send    (send),
          .addr    (tx_rd_addr),
          .data    (tx_rd_data),
          .TX_CLK  (TX_CLK),
@@ -351,12 +351,12 @@ module iob_eth #(
        .rst       (rst_int),
        .nbytes    (rx_nbytes_reg),
        .data_rcvd (rx_data_rcvd_int),
-       .rcv_ack   (rcv_ack),
 
        // mii side
        .wr        (rx_wr),
        .addr      (rx_wr_addr),
        .data      (rx_wr_data),
+       .rcv_ack   (rcv_ack),
        .RX_CLK    (RX_CLK),
        .RX_DATA   (RX_DATA),
        .RX_DV     (RX_DV),
