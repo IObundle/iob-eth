@@ -103,7 +103,7 @@ module iob_eth_tx
 
           4: begin
              TX_DATA <= data[7:4];
-             if (addr <= ((`PREAMBLE_LEN + 1 + `HDR_LEN - 1) + nbytes_sync[1])) begin
+             if (addr <= nbytes_sync[1]) begin
                 crc_en <= 1;
                 pc <= pc-1'b1;
              end
@@ -144,7 +144,7 @@ module iob_eth_tx
              .clk(TX_CLK),
              .rst(tx_rst[1]),
 
-             .start(send),
+             .start(pc == 0),
 
              .data_in(data),
              .data_en(crc_en),

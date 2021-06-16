@@ -1,7 +1,10 @@
    //
    // ETHERNET
    //
-   iob_eth eth
+   iob_eth #(
+      .AXI_ADDR_W(`DDR_ADDR_W)     
+     )
+     eth
      (
       .clk      (clk),
       .rst      (reset),
@@ -34,7 +37,7 @@
       .m_axi_wvalid(m_axi_wvalid[1*1+:1]), 
       .m_axi_wready(m_axi_wready[1*1+:1]), 
       //write response
-      //.m_axi_bid(m_axi_bid[1*1+:1]), 
+      .m_axi_bid(1'b0), 
       .m_axi_bresp(m_axi_bresp[1*2+:2]), 
       .m_axi_bvalid(m_axi_bvalid[1*1+:1]), 
       .m_axi_bready(m_axi_bready[1*1+:1]), 
@@ -51,7 +54,7 @@
       .m_axi_arvalid(m_axi_arvalid[1*1+:1]), 
       .m_axi_arready(m_axi_arready[1*1+:1]), 
       //read 
-      //.axi_rid(m_axi_rid), 
+      .m_axi_rid(1'b0), 
       .m_axi_rdata(m_axi_rdata[1*`MIG_BUS_W+:`MIG_BUS_W]), 
       .m_axi_rresp(m_axi_rresp[1*2+:2]), 
       .m_axi_rlast(m_axi_rlast[1*1+:1]), 

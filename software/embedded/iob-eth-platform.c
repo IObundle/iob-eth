@@ -3,6 +3,8 @@
 #include "iob-eth.h"
 #include "eth_mem_map.h"
 #include "iob-uart.h"
+#include "printf.h"
+#include "iob-ila.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
@@ -32,6 +34,7 @@ void eth_init(int base_address) {
   // SFD
   TEMPLATE[SDF_PTR] = ETH_SFD;
 
+  printf("Dest:");
   // dest mac address
 #ifdef LOOPBACK
   mac_addr = ETH_MAC_ADDR;
@@ -41,15 +44,21 @@ void eth_init(int base_address) {
   for (i=0; i < MAC_ADDR_LEN; i++) {
     TEMPLATE[MAC_DEST_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
+    printf("%02x ",TEMPLATE[MAC_DEST_PTR+i]);
   }
+
+  printf("\n\nSource:");
 
   // source mac address
   mac_addr = ETH_MAC_ADDR;
   for (i=0; i < MAC_ADDR_LEN; i++) {
     TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
+    printf("%02x ",TEMPLATE[MAC_SRC_PTR+i]);
   }
   
+  printf("\n\n");
+
   // eth type
   TEMPLATE[ETH_TYPE_PTR]   = ETH_TYPE_H;
   TEMPLATE[ETH_TYPE_PTR+1] = ETH_TYPE_L;
@@ -118,12 +127,51 @@ int eth_get_crc(void) {
   return (IO_GET(base, ETH_CRC));
 }
 
+int eth_get_rcv_size(void) {
+  return (IO_GET(base, ETH_RCV_SIZE));
+}
+
 void eth_set_data(int i, char data) {
   IO_SET(base, (ETH_DATA + PREAMBLE_LEN + 1 + HDR_LEN + i), data);
 }
 
 char eth_get_data(int i) {
   return (IO_GET(base, (ETH_DATA + i)));
+}
+
+#define ETH_DMA_WRITE_TO_MEM  0
+#define ETH_DMA_READ_FROM_MEM 1
+
+void eth_set_tx_buffer(char* buffer,int size){
+#if 1
+  while(eth_get_status_field(ETH_DMA_READY) != 1);
+
+  IO_SET(base,ETH_DMA_ADDRESS, (int) buffer); // Memory address
+  IO_SET(base,ETH_READ_ADDRESS,PAYLOAD_PTR);  // Buffer start
+  IO_SET(base,ETH_DMA_RUN,ETH_DMA_WRITE_TO_MEM); // DMA run
+
+  while(eth_get_status_field(ETH_DMA_READY) != 1);
+#else
+  for (int i=0; i < size; i++) {
+    eth_set_data(i, buffer[i]);
+  }
+#endif
+}
+
+void eth_get_rx_buffer(char* buffer,int size){
+#if 1
+  while(eth_get_status_field(ETH_DMA_READY) != 1);
+
+  IO_SET(base,ETH_DMA_ADDRESS, (int) buffer);  // Memory address
+  IO_SET(base,ETH_READ_ADDRESS,14); // Buffer start
+  IO_SET(base,ETH_DMA_RUN,ETH_DMA_READ_FROM_MEM); // DMA run
+
+  while(eth_get_status_field(ETH_DMA_READY) != 1);
+#else
+  for(int i = 0; i < ETH_NBYTES; i++){
+    buffer[i] = eth_get_data(i+14);
+  }
+#endif
 }
 
 void eth_init_frame(void) {

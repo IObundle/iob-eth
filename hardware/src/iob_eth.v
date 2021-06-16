@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 
+`include "axi.vh"
 `include "iob_lib.vh"
 `include "iob_eth_defs.vh"
 
@@ -54,16 +55,20 @@ module iob_eth #(
    reg [10:0]               rx_nbytes_reg;
    reg                      rx_nbytes_reg_en;
    // dma address
-   reg [31:0]               dma_address_reg;
+   reg [AXI_ADDR_W-1:0]     dma_address_reg;
    reg                      dma_address_reg_en;
-   wire[10:0]               dma_address;
+   reg                      dma_read_from_not_write;
+
+   wire[10:0]               dma_rx_address,dma_tx_address;
+   wire [7:0]               dma_tx_data;
+   wire                     dma_tx_wr;
 
    reg [10:0]               dma_start_index;
    reg                      dma_start_index_en;
 
    wire                     dma_ready;
    wire                     dma_out_en;
-   reg                      dma_out_run;
+   reg                      dma_out_run,dma_out_run_en;
 
    // control
    reg                      send_en;
@@ -77,7 +82,7 @@ module iob_eth #(
    reg [1:0]                tx_ready;
    reg [1:0]                tx_clk_pll_locked;
    wire                     tx_ready_int;
-   
+
    // rx signals
    reg [1:0]                rx_data_rcvd;
    wire                     rx_data_rcvd_int;
@@ -110,56 +115,77 @@ module iob_eth #(
        .DMA_DATA_W(AXI_DATA_W),
        .AXI_ADDR_W(AXI_ADDR_W)
        ) eth_dma (
-	      // system inputs
-	      .clk(clk),
-	      .rst(rst),
+        // system inputs
+        .clk(clk),
+        .rst(rst),
+
+        .in_data(dma_tx_data),
+        .in_addr(dma_tx_address),
+        .in_wr(dma_tx_wr),
+        .in_end_addr(tx_nbytes_reg),
 
         .out_data(rx_rd_data),
-        .out_addr(dma_address),
+        .out_addr(dma_rx_address),
+        .out_end_addr(rx_nbytes_reg),
 
         .dma_addr(dma_address_reg),
         .dma_run(dma_out_run),
         .dma_ready(dma_ready),
         .dma_start_index(dma_start_index),
-        .dma_end_index(rx_nbytes_reg),
-	      
-	      // AXI4 Master i/f
-	      // Address write
-	      .m_axi_awid(m_axi_awid), 
-	      .m_axi_awaddr(m_axi_awaddr), 
-	      .m_axi_awlen(m_axi_awlen), 
-	      .m_axi_awsize(m_axi_awsize), 
-	      .m_axi_awburst(m_axi_awburst), 
-	      .m_axi_awlock(m_axi_awlock), 
-	      .m_axi_awcache(m_axi_awcache), 
-	      .m_axi_awprot(m_axi_awprot),
-	      .m_axi_awqos(m_axi_awqos), 
-	      .m_axi_awvalid(m_axi_awvalid), 
-	      .m_axi_awready(m_axi_awready),
-	      //write
-	      .m_axi_wdata(m_axi_wdata), 
-	      .m_axi_wstrb(m_axi_wstrb), 
-	      .m_axi_wlast(m_axi_wlast), 
-	      .m_axi_wvalid(m_axi_wvalid), 
-	      .m_axi_wready(m_axi_wready), 
-	      //write response
-	      .m_axi_bresp(m_axi_bresp), 
-	      .m_axi_bvalid(m_axi_bvalid), 
-	      .m_axi_bready(m_axi_bready)
-	      );
+        .dma_read_from_not_write(dma_read_from_not_write),
 
-   // Disable reading, no need for now
-   assign m_axi_arid = 0;
-   assign m_axi_araddr = 0;  
-   assign m_axi_arlen = 0;   
-   assign m_axi_arsize = 0;  
-   assign m_axi_arburst = 0;
-   assign m_axi_arlock = 0; 
-   assign m_axi_arcache = 0; 
-   assign m_axi_arprot = 0;  
-   assign m_axi_arqos = 0;   
-   assign m_axi_arvalid = 0;
-   assign m_axi_rready = 0;
+        // AXI4 Master i/f
+        // Address write
+        .m_axi_awid(m_axi_awid), 
+        .m_axi_awaddr(m_axi_awaddr), 
+        .m_axi_awlen(m_axi_awlen), 
+        .m_axi_awsize(m_axi_awsize), 
+        .m_axi_awburst(m_axi_awburst), 
+        .m_axi_awlock(m_axi_awlock), 
+        .m_axi_awcache(m_axi_awcache), 
+        .m_axi_awprot(m_axi_awprot),
+        .m_axi_awqos(m_axi_awqos), 
+        .m_axi_awvalid(m_axi_awvalid), 
+        .m_axi_awready(m_axi_awready),
+        //write
+        .m_axi_wdata(m_axi_wdata), 
+        .m_axi_wstrb(m_axi_wstrb), 
+        .m_axi_wlast(m_axi_wlast), 
+        .m_axi_wvalid(m_axi_wvalid), 
+        .m_axi_wready(m_axi_wready), 
+        //write response
+        .m_axi_bid(m_axi_bid),
+        .m_axi_bresp(m_axi_bresp), 
+        .m_axi_bvalid(m_axi_bvalid), 
+        .m_axi_bready(m_axi_bready),
+
+        //address read
+        .m_axi_arid(m_axi_arid),
+        .m_axi_araddr(m_axi_araddr),
+        .m_axi_arlen(m_axi_arlen),
+        .m_axi_arsize(m_axi_arsize),
+        .m_axi_arburst(m_axi_arburst),
+        .m_axi_arlock(m_axi_arlock),
+        .m_axi_arcache(m_axi_arcache),
+        .m_axi_arprot(m_axi_arprot),
+        .m_axi_arqos(m_axi_arqos),
+        .m_axi_arvalid(m_axi_arvalid),
+        .m_axi_arready(m_axi_arready),
+   
+        //read
+        .m_axi_rid(m_axi_rid),
+        .m_axi_rdata(m_axi_rdata),
+        .m_axi_rresp(m_axi_rresp),
+        .m_axi_rlast(m_axi_rlast),
+        .m_axi_rvalid(m_axi_rvalid),
+        .m_axi_rready(m_axi_rready)
+        );
+   
+   // When dma is ready (not running) the software can still use the register interface to write and read the buffers
+   wire [10:0] rx_address = dma_ready ? addr[10:0] : dma_rx_address;
+   wire [10:0] tx_address = dma_ready ? addr[10:0] : dma_tx_address;
+   wire [7:0]  tx_wr_data = dma_ready ? data_in[7:0] : dma_tx_data;
+   wire        do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
 
    assign rst_int = rst_soft | rst;
    
@@ -209,7 +235,7 @@ module iob_eth #(
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
       dma_address_reg_en = 1'b0;
-      dma_out_run = 1'b0;
+      dma_out_run_en = 1'b0;
       dma_start_index_en = 1'b0;
 
       if(valid & wstrb)
@@ -221,7 +247,7 @@ module iob_eth #(
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
           `ETH_SOFTRST: rst_soft_en  = 1'b1;
           `ETH_DMA_ADDRESS: dma_address_reg_en = 1'b1;
-          `ETH_DMA_RUN: dma_out_run = 1'b1;
+          `ETH_DMA_RUN: dma_out_run_en = 1'b1;
           `ETH_READ_ADDRESS: dma_start_index_en = 1'b1;
           default: tx_wr = addr[11] & 1'b1; // ETH_DATA
         endcase
@@ -234,6 +260,7 @@ module iob_eth #(
         `ETH_STATUS: data_out = {15'b0, dma_ready, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
         `ETH_DUMMY: data_out = dummy_reg;
         `ETH_CRC: data_out = crc_value_cpu[1];
+        `ETH_RCV_SIZE: data_out = rx_wr_addr;
         default: data_out = {24'd0, rx_rd_data}; // ETH_DATA
       endcase
    end
@@ -252,12 +279,21 @@ module iob_eth #(
        rst_soft <= 1'b0;
 
    always @ (posedge clk, posedge rst_int)
+     if(rst_int)
+        dma_out_run <= 0;
+     else if(dma_out_run_en)
+        dma_out_run <= 1;
+     else
+        dma_out_run <= 0;
+
+   always @ (posedge clk, posedge rst_int)
      if (rst_int) begin
         tx_nbytes_reg <= 11'd46;
         rx_nbytes_reg <= 11'd46;
         dummy_reg <= 0;
         dma_address_reg <= 0;
         dma_start_index <= 0;
+        dma_read_from_not_write <= 0;
      end else if (dummy_reg_en)
        dummy_reg <= data_in;
      else if (tx_nbytes_reg_en)
@@ -266,6 +302,8 @@ module iob_eth #(
        rx_nbytes_reg <= data_in[10:0];
      else if (dma_address_reg_en)
        dma_address_reg <= data_in;
+     else if (dma_out_run_en)
+       dma_read_from_not_write <= data_in[0];
      else if (dma_start_index_en)
        dma_start_index <= data_in[10:0];
    
@@ -289,9 +327,9 @@ module iob_eth #(
      (
       // Back-End (written by host)
       .clk_a(clk),
-      .addr_a(addr[10:0]),
-      .data_a(data_in[7:0]),
-      .we_a(tx_wr),
+      .addr_a(tx_address),
+      .data_a(tx_wr_data),
+      .we_a(do_tx_wr),
 
       // Front-End (read by core)
       .clk_b(TX_CLK),
@@ -313,7 +351,7 @@ module iob_eth #(
 
       // Back-End (read by host)
       .clk_b(clk),
-      .addr_b(dma_address),
+      .addr_b(rx_address),
       .data_b(rx_rd_data)
       );
 
@@ -353,10 +391,10 @@ module iob_eth #(
        .data_rcvd (rx_data_rcvd_int),
 
        // mii side
+       .rcv_ack   (rcv_ack),
        .wr        (rx_wr),
        .addr      (rx_wr_addr),
        .data      (rx_wr_data),
-       .rcv_ack   (rcv_ack),
        .RX_CLK    (RX_CLK),
        .RX_DATA   (RX_DATA),
        .RX_DV     (RX_DV),

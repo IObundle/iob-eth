@@ -4,169 +4,122 @@
 `include "axi.vh"
 
 module iob_eth_dma #(
-		    parameter DMA_DATA_W = 32,
-		    // AXI4 interface parameters
-		    parameter AXI_ADDR_W = 32,
-		    parameter AXI_DATA_W = DMA_DATA_W
-		    ) (
-		       // system inputs
-		       input 		       clk,
-		       input 		       rst,
+            parameter DMA_DATA_W = 32,
+            // AXI4 interface parameters
+            parameter AXI_ADDR_W = 32,
+            parameter AXI_DATA_W = DMA_DATA_W
+    ) (
+        // system inputs
+        input                 clk,
+        input                 rst,
 
-		       //AXI4 Master i/f
-             // Master Interface Write Address
-             output [`AXI_ID_W-1:0]        m_axi_awid,
-             output reg [`AXI_ADDR_W-1:0]  m_axi_awaddr,
-             output [`AXI_LEN_W-1:0]       m_axi_awlen,
-             output [`AXI_SIZE_W-1:0]      m_axi_awsize,
-             output [`AXI_BURST_W-1:0]     m_axi_awburst,
-             output [`AXI_LOCK_W-1:0]      m_axi_awlock,
-             output [`AXI_CACHE_W-1:0]     m_axi_awcache,
-             output [`AXI_PROT_W-1:0]      m_axi_awprot,
-             output [`AXI_QOS_W-1:0]       m_axi_awqos,
-             output reg                    m_axi_awvalid,
-             input                         m_axi_awready,
+        `include "cpu_axi4_m_if.v"
 
-             // Master Interface Write Data
-             output [DMA_DATA_W-1:0]       m_axi_wdata,
-             output reg [DMA_DATA_W/8-1:0] m_axi_wstrb,
-             output reg                    m_axi_wlast,
-             output reg                    m_axi_wvalid,
-             input                         m_axi_wready,
+        // DMA Configurations
+        input[AXI_ADDR_W-1:0] dma_addr,
+        input                 dma_run,
+        output wire           dma_ready,
+        input [10:0]          dma_start_index,
+        input                 dma_read_from_not_write,
 
-             // Master Interface Write Response
-             //input [`AXI_ID_W-1:0]         m_axi_bid,
-             input [`AXI_RESP_W-1:0]       m_axi_bresp,
-             input                         m_axi_bvalid,
-             output reg                    m_axi_bready,
+        // For now have two different addresses for in and out data
+        output [7:0]          in_data,
+        output reg[10:0]      in_addr,
+        output                in_wr,
+        input [10:0]          in_end_addr,
 
-		       // DMA Configurations
-		       input [AXI_ADDR_W-1:0]  dma_addr,
-		       input 		             dma_run,
-		       output reg              dma_ready,
-             input [10:0]            dma_start_index,
-             input [10:0]            dma_end_index,
+        input [7:0]           out_data,
+        output reg[10:0]      out_addr,
+        input [10:0]          out_end_addr
+    );
 
-		       input [7:0]           out_data,
-		       output reg[10:0]      out_addr
-		       );
+wire dma_ready_r,dma_ready_w;
 
-   localparam axi_awsize = $clog2(DMA_DATA_W/8);
+assign dma_ready = dma_ready_r & dma_ready_w;
 
-   reg reset_int;
-   wire reset = rst | reset_int;
+iob_eth_dma_w #(
+    .DMA_DATA_W(DMA_DATA_W),
+    .AXI_ADDR_W(AXI_ADDR_W),
+    .AXI_DATA_W(AXI_DATA_W)
+  ) eth_dma_w (
+        // system inputs
+        .clk(clk),
+        .rst(rst),
 
-   reg [31:0] address;
+        .out_data(out_data),
+        .out_addr(out_addr),
 
-   // One byte at a time, for now
-   assign m_axi_awid = `AXI_ID_W'b0;
-   assign m_axi_awlen = 0; // number of trasfers per burst
-   assign m_axi_awsize = 3'h2;
-   assign m_axi_awburst = 2'b00;
-   assign m_axi_awlock = 1'b0;
-   assign m_axi_awcache = 4'h2;
-   assign m_axi_awprot = `AXI_PROT_W'b010;
-   assign m_axi_awqos = `AXI_QOS_W'h0;
+        .dma_addr(dma_addr),
+        .dma_run(dma_run & dma_read_from_not_write),
+        .dma_ready(dma_ready_w),
+        .dma_start_index(dma_start_index),
+        .dma_end_index(out_end_addr),
+
+        // AXI4 Master i/f
+        // Address write
+        .m_axi_awid(m_axi_awid), 
+        .m_axi_awaddr(m_axi_awaddr), 
+        .m_axi_awlen(m_axi_awlen), 
+        .m_axi_awsize(m_axi_awsize), 
+        .m_axi_awburst(m_axi_awburst), 
+        .m_axi_awlock(m_axi_awlock), 
+        .m_axi_awcache(m_axi_awcache), 
+        .m_axi_awprot(m_axi_awprot),
+        .m_axi_awqos(m_axi_awqos), 
+        .m_axi_awvalid(m_axi_awvalid), 
+        .m_axi_awready(m_axi_awready),
+        //write
+        .m_axi_wdata(m_axi_wdata), 
+        .m_axi_wstrb(m_axi_wstrb), 
+        .m_axi_wlast(m_axi_wlast), 
+        .m_axi_wvalid(m_axi_wvalid), 
+        .m_axi_wready(m_axi_wready), 
+        //write response
+        .m_axi_bresp(m_axi_bresp), 
+        .m_axi_bvalid(m_axi_bvalid), 
+        .m_axi_bready(m_axi_bready)
+  );
+
+iob_eth_dma_r #(
+    .DMA_DATA_W(DMA_DATA_W),
+    .AXI_ADDR_W(AXI_ADDR_W),
+    .AXI_DATA_W(AXI_DATA_W)
+  ) eth_dma_r (
+        // system inputs
+        .clk(clk),
+        .rst(rst),
+
+        .in_data(in_data),
+        .in_addr(in_addr),
+        .in_wr(in_wr),
+
+        .dma_addr(dma_addr),
+        .dma_run(dma_run & !dma_read_from_not_write),
+        .dma_ready(dma_ready_r),
+        .dma_start_index(dma_start_index),
+        .dma_end_index(in_end_addr),
+
+        // AXI4 Master i/f
+        //address read
+        .m_axi_arid(m_axi_arid),
+        .m_axi_araddr(m_axi_araddr),
+        .m_axi_arlen(m_axi_arlen),
+        .m_axi_arsize(m_axi_arsize),
+        .m_axi_arburst(m_axi_arburst),
+        .m_axi_arlock(m_axi_arlock),
+        .m_axi_arcache(m_axi_arcache),
+        .m_axi_arprot(m_axi_arprot),
+        .m_axi_arqos(m_axi_arqos),
+        .m_axi_arvalid(m_axi_arvalid),
+        .m_axi_arready(m_axi_arready),
    
-   // Data write constants
-   assign m_axi_wdata = {out_data,out_data,out_data,out_data}; // the strobe signal selects the correct byte
-
-   reg [3:0] state,state_next;
-   reg [31:0] buffer;
-   reg [31:0] m_axi_awaddr_next;
-
-   reg [10:0] out_addr_next;
-   reg [3:0] m_axi_wstrb_next;
-
-   reg [10:0] end_index,end_index_next;
-
-   always @(posedge clk, posedge reset)
-   begin
-      if(reset)
-      begin
-         state <= 0;
-         end_index <= 0;
-         out_addr <= 0;
-         m_axi_wstrb <= 4'b0001;
-         m_axi_awaddr <= 0;
-      end else begin
-         state <= state_next;
-         end_index <= end_index_next;
-         out_addr <= out_addr_next;
-         m_axi_wstrb <= m_axi_wstrb_next;
-         m_axi_awaddr <= m_axi_awaddr_next;
-      end
-   end
-
-   always @*
-   begin
-      reset_int = 1'b0;
-      // Output
-      dma_ready = 1'b0;
-      m_axi_wlast = 1'b0;
-      m_axi_wvalid = 1'b0;
-      m_axi_bready = 1'b0;
-      m_axi_awvalid = 1'b0;
-      // Control state 
-      state_next = state;
-      end_index_next = end_index;
-      out_addr_next = out_addr;
-      m_axi_wstrb_next = m_axi_wstrb;
-      m_axi_awaddr_next = m_axi_awaddr;
-
-      case(state)
-         4'h0: begin // Wait for dma_run
-            dma_ready = 1'b1;
-
-            if(dma_run)
-            begin
-               state_next = 4'h1;
-               out_addr_next = dma_start_index;
-               end_index_next = dma_end_index;
-               m_axi_wstrb_next = {dma_addr[1] & dma_addr[0],dma_addr[1] & ~dma_addr[0],~dma_addr[1] & dma_addr[0],~dma_addr[1] & ~dma_addr[0]};
-               m_axi_awaddr_next = {dma_addr[31:2],2'b00};
-            end
-         end
-         4'h1: begin // Wait for awready
-            m_axi_awvalid = 1'b1;
-
-            if(m_axi_awready)
-            begin
-               state_next = 4'h2;
-            end
-         end
-         4'h2: begin // Begin data reading cycle
-            m_axi_wvalid = 1'b1;
-            m_axi_wlast = 1'b1;
-
-            if(m_axi_wready)
-            begin
-               state_next = 4'h4;
-            end
-         end
-         4'h4: begin // Write response
-            m_axi_bready = 1'b1;
-
-            if(m_axi_bvalid)
-            begin
-               state_next = 4'h8;
-            end
-         end
-         4'h8: begin // Update run variables
-            m_axi_wstrb_next = {m_axi_wstrb[2:0],m_axi_wstrb[3]};
-            out_addr_next = out_addr + 32'h1;
-
-            if(m_axi_wstrb[3])
-            begin
-               m_axi_awaddr_next = m_axi_awaddr + 32'h4;
-            end
-
-            if(out_addr_next == end_index)
-               reset_int = 1'b1;
-            else
-               state_next = 4'h1; // Loop back
-         end
-      endcase
-   end
+        //read
+        .m_axi_rid(m_axi_rid),
+        .m_axi_rdata(m_axi_rdata),
+        .m_axi_rresp(m_axi_rresp),
+        .m_axi_rlast(m_axi_rlast),
+        .m_axi_rvalid(m_axi_rvalid),
+        .m_axi_rready(m_axi_rready)
+  );
 
 endmodule

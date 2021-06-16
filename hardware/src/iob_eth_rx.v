@@ -90,7 +90,7 @@ module iob_eth_rx #(
 
           4: wr <= 1;
 
-          5: if (RX_DV /*addr != ((`HDR_LEN+4-1)+nbytes_eth[1])*/) begin
+          5: if (RX_DV) begin
              pc <= pc - 1'b1;
           end
 
@@ -109,8 +109,6 @@ module iob_eth_rx #(
             pc <= pc;
           else
             pc <= 0;
-
-          default: ;
 
         endcase
      end

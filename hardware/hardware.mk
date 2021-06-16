@@ -1,12 +1,12 @@
 include $(ETHERNET_DIR)/core.mk
 
-include $(DMA_DIR)/hardware/hardware.mk
-
 #include
 INCLUDE+=$(incdir)$(ETHERNET_INC_DIR)
 
 #headers
 VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
+
+VHDR+=$(wildcard $(INTERCON_INC_DIR)/axi.vh)
 
 #sources
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)

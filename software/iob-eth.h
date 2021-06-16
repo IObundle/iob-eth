@@ -6,8 +6,8 @@
 #define ETH_PHY_DV            2
 #define ETH_PHY_CLK           3
 #define ETH_RX_WR_ADDR        4
-#define ETH_TX_CLK_PLL_LOCKED 5
-#define ETH_DMA_READY         6
+#define ETH_TX_CLK_PLL_LOCKED 15
+#define ETH_DMA_READY         16
 
 #define ETH_MAC_ADDR 0x01606e11020f
 
@@ -34,9 +34,15 @@ void eth_set_rx_payload_size(unsigned int size);
 
 int eth_get_crc(void);
 
+int eth_get_rcv_size(void);
+
 void eth_set_data(int i, char data);
 
 char eth_get_data(int i);
+
+void eth_set_tx_buffer(char* buffer,int size);
+
+void eth_get_rx_buffer(char* buffer,int size);
 
 void eth_init_frame(void);
 
