@@ -12,17 +12,12 @@ void eth_send_frame(char *data, unsigned int size) {
   // wait for ready
   while(!eth_tx_ready());
 
-  // write data to send
-  // init frame
-  eth_init_frame();
-
   // set frame size
-  eth_set_tx_payload_size(22 + size); // 22 
+  eth_set_tx_payload_size(size + 22); // 22 - 14 + 8 bytes from preamble
 
   // payload
   eth_set_tx_buffer(data,size);
 
-  eth_set_tx_payload_size(HDR_LEN + size + 7); // payload + HDR + 8 bytes from preamble (7-0x55 and 1-0xD5) (instead of payload size, think its the number of elements from the buffer to send) 
   // start sending
   eth_send();
 
@@ -47,9 +42,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     return ETH_INVALID_CRC;
   }
 
-  printf("%d\n",eth_get_rcv_size());
-
-  eth_set_rx_payload_size(eth_get_rcv_size()+14); // DMA end address, since we skip the first 14 bytes, need to add 14 more
+  eth_set_rx_payload_size(eth_get_rcv_size()-4); // DMA end address, the last 4 are crc. We do not need them
   eth_get_rx_buffer(data_rcv,size);
 
   // send receive ack
@@ -77,7 +70,7 @@ unsigned int eth_rcv_file(char *data, int size) {
      while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
 
      // send data back as ack
-     eth_send_frame(&data[j*ETH_NBYTES], bytes_to_receive);
+     eth_send_frame(&data[count_bytes], bytes_to_receive);
 
      // update byte counter
      count_bytes += bytes_to_receive;

@@ -73,6 +73,7 @@ module iob_eth_tx
         addr <= 0;
         ready <= 1;
         TX_EN <= 0;
+        TX_DATA <= 0;
      end else begin
 
         pc <= pc + 1'b1;
@@ -91,7 +92,7 @@ module iob_eth_tx
              TX_DATA <= data[3:0];
           end
 
-          2: begin
+          2: begin // Addr is different here, but data only changes in the next cycle
              TX_DATA <= data[7:4];
              if (addr != (`PREAMBLE_LEN + 1))
                pc <= pc-1'b1;
@@ -103,7 +104,7 @@ module iob_eth_tx
 
           4: begin
              TX_DATA <= data[7:4];
-             if (addr <= nbytes_sync[1]) begin
+             if (addr < nbytes_sync[1]) begin
                 crc_en <= 1;
                 pc <= pc-1'b1;
              end

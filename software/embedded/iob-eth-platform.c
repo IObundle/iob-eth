@@ -79,6 +79,8 @@ void eth_init(int base_address) {
   IO_SET(base, ETH_TX_NBYTES, 46);
   IO_SET(base, ETH_RX_NBYTES, 46);
 
+  eth_init_frame();
+
   // check processor interface
   // write dummy register
   IO_SET(base, ETH_DUMMY, 0xDEADBEEF);
@@ -131,12 +133,12 @@ int eth_get_rcv_size(void) {
   return (IO_GET(base, ETH_RCV_SIZE));
 }
 
-void eth_set_data(int i, char data) {
-  IO_SET(base, (ETH_DATA + PREAMBLE_LEN + 1 + HDR_LEN + i), data);
-}
-
 char eth_get_data(int i) {
-  return (IO_GET(base, (ETH_DATA + i)));
+  int data = (IO_GET(base, (ETH_DATA + i / 4)));
+
+  data >>= (8 * (i % 4));
+
+  return ((char) data & 0xff);
 }
 
 #define ETH_DMA_WRITE_TO_MEM  0
@@ -152,8 +154,8 @@ void eth_set_tx_buffer(char* buffer,int size){
 
   while(eth_get_status_field(ETH_DMA_READY) != 1);
 #else
-  for (int i=0; i < size; i++) {
-    eth_set_data(i, buffer[i]);
+  for (int i = 0; i < size; i++) {
+    eth_set_data(i,buffer[i]);
   }
 #endif
 }
@@ -167,8 +169,18 @@ void eth_get_rx_buffer(char* buffer,int size){
   IO_SET(base,ETH_DMA_RUN,ETH_DMA_READ_FROM_MEM); // DMA run
 
   while(eth_get_status_field(ETH_DMA_READY) != 1);
+
+  /*
+  for(int i = 0; i < size; i++){
+    if((i % 16 == 0) & i > 0){
+      printf("\n");
+    }
+    printf("%02x ",buffer[i]);
+  }
+  printf("\n");
+  */
 #else
-  for(int i = 0; i < ETH_NBYTES; i++){
+  for(int i = 0; i < size; i++){
     buffer[i] = eth_get_data(i+14);
   }
 #endif
@@ -176,8 +188,16 @@ void eth_get_rx_buffer(char* buffer,int size){
 
 void eth_init_frame(void) {
   int i;
+  
+  int* TEMPLATE_INT = (int*) TEMPLATE;
 
+#if 1
   for (i=0; i < (PREAMBLE_LEN + 1 + HDR_LEN); i++) {
-    IO_SET(base, (ETH_DATA + i), TEMPLATE[i]);
+    BYTE_SET(base, ETH_DATA, i, TEMPLATE[i]);
   }
+#else
+  for (i=0; i < (PREAMBLE_LEN + 1 + HDR_LEN) / 4; i++) {
+    IO_SET(base, (ETH_DATA + i*4), TEMPLATE_INT[i]);
+  }
+#endif
 }

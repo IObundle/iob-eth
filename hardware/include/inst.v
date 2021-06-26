@@ -1,6 +1,9 @@
    //
    // ETHERNET
    //
+   wire eth_dma_ready;
+   wire [63:0] eth_ila_data;
+
    iob_eth #(
       .AXI_ADDR_W(`DDR_ADDR_W)     
      )
@@ -13,7 +16,7 @@
       .valid(slaves_req[`valid(`ETHERNET)]),
       .addr(slaves_req[`address(`ETHERNET, `ETH_ADDR_W+2)-2]),
       .data_in(slaves_req[`wdata(`ETHERNET)]),
-      .wstrb(|slaves_req[`wstrb(`ETHERNET)]),
+      .wstrb(slaves_req[`wstrb(`ETHERNET)]),
       .data_out(slaves_resp[`rdata(`ETHERNET)]),
       .ready(slaves_resp[`ready(`ETHERNET)]),
 
@@ -60,6 +63,9 @@
       .m_axi_rlast(m_axi_rlast[1*1+:1]), 
       .m_axi_rvalid(m_axi_rvalid[1*1+:1]),  
       .m_axi_rready(m_axi_rready[1*1+:1]),
+
+      .ila_dma_ready(eth_dma_ready),
+      .ila_data(eth_ila_data),
 
       // ethernet interface
       .ETH_PHY_RESETN(ETH_PHY_RESETN),

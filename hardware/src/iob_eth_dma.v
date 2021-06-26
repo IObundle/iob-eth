@@ -23,13 +23,14 @@ module iob_eth_dma #(
         input                 dma_read_from_not_write,
 
         // For now have two different addresses for in and out data
-        output [7:0]          in_data,
-        output reg[10:0]      in_addr,
+        output [31:0]         in_data,
+        output reg[8:0]       in_addr,
         output                in_wr,
         input [10:0]          in_end_addr,
+        output [3:0]          in_wstrb,
 
-        input [7:0]           out_data,
-        output reg[10:0]      out_addr,
+        input [31:0]          out_data,
+        output reg[8:0]       out_addr,
         input [10:0]          out_end_addr
     );
 
@@ -92,6 +93,7 @@ iob_eth_dma_r #(
         .in_data(in_data),
         .in_addr(in_addr),
         .in_wr(in_wr),
+        .in_wstrb(in_wstrb),
 
         .dma_addr(dma_addr),
         .dma_run(dma_run & !dma_read_from_not_write),

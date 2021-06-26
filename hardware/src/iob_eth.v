@@ -20,12 +20,15 @@ module iob_eth #(
 
     input                   valid,
     output reg              ready,
-    input                   wstrb,
+    input [3:0]             wstrb,
     input [`ETH_ADDR_W-1:0] addr,
     output reg [31:0]       data_out,
     input [31:0]            data_in,
 
     `include "cpu_axi4_m_if.v"
+
+    output wire ila_dma_ready,
+    output wire [63:0] ila_data,
 
     // PHY side
     output reg              ETH_PHY_RESETN,
@@ -59,8 +62,10 @@ module iob_eth #(
    reg                      dma_address_reg_en;
    reg                      dma_read_from_not_write;
 
-   wire[10:0]               dma_rx_address,dma_tx_address;
-   wire [7:0]               dma_tx_data;
+   wire[3:0]                dma_in_wstrb;
+   wire[8:0]                dma_rx_address;
+   wire[8:0]                dma_tx_address;
+   wire[31:0]               dma_tx_data;
    wire                     dma_tx_wr;
 
    reg [10:0]               dma_start_index;
@@ -86,7 +91,7 @@ module iob_eth #(
    // rx signals
    reg [1:0]                rx_data_rcvd;
    wire                     rx_data_rcvd_int;
-   wire [7:0]               rx_rd_data;
+   wire[31:0]               rx_rd_data;
    reg [10:0]               rx_wr_addr_cpu[1:0];
    reg [31:0]               crc_value_cpu[1:0];
    
@@ -102,8 +107,8 @@ module iob_eth #(
    wire                     rst_int;
 
    // ETH CLOCK DOMAIN
-   wire [10:0]              tx_rd_addr;
-   wire [7:0]               tx_rd_data;
+   wire [8:0]               tx_rd_addr;
+   wire [31:0]              tx_rd_data;
 
    wire [10:0]              rx_wr_addr;
    wire [7:0]               rx_wr_data;
@@ -123,6 +128,7 @@ module iob_eth #(
         .in_addr(dma_tx_address),
         .in_wr(dma_tx_wr),
         .in_end_addr(tx_nbytes_reg),
+        .in_wstrb(dma_in_wstrb),
 
         .out_data(rx_rd_data),
         .out_addr(dma_rx_address),
@@ -182,10 +188,11 @@ module iob_eth #(
         );
    
    // When dma is ready (not running) the software can still use the register interface to write and read the buffers
-   wire [10:0] rx_address = dma_ready ? addr[10:0] : dma_rx_address;
-   wire [10:0] tx_address = dma_ready ? addr[10:0] : dma_tx_address;
-   wire [7:0]  tx_wr_data = dma_ready ? data_in[7:0] : dma_tx_data;
+   wire [8:0]  rx_address = dma_ready ? addr[8:0] : dma_rx_address;
+   wire [8:0]  tx_address = dma_ready ? addr[8:0] : dma_tx_address;
+   wire [31:0] tx_wr_data = dma_ready ? data_in : dma_tx_data;
    wire        do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
+   wire [3:0]  tx_wstrb   = dma_ready ? wstrb : dma_in_wstrb;
 
    assign rst_int = rst_soft | rst;
    
@@ -238,7 +245,7 @@ module iob_eth #(
       dma_out_run_en = 1'b0;
       dma_start_index_en = 1'b0;
 
-      if(valid & wstrb)
+      if(valid & (|wstrb))
         case (addr)
           `ETH_SEND: send_en = 1'b1;
           `ETH_RCVACK: rcv_ack_en = 1'b1;
@@ -261,7 +268,7 @@ module iob_eth #(
         `ETH_DUMMY: data_out = dummy_reg;
         `ETH_CRC: data_out = crc_value_cpu[1];
         `ETH_RCV_SIZE: data_out = rx_wr_addr;
-        default: data_out = {24'd0, rx_rd_data}; // ETH_DATA
+        default: data_out = rx_rd_data; // ETH_DATA
       endcase
    end
 
@@ -319,17 +326,14 @@ module iob_eth #(
    // TX and RX BUFFERS
    //
 
-   iob_eth_alt_s2p_mem #(
-                         .DATA_W(8),
-                         .ADDR_W(`ETH_ADDR_W-1)
-                         )
-   tx_buffer
+   eth_mem tx_buffer
      (
       // Back-End (written by host)
       .clk_a(clk),
       .addr_a(tx_address),
       .data_a(tx_wr_data),
       .we_a(do_tx_wr),
+      .wstrb(tx_wstrb),
 
       // Front-End (read by core)
       .clk_b(TX_CLK),
@@ -337,17 +341,17 @@ module iob_eth #(
       .data_b(tx_rd_data)
       );
 
-   iob_eth_alt_s2p_mem #(
-                         .DATA_W(8),
-                         .ADDR_W(`ETH_ADDR_W-1)
-                         )
-   rx_buffer
+   wire [3:0] rx_wstrb = rx_wr_addr[1] ? (rx_wr_addr[0] ? 4'b1000 : 4'b0100):
+                                         (rx_wr_addr[0] ? 4'b0010 : 4'b0001);
+
+   eth_mem rx_buffer
      (
       // Front-End (written by core)
       .clk_a(RX_CLK),
-      .addr_a(rx_wr_addr),
-      .data_a(rx_wr_data),
+      .addr_a(rx_wr_addr[10:2]),
+      .data_a({rx_wr_data,rx_wr_data,rx_wr_data,rx_wr_data}),
       .we_a(rx_wr),
+      .wstrb(rx_wstrb),
 
       // Back-End (read by host)
       .clk_b(clk),
@@ -359,6 +363,19 @@ module iob_eth #(
    //
    // TRANSMITTER
    //
+   
+   wire [10:0] tx_out_addr;
+   assign tx_rd_addr = tx_out_addr[10:2];
+
+   reg [1:0] delayed_tx_sel;
+   always @(posedge TX_CLK,posedge rst_int)
+     if(rst_int)
+       delayed_tx_sel <= 0;
+     else
+       delayed_tx_sel <= tx_out_addr[1:0];
+
+   wire [7:0] tx_in_data = delayed_tx_sel[1] ? (delayed_tx_sel[0] ? tx_rd_data[8*3 +: 8] : tx_rd_data[8*2 +: 8]):
+                                               (delayed_tx_sel[0] ? tx_rd_data[8*1 +: 8] : tx_rd_data[8*0 +: 8]);
 
    iob_eth_tx
      tx (
@@ -369,8 +386,8 @@ module iob_eth #(
 
          // mii side
          .send    (send),
-         .addr    (tx_rd_addr),
-         .data    (tx_rd_data),
+         .addr    (tx_out_addr),
+         .data    (tx_in_data),
          .TX_CLK  (TX_CLK),
          .TX_EN   (TX_EN),
          .TX_DATA (TX_DATA)
@@ -437,4 +454,11 @@ module iob_eth #(
           phy_dv_detected <= 1'b1;
      end
    
+assign ila_dma_ready = dma_ready;
+
+wire [31:0] s0 = {15'b0, dma_ready, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+wire [31:0] s1 = tx_wr_data;
+
+assign ila_data = {s1,s0};
+
 endmodule
