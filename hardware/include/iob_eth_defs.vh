@@ -19,7 +19,7 @@
 `define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 
 // Frame structure
-`define PREAMBLE_LEN 7
+`define PREAMBLE_LEN 9
 `define MAC_ADDR_LEN 6
 `define HDR_LEN      (2*`MAC_ADDR_LEN + 2)
 
@@ -34,6 +34,6 @@
 `define ETH_CRC              `ETH_ADDR_W'd8
 `define ETH_RCV_SIZE         `ETH_ADDR_W'd9
 `define ETH_DMA_ADDRESS      `ETH_ADDR_W'd10
-`define ETH_READ_ADDRESS     `ETH_ADDR_W'd11
+`define ETH_DMA_LEN          `ETH_ADDR_W'd11
 `define ETH_DMA_RUN          `ETH_ADDR_W'd12
 `define ETH_DATA             `ETH_ADDR_W'd2048

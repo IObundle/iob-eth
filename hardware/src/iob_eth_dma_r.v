@@ -39,13 +39,11 @@ module iob_eth_dma_r #(
 		       input[AXI_ADDR_W-1:0] dma_addr,
 		       input 		             dma_run,
 		       output reg            dma_ready,
-           input [10:0]          dma_start_index,
-           input [10:0]          dma_end_index,
+           input [9:0]           dma_len,
 
 		       output wire[31:0]     in_data,
 		       output reg[8:0]       in_addr,
-           output wire           in_wr,
-           output wire[3:0]      in_wstrb
+           output reg            in_wr
 		       );
 
    assign m_axi_arid = 0;   // id is zero
@@ -56,55 +54,36 @@ module iob_eth_dma_r #(
    assign m_axi_arprot = `AXI_PROT_W'b010;
    assign m_axi_arqos = `AXI_QOS_W'h0;
 
-   reg [3:0] state;
-   reg [3:0] read_wstrb;
-
-   wire [3:0] dma_read_strobe_start = dma_addr[1] ? (dma_addr[0] ? 4'b1000 : 4'b1100):
-                                                    (dma_addr[0] ? 4'b1110 : 4'b1111);
-
-   wire [3:0] in_wstrb_start = dma_start_index[1] ? (dma_start_index[0] ? 4'b1000 : 4'b1100):
-                                                    (dma_start_index[0] ? 4'b1110 : 4'b1111);
-
    wire [31:0] aligned_data;
    wire aligned_valid;
-   wire ram_last;
-   wire write_last;
+
+   wire axi_transfer = (m_axi_rvalid & m_axi_rready);
+
+   wire [7:0] axi_len;
+   wire first_transfer_valid;
+   reg remaining_data;
 
    // Aligns data coming from the RAM
    eth_burst_align burst_align(
         .data(m_axi_rdata),
-        .strobe(read_wstrb),
-        .valid(m_axi_rvalid),
-        .last(m_axi_rlast),
-
-        .data_out(aligned_data),
-        .data_valid(aligned_valid),
-        .strobe_out(),
-        .last_out(ram_last),
-
-        .delay(1'b0),
-
-        .clk(clk),
-        .rst(rst)
-    );
-
-   // Misalign data to write to the TX buffer
-   eth_burst_split burst_split(
-        .data(aligned_data),
-        .valid(aligned_valid),
-        .strobe(in_wstrb_start),
-        .last(ram_last),
+        .transfer(axi_transfer),
+        .offset(dma_addr[1:0]),
+        .len(dma_len),
+        .remaining_data(remaining_data),
 
         .data_out(in_data),
-        .data_valid(in_wr),
-        .strobe_out(in_wstrb),
-        .last_out(write_last),
+        .axi_len(axi_len),
 
-        .delay(1'b0),
-        
+        .first_transfer_valid(first_transfer_valid),
+
         .clk(clk),
         .rst(rst)
     );
+
+   reg [3:0] state;
+   reg did_first_transfer;
+
+   wire next_cycle_valid = (first_transfer_valid || did_first_transfer);
 
    always @(posedge clk, posedge rst)
    begin
@@ -116,11 +95,17 @@ module iob_eth_dma_r #(
          m_axi_rready <= 0;
          in_addr <= 0;
          state <= 0;
-         read_wstrb <= 4'b0001;
+         in_wr <= 0;
+         remaining_data <= 0;
+         did_first_transfer <= 0;
          dma_ready <= 1'b1;
       end else begin
-         if(in_wr)
-          in_addr <= in_addr + 32'h1;
+         if(axi_transfer && next_cycle_valid) begin
+            in_addr <= in_addr + 32'h1;
+         end
+
+         if(next_cycle_valid)
+            in_wr <= axi_transfer;
 
          case(state)
            4'h0: begin
@@ -128,11 +113,11 @@ module iob_eth_dma_r #(
              begin
               dma_ready <= 1'b0;
               state <= 4'h1;
-              read_wstrb <= dma_read_strobe_start;
+              did_first_transfer <= 0;
               m_axi_arvalid <= 1'b1;
               m_axi_araddr <= {dma_addr[AXI_ADDR_W-1:2],2'b00};
-              m_axi_arlen <= dma_end_index[10:2] - dma_start_index[10:2];
-              in_addr <= dma_start_index[10:2];
+              m_axi_arlen <= axi_len;
+              in_addr <= 5;
              end
            end
            4'h1: begin
@@ -143,16 +128,26 @@ module iob_eth_dma_r #(
              end
            end
            4'h2: begin
-             if(m_axi_rvalid & m_axi_rlast) begin
+             if(axi_transfer) begin
+                 did_first_transfer <= 1'b1;
+             end
+
+             if(axi_transfer & m_axi_rlast) begin
               m_axi_rready <= 1'b0;
               state <= 4'h4;
+              remaining_data <= 1'b1;
              end
            end
            4'h4: begin
-             if(write_last) begin // Wait for last to signal end of DMA transfer
+              in_addr <= in_addr + 32'h1;
+              in_wr <= 1'b1;
+              remaining_data <= 1'b0;
+              state <= 4'h8;
+           end
+           4'h8: begin
+              in_wr <= 1'b0;
               dma_ready <= 1'b1;
               state <= 4'h0;
-             end
            end
           default:;
          endcase

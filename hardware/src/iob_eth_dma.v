@@ -19,19 +19,16 @@ module iob_eth_dma #(
         input[AXI_ADDR_W-1:0] dma_addr,
         input                 dma_run,
         output wire           dma_ready,
-        input [10:0]          dma_start_index,
+        input [9:0]           dma_len,
         input                 dma_read_from_not_write,
 
         // For now have two different addresses for in and out data
         output [31:0]         in_data,
         output reg[8:0]       in_addr,
         output                in_wr,
-        input [10:0]          in_end_addr,
-        output [3:0]          in_wstrb,
 
         input [31:0]          out_data,
-        output reg[8:0]       out_addr,
-        input [10:0]          out_end_addr
+        output reg[8:0]       out_addr
     );
 
 wire dma_ready_r,dma_ready_w;
@@ -53,8 +50,7 @@ iob_eth_dma_w #(
         .dma_addr(dma_addr),
         .dma_run(dma_run & dma_read_from_not_write),
         .dma_ready(dma_ready_w),
-        .dma_start_index(dma_start_index),
-        .dma_end_index(out_end_addr),
+        .dma_len(dma_len),
 
         // AXI4 Master i/f
         // Address write
@@ -93,13 +89,11 @@ iob_eth_dma_r #(
         .in_data(in_data),
         .in_addr(in_addr),
         .in_wr(in_wr),
-        .in_wstrb(in_wstrb),
 
         .dma_addr(dma_addr),
         .dma_run(dma_run & !dma_read_from_not_write),
         .dma_ready(dma_ready_r),
-        .dma_start_index(dma_start_index),
-        .dma_end_index(in_end_addr),
+        .dma_len(dma_len),
 
         // AXI4 Master i/f
         //address read

@@ -2,7 +2,7 @@
 #include "iob-uart.h"
 #include "printf.h"
 
-#define RCV_TIMEOUT 5000
+#define RCV_TIMEOUT 500000
 
 static char buffer[ETH_NBYTES+HDR_LEN];
 
@@ -13,13 +13,15 @@ void eth_send_frame(char *data, unsigned int size) {
   while(!eth_tx_ready());
 
   // set frame size
-  eth_set_tx_payload_size(size + 22); // 22 - 14 + 8 bytes from preamble
+  eth_set_tx_payload_size(size + 24); // 24 - 14 + 10 bytes from preamble
 
   // payload
   eth_set_tx_buffer(data,size);
 
   // start sending
   eth_send();
+
+  while(!eth_tx_ready());
 
   return;
 }
@@ -42,7 +44,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     return ETH_INVALID_CRC;
   }
 
-  eth_set_rx_payload_size(eth_get_rcv_size()-4); // DMA end address, the last 4 are crc. We do not need them
+  eth_set_rx_payload_size(eth_get_rcv_size() - 4); // DMA end address, the last 4 are crc. We do not need them
   eth_get_rx_buffer(data_rcv,size);
 
   // send receive ack

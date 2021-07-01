@@ -64,9 +64,6 @@
       .m_axi_rvalid(m_axi_rvalid[1*1+:1]),  
       .m_axi_rready(m_axi_rready[1*1+:1]),
 
-      .ila_dma_ready(eth_dma_ready),
-      .ila_data(eth_ila_data),
-
       // ethernet interface
       .ETH_PHY_RESETN(ETH_PHY_RESETN),
       .PLL_LOCKED(PLL_LOCKED),

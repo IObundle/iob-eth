@@ -15,3 +15,5 @@ DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x001200feaa00
 else
 DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x$(RMAC_ADDR)
 endif
+
+DEFINE+=$(defmacro)DDR_MEM=0x80000000

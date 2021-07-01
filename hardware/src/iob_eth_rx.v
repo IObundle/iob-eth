@@ -60,7 +60,7 @@ module iob_eth_rx #(
 
      if(rx_rst[1]) begin
         pc <= 0;
-        addr <= 0;
+        addr <= 2;
         dest_mac_addr <= 0;
         wr <= 0;
         data_rcvd <= 0;
@@ -75,14 +75,14 @@ module iob_eth_rx #(
           0 : if (data_int != `ETH_SFD || !RX_DV)
             pc <= pc;
 
-          1: addr <= 0;
+          1: addr <= 2;
 
           2: begin
              dest_mac_addr <= {dest_mac_addr[39:0], data_int};
              wr <= 1;
           end
 
-          3: if (addr != (`MAC_ADDR_LEN-1)) begin
+          3: if (addr != (`MAC_ADDR_LEN-1 + 2)) begin
              pc <= pc - 1'b1;
           end else if (dest_mac_addr != ETH_MAC_ADDR) begin
              pc <= 7;
@@ -99,7 +99,7 @@ module iob_eth_rx #(
              data_rcvd <= 1;
              if (rcv_ack) begin
                 pc <= 0;
-                addr <= 0;
+                addr <= 2;
                 data_rcvd <= 0;
              end
           end

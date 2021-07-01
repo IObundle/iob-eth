@@ -44,14 +44,11 @@ module iob_eth_dma_w #(
 		     input[AXI_ADDR_W-1:0] dma_addr,
 		     input 		            dma_run,
 		     output reg            dma_ready,
-           input [10:0]          dma_start_index,
-           input [10:0]          dma_end_index,
+           input [9:0]           dma_len,
 
 		     input [31:0]          out_data,
 		     output reg[8:0]       out_addr
 		     );
-
-   reg [31:0] address;
 
    // One byte at a time, for now
    assign m_axi_awid = `AXI_ID_W'b0;
@@ -62,67 +59,36 @@ module iob_eth_dma_w #(
    assign m_axi_awprot = `AXI_PROT_W'b010;
    assign m_axi_awqos = `AXI_QOS_W'h0;
    
-   wire [3:0] ram_wstrb_start = dma_addr[1] ? (dma_addr[0] ? 4'b1000 : 4'b1100):
-                                              (dma_addr[0] ? 4'b1110 : 4'b1111);
-
-   wire [3:0] in_wstrb_start = dma_start_index[1] ? (dma_start_index[0] ? 4'b1000 : 4'b1100):
-                                                    (dma_start_index[0] ? 4'b1110 : 4'b1111);
-
    wire axi_transfer = (m_axi_wvalid & m_axi_wready);
-   wire last_in = (out_addr == (dma_end_index[10:2] + (dma_end_index[1:0] > dma_start_index[1:0] ? 10'h1 : 10'h0)));
 
-   wire buffer_last;
-   reg burst_align_valid; // Quick starts the transfer
+   reg [7:0] transfers;
+   reg bootstrap;
 
-   wire [31:0] aligned_data;
-   wire aligned_valid;
+   wire [31:0] axi_data;
+   wire [3:0] initial_strb,final_strb;
+   wire [7:0] axi_len;
 
-   reg [7:0] state;
-
-   wire doDelay = (state >= 8'h4 & !axi_transfer); // Always delay if a transfer has not happened
-
-   // Aligns data coming from the buffer
-   eth_burst_align burst_align(
-        .data(out_data),
-        .strobe(in_wstrb_start),
-        .valid(burst_align_valid), // After starting, m_axi_transfer controls the remaining 
-        .last(last_in),
-
-        .data_out(aligned_data),
-        .data_valid(aligned_valid),
-        .strobe_out(),
-        .last_out(buffer_last),
-
-        .delay(doDelay),
-
-        .clk(clk),
-        .rst(rst)
-    );
-
-   wire [31:0] misaligned_data;
-   wire [3:0] misaligned_strobe;
-   wire misaligned_valid;
-   wire misaligned_last;
+   reg [31:0] storedData;
+   reg hasStoredData;
 
    // Misalign data to write to RAM
    eth_burst_split burst_split(
-        .data(aligned_data),
-        .valid(aligned_valid),
-        .strobe(ram_wstrb_start),
-        .last(buffer_last),
+        .data((hasStoredData ? storedData : out_data)),
+        .transfer(axi_transfer | bootstrap),
+        .offset(dma_addr[1:0]),
+        .len(dma_len),
 
-        .data_out(misaligned_data),
-        .data_valid(misaligned_valid),
-        .strobe_out(misaligned_strobe),
-        .last_out(misaligned_last),
+        .data_out(axi_data),
 
-        .delay(doDelay),
+        .initial_strb(initial_strb),
+        .final_strb(final_strb),
+        .axi_len(axi_len),
 
         .clk(clk),
         .rst(rst)
     );
 
-   reg [10:0] transfers;
+   reg [7:0] state;
 
    always @(posedge clk, posedge rst)
    begin
@@ -136,77 +102,84 @@ module iob_eth_dma_w #(
          m_axi_wstrb <= 0;
          m_axi_bready <= 0;
          m_axi_wdata <= 0;
-         burst_align_valid <= 0;
          state <= 0;
          transfers <= 0;
          out_addr <= 0;
+         hasStoredData <= 0;
+         storedData <= 0;
+         bootstrap <= 0;
          dma_ready <= 1'b1;
       end else begin
 
-      if(axi_transfer) begin
-         transfers <= transfers + 1;
-      end
-
-      if(last_in) begin
-         burst_align_valid <= 1'b0;
-      end
-
       case(state)
          8'h0: begin
+            out_addr <= 4;
+            transfers <= 0;
+            m_axi_awaddr <= {dma_addr[AXI_ADDR_W-1:2],2'b00};
+            m_axi_awlen <= axi_len;
+
             if(dma_run)
             begin
-               state <= 5'h1;
-               out_addr <= dma_start_index[10:2];
+               state <= 8'h1;
                dma_ready <= 1'b0;
-               transfers <= 0;
-               m_axi_awvalid <= 1'b1;
-               m_axi_awaddr <= {dma_addr[AXI_ADDR_W-1:2],2'b00};
-               m_axi_awlen <= dma_end_index[10:2] - dma_start_index[10:2] + (dma_end_index[1:0] > dma_start_index[1:0] ? 10'h1 : 10'h0);
             end
          end
-        8'h1: begin // Wait for first valid data
-           if(m_axi_awready) begin
-               m_axi_awvalid <= 1'b0;
-
-               state <= 8'h2;
-               out_addr <= out_addr + 1;
-               burst_align_valid <= 1'b1;
-           end
+        8'h1: begin // Need to wait one cycle with dma_ready deasserted to start reading valid data from the buffer
+           state <= 8'h2;
+           m_axi_awvalid <= 1'b1;
         end
-        8'h2: begin
-           out_addr <= out_addr + 8'h1;
-           if(misaligned_valid) begin
+        8'h2: begin // Wait for first valid data
+            m_axi_wstrb <= initial_strb;
+            m_axi_wdata <= axi_data;
+            
+            if(m_axi_awready) begin
                state <= 8'h4;
-               m_axi_wvalid <= 1'b1;
-               m_axi_wdata <= misaligned_data;
-               m_axi_wstrb <= misaligned_strobe;
-           end
+               m_axi_awvalid <= 1'b0;
+               bootstrap <= 1'b1;
+               out_addr <= out_addr + 1;
+            end
         end
-        8'h4: begin // Perform burst transfer
+        8'h4: begin
+            state <= 8'h8;
+            m_axi_wvalid <= 1'b1;
+            bootstrap <= 1'b0;
+            out_addr <= out_addr + 1;
+        end
+        8'h8: begin // Perform burst transfer
            if(axi_transfer) begin
-               m_axi_wdata <= misaligned_data;
-               m_axi_wstrb <= misaligned_strobe;
-               if(burst_align_valid & !last_in)
-                  out_addr <= out_addr + 1;
-               if(transfers + 1 == m_axi_awlen) begin
-                  m_axi_wlast <= 1'b1;
-                  state <= 8'h8;
+               transfers <= transfers + 1;
+               out_addr <= out_addr + 1;
+               m_axi_wdata <= axi_data;
+               m_axi_wstrb <= 4'b1111;
+
+               if(hasStoredData) begin
+                  hasStoredData <= 1'b0;
+                  storedData <= 0;
                end
+
+               if(transfers + 1 >= axi_len) begin
+                  m_axi_wlast <= 1'b1;
+                  m_axi_wstrb <= final_strb;
+                  state <= 8'h10;
+               end
+           end else if(!hasStoredData) begin
+              hasStoredData <= 1'b1;
+              storedData <= out_data;
            end
         end
-        8'h8: begin
+        8'h10: begin
          if(axi_transfer) begin
-            state <= 8'h10;
+            state <= 8'h20;
             m_axi_wlast <= 1'b0;
             m_axi_wvalid <= 1'b0;
             m_axi_bready <= 1'b1;
          end
         end
-        8'h10: begin
+        8'h20: begin
            if(m_axi_bvalid) begin
+              state <= 8'h0;
               m_axi_bready <= 1'b0;
               dma_ready <= 1'b1;
-              state <= 8'h0;
            end
         end
         default:;
