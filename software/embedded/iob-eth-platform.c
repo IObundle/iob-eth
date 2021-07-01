@@ -82,10 +82,6 @@ void eth_init(int base_address) {
   }
 }
 
-int eth_get_status(void) {
-  return (IO_GET(base, ETH_STATUS));
-}
-
 int eth_get_status(char field) {
   if (field == ETH_RX_WR_ADDR) {
     return ((IO_GET(base, ETH_STATUS) >> field) & 0x7FFF);

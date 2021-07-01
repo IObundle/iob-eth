@@ -17,8 +17,6 @@
 // driver functions
 void eth_init(int base);
 
-int eth_get_status(void);
-
 int eth_get_status(char field);
 
 void eth_set_send(char value);
