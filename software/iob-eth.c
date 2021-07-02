@@ -1,5 +1,4 @@
 #include "iob-eth.h"
-#include "iob-uart.h"
 #include "printf.h"
 
 #define RCV_TIMEOUT 500000
@@ -38,11 +37,10 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if(eth_get_crc() != 0xc704dd7b) {
     eth_ack();
-    uart_puts("Bad CRC\n");
+    printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
-  eth_set_rx_payload_size(eth_get_rcv_size() - 4); // DMA end address, the last 4 are crc. We do not need them
   eth_get_rx_buffer(data_rcv,size);
 
   // send receive ack

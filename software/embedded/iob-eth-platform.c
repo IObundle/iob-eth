@@ -2,7 +2,6 @@
 #include "interconnect.h"
 #include "iob-eth.h"
 #include "eth_mem_map.h"
-#include "iob-uart.h"
 #include "printf.h"
 #include "iob-ila.h"
 
@@ -60,15 +59,15 @@ void eth_init(int base_address) {
   }
 
   #ifdef ETH_DEBUG_PRINT
-  uart_puts("\nSender:");
+  printf("\nSender:");
   for(i=0; i < MAC_ADDR_LEN; i++){
     printf("%02x ",TEMPLATE[MAC_SRC_PTR+i]);
   }
-  uart_puts("\nDest: ");
+  printf("\nDest: ");
   for(i=0; i < MAC_ADDR_LEN; i++){
     printf("%02x ",TEMPLATE[MAC_DEST_PTR+i]);
   }
-  uart_puts("\n");
+  printf("\n");
   #endif
 
   // eth type
@@ -83,14 +82,14 @@ void eth_init(int base_address) {
   while (!((IO_GET(base, ETH_STATUS) >> 3) & 1));
 
   #ifdef ETH_DEBUG_PRINT
-  uart_puts("Ethernet RX clock detected\n");
+  printf("Ethernet RX clock detected\n");
   #endif
 
   // wait for PLL to lock and produce tx clock 
   while (!((IO_GET(base, ETH_STATUS) >> 15) & 1));
 
   #ifdef ETH_DEBUG_PRINT
-  uart_puts("Ethernet TX PLL locked\n");
+  printf("Ethernet TX PLL locked\n");
   #endif
 
   // set initial payload size to Ethernet minimum excluding FCS
@@ -105,9 +104,9 @@ void eth_init(int base_address) {
 
   // read and check result
   if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF) {
-    uart_puts("Ethernet Init failed\n");
+    printf("Ethernet Init failed\n");
   } else {
-    uart_puts("Ethernet Core Initialized\n");
+    printf("Ethernet Core Initialized\n");
   }
 }
 
