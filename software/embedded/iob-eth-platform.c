@@ -2,7 +2,8 @@
 #include "interconnect.h"
 #include "iob-eth.h"
 #include "eth_mem_map.h"
-#include "iob-uart.h"
+#include "printf.h"
+#include "iob-ila.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
@@ -12,14 +13,21 @@
 #define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
 #define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
+#define TEMPLATE_LEN     (PAYLOAD_PTR)
+
+#define ETH_DMA_WRITE_TO_MEM  0
+#define ETH_DMA_READ_FROM_MEM 1
+
+#define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
+
 // Base address
-int base;
+static int base;
 
 // Frame template
-char TEMPLATE[PREAMBLE_LEN + 1 + HDR_LEN];
+static char TEMPLATE[TEMPLATE_LEN];
 
 void eth_init(int base_address) {
-  int i;
+  int i,ret;
   uint64_t mac_addr;
 
   // set base address
@@ -49,7 +57,19 @@ void eth_init(int base_address) {
     TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
-  
+
+  #ifdef ETH_DEBUG_PRINT
+  printf("\nSender:");
+  for(i=0; i < MAC_ADDR_LEN; i++){
+    printf("%02x ",TEMPLATE[MAC_SRC_PTR+i]);
+  }
+  printf("\nDest: ");
+  for(i=0; i < MAC_ADDR_LEN; i++){
+    printf("%02x ",TEMPLATE[MAC_DEST_PTR+i]);
+  }
+  printf("\n");
+  #endif
+
   // eth type
   TEMPLATE[ETH_TYPE_PTR]   = ETH_TYPE_H;
   TEMPLATE[ETH_TYPE_PTR+1] = ETH_TYPE_L;
@@ -60,15 +80,23 @@ void eth_init(int base_address) {
 
   // wait for PHY to produce rx clock 
   while (!((IO_GET(base, ETH_STATUS) >> 3) & 1));
-  uart_puts("Ethernet RX clock detected\n");
+
+  #ifdef ETH_DEBUG_PRINT
+  printf("Ethernet RX clock detected\n");
+  #endif
 
   // wait for PLL to lock and produce tx clock 
   while (!((IO_GET(base, ETH_STATUS) >> 15) & 1));
-  uart_puts("Ethernet TX PLL locked\n");
+
+  #ifdef ETH_DEBUG_PRINT
+  printf("Ethernet TX PLL locked\n");
+  #endif
 
   // set initial payload size to Ethernet minimum excluding FCS
   IO_SET(base, ETH_TX_NBYTES, 46);
   IO_SET(base, ETH_RX_NBYTES, 46);
+
+  eth_init_frame();
 
   // check processor interface
   // write dummy register
@@ -76,13 +104,17 @@ void eth_init(int base_address) {
 
   // read and check result
   if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF) {
-    uart_puts("Ethernet Init failed\n");
+    printf("Ethernet Init failed\n");
   } else {
-    uart_puts("Ethernet Core Initialized\n");
+    printf("Ethernet Core Initialized\n");
   }
 }
 
-int eth_get_status(char field) {
+int eth_get_status(void) {
+  return (IO_GET(base, ETH_STATUS));
+}
+
+int eth_get_status_field(char field) {
   if (field == ETH_RX_WR_ADDR) {
     return ((IO_GET(base, ETH_STATUS) >> field) & 0x7FFF);
   } else {
@@ -114,18 +146,76 @@ int eth_get_crc(void) {
   return (IO_GET(base, ETH_CRC));
 }
 
-void eth_set_data(int i, char data) {
-  IO_SET(base, (ETH_DATA + PREAMBLE_LEN + 1 + HDR_LEN + i), data);
+int eth_get_rcv_size(void) {
+  return (IO_GET(base, ETH_RCV_SIZE));
 }
 
 char eth_get_data(int i) {
-  return (IO_GET(base, (ETH_DATA + i)));
+  int data = (IO_GET(base, (ETH_DATA + i / 4)));
+
+  data >>= (8 * (i % 4));
+
+  return ((char) data & 0xff);
+}
+
+void eth_set_tx_buffer(char* buffer,int size){
+  int dma_transfer = 0,dma_address = 0;
+
+#ifdef ETH_DMA
+  if(((int) buffer) >= DDR_MEM){
+    dma_transfer = 1;
+  }
+  dma_address = (((int) buffer) - DDR_MEM);
+#endif
+
+  if(dma_transfer) {
+    while(eth_get_status_field(ETH_DMA_READY) != 1);
+
+    IO_SET(base,ETH_DMA_ADDRESS, dma_address);     // Memory address
+    IO_SET(base,ETH_DMA_LEN,size);                 // Length
+    IO_SET(base,ETH_DMA_RUN,ETH_DMA_WRITE_TO_MEM); // DMA run
+
+    while(eth_get_status_field(ETH_DMA_READY) != 1);
+  } else {
+    int* buffer_int = (int*) buffer;
+
+    for (int i = 0; i < DWORD_ALIGN(size) / 4; i++) {
+      IO_SET(base,ETH_DATA + TEMPLATE_LEN + i * 4,buffer_int[i]);
+    }
+  }
+}
+
+void eth_get_rx_buffer(char* buffer,int size){
+  int dma_transfer = 0,dma_address = 0;
+
+#ifdef ETH_DMA
+  if(((int) buffer) >= DDR_MEM){
+    dma_transfer = 1;
+  }
+  dma_address = (((int) buffer) - DDR_MEM);
+#endif
+
+  if(dma_transfer){
+    while(eth_get_status_field(ETH_DMA_READY) != 1);
+
+    IO_SET(base,ETH_DMA_ADDRESS,dma_address);       // Memory address
+    IO_SET(base,ETH_DMA_LEN,size);                  // Length
+    IO_SET(base,ETH_DMA_RUN,ETH_DMA_READ_FROM_MEM); // DMA run
+
+    while(eth_get_status_field(ETH_DMA_READY) != 1);
+  } else {
+    for(int i = 0; i < size; i++){
+      buffer[i] = eth_get_data(i+16);
+    }
+  }
 }
 
 void eth_init_frame(void) {
   int i;
+  
+  int* TEMPLATE_INT = (int*) TEMPLATE;
 
-  for (i=0; i < (PREAMBLE_LEN + 1 + HDR_LEN); i++) {
-    IO_SET(base, (ETH_DATA + i), TEMPLATE[i]);
+  for (i = 0; i < TEMPLATE_LEN / 4; i++) {
+    IO_SET(base, ETH_DATA + i * 4, TEMPLATE_INT[i]);
   }
 }

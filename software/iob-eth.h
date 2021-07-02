@@ -6,7 +6,8 @@
 #define ETH_PHY_DV            2
 #define ETH_PHY_CLK           3
 #define ETH_RX_WR_ADDR        4
-#define ETH_TX_CLK_PLL_LOCKED 5
+#define ETH_TX_CLK_PLL_LOCKED 15
+#define ETH_DMA_READY         16
 
 #define ETH_MAC_ADDR 0x01606e11020f
 
@@ -17,7 +18,9 @@
 // driver functions
 void eth_init(int base);
 
-int eth_get_status(char field);
+int eth_get_status(void);
+
+int eth_get_status_field(char field);
 
 void eth_set_send(char value);
 
@@ -31,9 +34,15 @@ void eth_set_rx_payload_size(unsigned int size);
 
 int eth_get_crc(void);
 
+int eth_get_rcv_size(void);
+
 void eth_set_data(int i, char data);
 
 char eth_get_data(int i);
+
+void eth_set_tx_buffer(char* buffer,int size);
+
+void eth_get_rx_buffer(char* buffer,int size);
 
 void eth_init_frame(void);
 
@@ -56,17 +65,17 @@ unsigned int eth_send_file(char *data, int size);
 
 void eth_print_status(void);
 
-#define eth_tx_ready() eth_get_status(ETH_TX_READY)
+#define eth_tx_ready() eth_get_status_field(ETH_TX_READY)
 
-#define eth_rx_ready() eth_get_status(ETH_RX_READY)
+#define eth_rx_ready() eth_get_status_field(ETH_RX_READY)
 
-#define eth_phy_dv() eth_get_status(ETH_PHY_DV)
+#define eth_phy_dv() eth_get_status_field(ETH_PHY_DV)
 
-#define eth_phy_clk() eth_get_status(ETH_PHY_CLK)
+#define eth_phy_clk() eth_get_status_field(ETH_PHY_CLK)
 
-#define eth_rx_wr_addr() eth_get_status(ETH_RX_WR_ADDR)
+#define eth_rx_wr_addr() eth_get_status_field(ETH_RX_WR_ADDR)
 
-#define eth_tx_clk_pll_locked() eth_get_status(ETH_TX_CLK_PLL_LOCKED)
+#define eth_tx_clk_pll_locked() eth_get_status_field(ETH_TX_CLK_PLL_LOCKED)
 
 #define eth_send() eth_set_send(1)
 

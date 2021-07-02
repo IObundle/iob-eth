@@ -1,0 +1,12 @@
+[submodule "submodules/DMA"]
+	path = submodules/DMA
+	url = git@github.com:IObundle/iob-dma.git
+[submodule "submodules/LIB"]
+	path = submodules/LIB
+	url = git@github.com:IObundle/iob-lib.git
+[submodule "submodules/MEM"]
+	path = submodules/MEM
+	url = git@github.com:IObundle/iob-mem.git
+[submodule "submodules/INTERCON"]
+	path = submodules/INTERCON
+	url = git@github.com:IObundle/iob-interconnect.git

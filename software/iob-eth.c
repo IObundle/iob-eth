@@ -1,10 +1,9 @@
 #include "iob-eth.h"
-#include "iob-uart.h"
 #include "printf.h"
 
-#define RCV_TIMEOUT 5000
+#define RCV_TIMEOUT 500000
 
-char buffer[HDR_LEN+ETH_NBYTES];
+static char buffer[ETH_NBYTES+HDR_LEN];
 
 void eth_send_frame(char *data, unsigned int size) {
   int i;
@@ -13,16 +12,10 @@ void eth_send_frame(char *data, unsigned int size) {
   while(!eth_tx_ready());
 
   // set frame size
-  eth_set_tx_payload_size(size);
-
-  // write data to send
-  // init frame
-  eth_init_frame();
+  eth_set_tx_payload_size(size + 24); // 24 - 14 + 10 bytes from preamble
 
   // payload
-  for (i=0; i < size; i++) {
-    eth_set_data(i, data[i]);
-  }
+  eth_set_tx_buffer(data,size);
 
   // start sending
   eth_send();
@@ -44,13 +37,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if(eth_get_crc() != 0xc704dd7b) {
     eth_ack();
-    uart_puts("Bad CRC\n\0");
+    printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
-  for(i=0; i < (size+HDR_LEN); i++) {
-    data_rcv[i] = eth_get_data(i);
-  }
+  eth_get_rx_buffer(data_rcv,size);
 
   // send receive ack
   eth_ack();
@@ -74,15 +65,10 @@ unsigned int eth_rcv_file(char *data, int size) {
      else bytes_to_receive = ETH_NBYTES;
 
      // wait to receive frame
-     while(eth_rcv_frame(buffer, bytes_to_receive, RCV_TIMEOUT));
-
-     // save in DDR
-     for(i = 0; i < bytes_to_receive; i++) {
-       data[j*ETH_NBYTES + i] = buffer[HDR_LEN+i];
-     }
+     while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
 
      // send data back as ack
-     eth_send_frame(&buffer[HDR_LEN], bytes_to_receive);
+     eth_send_frame(&data[count_bytes], bytes_to_receive);
 
      // update byte counter
      count_bytes += bytes_to_receive;
