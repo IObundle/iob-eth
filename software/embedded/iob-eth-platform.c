@@ -16,13 +16,16 @@
 
 #define TEMPLATE_LEN     (PAYLOAD_PTR)
 
+#define ETH_DMA_WRITE_TO_MEM  0
+#define ETH_DMA_READ_FROM_MEM 1
+
+#define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
+
 // Base address
 static int base;
 
 // Frame template
 static char TEMPLATE[TEMPLATE_LEN];
-
-//#define ETH_DEBUG_PRINT 1
 
 void eth_init(int base_address) {
   int i,ret;
@@ -55,6 +58,18 @@ void eth_init(int base_address) {
     TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
+
+  #ifdef ETH_DEBUG_PRINT
+  uart_puts("\nSender:");
+  for(i=0; i < MAC_ADDR_LEN; i++){
+    printf("%02x ",TEMPLATE[MAC_SRC_PTR+i]);
+  }
+  uart_puts("\nDest: ");
+  for(i=0; i < MAC_ADDR_LEN; i++){
+    printf("%02x ",TEMPLATE[MAC_DEST_PTR+i]);
+  }
+  uart_puts("\n");
+  #endif
 
   // eth type
   TEMPLATE[ETH_TYPE_PTR]   = ETH_TYPE_H;
@@ -90,13 +105,9 @@ void eth_init(int base_address) {
 
   // read and check result
   if (IO_GET(base, ETH_DUMMY) != 0xDEADBEEF) {
-    #ifdef ETH_DEBUG_PRINT
     uart_puts("Ethernet Init failed\n");
-    #endif
   } else {
-    #ifdef ETH_DEBUG_PRINT
     uart_puts("Ethernet Core Initialized\n");
-    #endif
   }
 }
 
@@ -148,36 +159,48 @@ char eth_get_data(int i) {
   return ((char) data & 0xff);
 }
 
-#define ETH_DMA_WRITE_TO_MEM  0
-#define ETH_DMA_READ_FROM_MEM 1
-
-#define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
-
 void eth_set_tx_buffer(char* buffer,int size){
+  int dma_transfer = 0,dma_address = 0;
+
+#ifdef ETH_DMA
   if(((int) buffer) >= DDR_MEM){
+    dma_transfer = 1;
+  }
+  dma_address = (((int) buffer) - DDR_MEM);
+#endif
+
+  if(dma_transfer) {
     while(eth_get_status_field(ETH_DMA_READY) != 1);
 
-    IO_SET(base,ETH_DMA_ADDRESS, (((int) buffer) - DDR_MEM)); // Memory address
-    IO_SET(base,ETH_DMA_LEN,size);  // Length
+    IO_SET(base,ETH_DMA_ADDRESS, dma_address);     // Memory address
+    IO_SET(base,ETH_DMA_LEN,size);                 // Length
     IO_SET(base,ETH_DMA_RUN,ETH_DMA_WRITE_TO_MEM); // DMA run
 
     while(eth_get_status_field(ETH_DMA_READY) != 1);
   } else {
     int* buffer_int = (int*) buffer;
 
-    for (int i = 0; i < (DWORD_ALIGN(size) / 4) - 1; i++) {
+    for (int i = 0; i < DWORD_ALIGN(size) / 4; i++) {
       IO_SET(base,ETH_DATA + TEMPLATE_LEN + i * 4,buffer_int[i]);
     }
   }
 }
 
 void eth_get_rx_buffer(char* buffer,int size){
+  int dma_transfer = 0,dma_address = 0;
 
+#ifdef ETH_DMA
   if(((int) buffer) >= DDR_MEM){
+    dma_transfer = 1;
+  }
+  dma_address = (((int) buffer) - DDR_MEM);
+#endif
+
+  if(dma_transfer){
     while(eth_get_status_field(ETH_DMA_READY) != 1);
 
-    IO_SET(base,ETH_DMA_ADDRESS, (((int) buffer) - DDR_MEM));  // Memory address
-    IO_SET(base,ETH_DMA_LEN,size); // Length
+    IO_SET(base,ETH_DMA_ADDRESS,dma_address);       // Memory address
+    IO_SET(base,ETH_DMA_LEN,size);                  // Length
     IO_SET(base,ETH_DMA_RUN,ETH_DMA_READ_FROM_MEM); // DMA run
 
     while(eth_get_status_field(ETH_DMA_READY) != 1);
@@ -186,16 +209,6 @@ void eth_get_rx_buffer(char* buffer,int size){
       buffer[i] = eth_get_data(i+16);
     }
   }
-
-#if 0
-  for(int i = 0; i < size + 8; i++){
-    if((i % 16) == 0 && i > 0){
-      printf("\n");
-    }
-    printf("%02x ",buffer[i]);
-  }
-  printf("\n");
-#endif
 }
 
 void eth_init_frame(void) {

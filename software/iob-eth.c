@@ -21,8 +21,6 @@ void eth_send_frame(char *data, unsigned int size) {
   // start sending
   eth_send();
 
-  while(!eth_tx_ready());
-
   return;
 }
 

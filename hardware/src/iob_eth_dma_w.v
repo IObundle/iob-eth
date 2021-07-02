@@ -4,16 +4,16 @@
 `include "axi.vh"
 
 module iob_eth_dma_w #(
-		    parameter DMA_DATA_W = 32,
-		    // AXI4 interface parameters
-		    parameter AXI_ADDR_W = 32,
-		    parameter AXI_DATA_W = DMA_DATA_W
-		    ) (
-		       // system inputs
-		       input 		       clk,
-		       input 		       rst,
+          parameter DMA_DATA_W = 32,
+          // AXI4 interface parameters
+          parameter AXI_ADDR_W = 32,
+          parameter AXI_DATA_W = DMA_DATA_W
+          ) (
+             // system inputs
+             input             clk,
+             input             rst,
 
-		       //AXI4 Master i/f
+             //AXI4 Master i/f
            // Master Interface Write Address
            output [`AXI_ID_W-1:0]        m_axi_awid,
            output reg [AXI_ADDR_W-1:0]   m_axi_awaddr,
@@ -40,15 +40,15 @@ module iob_eth_dma_w #(
            input                         m_axi_bvalid,
            output reg                    m_axi_bready,
 
-		     // DMA Configurations
-		     input[AXI_ADDR_W-1:0] dma_addr,
-		     input 		            dma_run,
-		     output reg            dma_ready,
+           // DMA Configurations
+           input[AXI_ADDR_W-1:0] dma_addr,
+           input                 dma_run,
+           output reg            dma_ready,
            input [9:0]           dma_len,
 
-		     input [31:0]          out_data,
-		     output reg[8:0]       out_addr
-		     );
+           input [31:0]          out_data,
+           output reg[8:0]       out_addr
+           );
 
    // One byte at a time, for now
    assign m_axi_awid = `AXI_ID_W'b0;
@@ -113,7 +113,7 @@ module iob_eth_dma_w #(
 
       case(state)
          8'h0: begin
-            out_addr <= 4;
+            out_addr <= `DMA_W_START;
             transfers <= 0;
             m_axi_awaddr <= {dma_addr[AXI_ADDR_W-1:2],2'b00};
             m_axi_awlen <= axi_len;

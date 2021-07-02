@@ -19,9 +19,15 @@
 `define ETH_NBYTES (1024-18) // minimum ethernet payload excluding FCS
 
 // Frame structure
-`define PREAMBLE_LEN 9
+`define PREAMBLE_LEN 9 // 7 + 2 bytes in order to align frame data
 `define MAC_ADDR_LEN 6
 `define HDR_LEN      (2*`MAC_ADDR_LEN + 2)
+
+// RX and TX buffer and DMA parameters
+
+`define ETH_RX_BUFFER_START 2 // In order to align frame data, start saving from byte 2 onwards
+`define DMA_W_START 4 // First 4 DWORDS are the header, data starts from DWORD 4
+`define DMA_R_START 6 // First 6 DWORDS are the template. 
 
 // Memory map
 `define ETH_STATUS           `ETH_ADDR_W'd0

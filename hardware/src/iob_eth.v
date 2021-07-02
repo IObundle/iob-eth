@@ -111,6 +111,13 @@ module iob_eth #(
    wire                     rx_wr;
    wire [31:0]              crc_value;
 
+   wire [8:0]               rx_address;
+   wire [8:0]               tx_address;
+   wire [31:0]              tx_wr_data;
+   wire                     do_tx_wr;
+
+`ifdef ETH_DMA
+
     iob_eth_dma 
      #(
        .DMA_DATA_W(AXI_DATA_W),
@@ -181,10 +188,19 @@ module iob_eth #(
         );
    
    // When dma is ready (not running) the software can still use the register interface to write and read the buffers
-   wire [8:0]  rx_address = dma_ready ? addr[8:0] : dma_rx_address;
-   wire [8:0]  tx_address = dma_ready ? addr[8:0] : dma_tx_address;
-   wire [31:0] tx_wr_data = dma_ready ? data_in : dma_tx_data;
-   wire        do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
+   assign  rx_address = dma_ready ? addr[8:0] : dma_rx_address;
+   assign  tx_address = dma_ready ? addr[8:0] : dma_tx_address;
+   assign  tx_wr_data = dma_ready ? data_in : dma_tx_data;
+   assign  do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
+
+`else // No ETH_DMA
+
+   assign  rx_address = addr[8:0];
+   assign  tx_address = addr[8:0];
+   assign  tx_wr_data = data_in;
+   assign  do_tx_wr   = tx_wr;
+
+`endif
 
    assign rst_int = rst_soft | rst;
    

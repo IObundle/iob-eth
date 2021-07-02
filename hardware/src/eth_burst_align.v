@@ -34,35 +34,33 @@ begin
     last_data_out = stored_data;
 
     if(offset[1:0] == 2'b00 & len[1:0] == 2'b00)
-    	axi_len = len[9:2] - 8'h1;
+        axi_len = len[9:2] - 8'h1;
     else if((offset[1:0] == 2'b10 && len[1:0] == 2'b11) ||
-    		(offset[1:0] == 2'b11 && len[1:0] >= 2'b10))
-    	axi_len = len[9:2] + 8'h1;
+            (offset[1:0] == 2'b11 && len[1:0] >= 2'b10))
+        axi_len = len[9:2] + 8'h1;
     else
-    	axi_len = len[9:2];
+        axi_len = len[9:2];
 end
 
 always @(posedge clk,posedge rst)
 begin
-	if(rst) begin
-		stored_data <= 0;
-	end 
-	else if(transfer || remaining_data) begin
-		case(offset[1:0])
-		2'b00:;
-		2'b01: stored_data <= data[31:8];
-		2'b10: stored_data[15:0] <= data[31:16];
-		2'b11: stored_data[7:0] <= data[31:24];
-		default:;
-		endcase
-                case(offset[1:0])
-                2'b00: data_out <= data; 
-                2'b01: data_out <= {data[7:0],stored_data};
-                2'b10: data_out <= {data[15:0],stored_data[15:0]};
-                2'b11: data_out <= {data[23:0],stored_data[7:0]};
-                default:;
-                endcase
-	end
+    if(rst) begin
+        stored_data <= 0;
+    end 
+    else if(transfer || remaining_data) begin
+        case(offset[1:0])
+        2'b00:;
+        2'b01: stored_data <= data[31:8];
+        2'b10: stored_data[15:0] <= data[31:16];
+        2'b11: stored_data[7:0] <= data[31:24];
+        endcase
+        case(offset[1:0])
+        2'b00: data_out <= data; 
+        2'b01: data_out <= {data[7:0],stored_data};
+        2'b10: data_out <= {data[15:0],stored_data[15:0]};
+        2'b11: data_out <= {data[23:0],stored_data[7:0]};
+        endcase
+    end
 end
 
 endmodule

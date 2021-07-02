@@ -12,5 +12,10 @@ VHDR+=$(wildcard $(INTERCON_INC_DIR)/axi.vh)
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
 
 ifeq ($(SIM),1)
-	DEFINE+=$(defmacro)SIM
+    DEFINE+=$(defmacro)SIM
+endif
+
+#define ETH_DMA
+ifeq ($(ETH_DMA),1)
+DEFINE+=$(defmacro)ETH_DMA 
 endif

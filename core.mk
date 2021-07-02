@@ -3,6 +3,17 @@ IS_CORE:=1
 USE_NETLIST ?=0
 TOP_MODULE:=iob_eth
 
+# DEFAULT 
+ETH_DMA ?= 1
+ETH_DEBUG_PRINT ?= 0
+DDR_MEM ?= 0x80000000
+
+ifeq ($(ETH_DMA),1)
+        ifeq ($(DDR_MEM),)
+                $(error ETH_DMA set but DDR_MEM not set) 
+        endif
+endif
+
 #ETHERNET PATHS
 ETHERNET_HW_DIR:=$(ETHERNET_DIR)/hardware
 ETHERNET_INC_DIR:=$(ETHERNET_HW_DIR)/include

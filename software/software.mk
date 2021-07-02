@@ -16,4 +16,14 @@ else
 DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x$(RMAC_ADDR)
 endif
 
-DEFINE+=$(defmacro)DDR_MEM=0x80000000
+#define ETH_DMA
+ifeq ($(ETH_DMA),1)
+DEFINE+=$(defmacro)ETH_DMA 
+endif
+
+#define ETH_DEBUG_PRINT
+ifeq ($(ETH_DEBUG_PRINT),1)
+DEFINE+=$(defmacro)ETH_DEBUG_PRINT
+endif
+
+DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)

@@ -6,7 +6,7 @@
 // For now, simple acts as a loopback, sending any message received back after a few cycles
 
 module iob_eth_tb_gen(
-	input  RX_CLK,
+    input  RX_CLK,
     input [3:0] RX_DATA,
     input RX_DV,
 
@@ -14,9 +14,9 @@ module iob_eth_tb_gen(
     output reg [3:0] TX_DATA,
     output reg TX_EN,
 
-	input clk,
-	input reset
-	);
+    input clk,
+    input reset
+    );
 
 reg [15:0] counter;
 
@@ -65,35 +65,35 @@ begin
 
       if(rxPartEnabled)
       begin
-      	case(rxPartState)
-      	4'h0: begin // Wait for 
-      		if(RX_DV && RX_DATA == 4'hD) begin
-      			rxPartState <= 4'h1;
-      		end
-      	end
-      	4'h1: begin // Collect nibbles until end of message
-      		if(RX_DV) begin
+        case(rxPartState)
+        4'h0: begin // Wait for 
+            if(RX_DV && RX_DATA == 4'hD) begin
+                rxPartState <= 4'h1;
+            end
+        end
+        4'h1: begin // Collect nibbles until end of message
+            if(RX_DV) begin
                 savedRX[savedRXCounter] <= RX_DATA;
                 savedRXCounter <= savedRXCounter + 1;
-      		end else begin
-      			rxPartState <= 4'h2;
-      		end
-      	end
-      	4'h2: begin // Wait some cycles before starting TX
-      		rxWaitReg <= rxWaitReg + 1;
-      		if(rxWaitReg == 10) begin
-      			rxEnableTx <= 1; // Start TX
-      			txSendSize <= savedRXCounter - 11'h8;
-      			rxPartEnabled <= 0;
-      			rxReset <= 1;
-      		end
-      	end
-      	endcase
+            end else begin
+                rxPartState <= 4'h2;
+            end
+        end
+        4'h2: begin // Wait some cycles before starting TX
+            rxWaitReg <= rxWaitReg + 1;
+            if(rxWaitReg == 10) begin
+                rxEnableTx <= 1; // Start TX
+                txSendSize <= savedRXCounter - 11'h8;
+                rxPartEnabled <= 0;
+                rxReset <= 1;
+            end
+        end
+        endcase
       end
 
       if(txEnableRx)
       begin
-      	rxPartEnabled <= 1;
+        rxPartEnabled <= 1;
       end
 
       if(reset | rxReset)
@@ -106,7 +106,7 @@ begin
 
       if(reset)
       begin
-      		rxPartEnabled <= 1; // Start enabled
+            rxPartEnabled <= 1; // Start enabled
             txSendSize <= 0;
       end
 end
@@ -147,93 +147,93 @@ always @(posedge TX_CLK,posedge reset)
 begin
       txEnableRx <= 0;
 
-	  if(txPartEnabled)
-	  begin
-	  	case(txPartState)
-	  	4'h0: begin // Start the sending process
-	  		TX_EN <= 1;
-	  		TX_DATA <= 4'h5;
-	  		txPartState <= 4'h1;
-	  	end
-	  	4'h1: begin
-	  		TX_DATA <= 4'hD;
-	  		txPartState <= 4'h2;
-	  	end
-	  	4'h2: begin // Send all data except the CRC bytes
-	  		TX_DATA <= `SEND_ARRAY[sendingTXCounter];
+      if(txPartEnabled)
+      begin
+        case(txPartState)
+        4'h0: begin // Start the sending process
+            TX_EN <= 1;
+            TX_DATA <= 4'h5;
+            txPartState <= 4'h1;
+        end
+        4'h1: begin
+            TX_DATA <= 4'hD;
+            txPartState <= 4'h2;
+        end
+        4'h2: begin // Send all data except the CRC bytes
+            TX_DATA <= `SEND_ARRAY[sendingTXCounter];
         sendingTXCounter <= sendingTXCounter + 1;
 
-	  		if(sendingTXCounter[0] == 1'b0)
-	  			crc_en <= 1'b1;
-	  		else
-	  			crc_en <= 1'b0;
+            if(sendingTXCounter[0] == 1'b0)
+                crc_en <= 1'b1;
+            else
+                crc_en <= 1'b0;
 
-	  		if(sendingTXCounter == rxSendSize) begin
-	  			TX_DATA <= crc_out[27:24];
-	  			txPartState <= 4'h3;
-	  			crc_en <= 1'b0;
-	  		end
-	  	end
+            if(sendingTXCounter == rxSendSize) begin
+                TX_DATA <= crc_out[27:24];
+                txPartState <= 4'h3;
+                crc_en <= 1'b0;
+            end
+        end
         4'h3: begin
-        	TX_DATA <= crc_out[31:28];
-        	txPartState <= 4'h4;
+            TX_DATA <= crc_out[31:28];
+            txPartState <= 4'h4;
         end
 
         4'h4: begin
-        	TX_DATA <= crc_out[19:16];
-        	txPartState <= 4'h5;
+            TX_DATA <= crc_out[19:16];
+            txPartState <= 4'h5;
         end
 
         4'h5: begin
-        	TX_DATA <= crc_out[23:20];
-        	txPartState <= 4'h6;
+            TX_DATA <= crc_out[23:20];
+            txPartState <= 4'h6;
         end
 
         4'h6: begin
-        	TX_DATA <= crc_out[11:8];
-        	txPartState <= 4'h7;
+            TX_DATA <= crc_out[11:8];
+            txPartState <= 4'h7;
         end
 
         4'h7: begin
-        	TX_DATA <= crc_out[15:12];
-        	txPartState <= 4'h8;
+            TX_DATA <= crc_out[15:12];
+            txPartState <= 4'h8;
         end
 
         4'h8: begin
-        	TX_DATA <= crc_out[3:0];
-        	txPartState <= 4'h9;
+            TX_DATA <= crc_out[3:0];
+            txPartState <= 4'h9;
         end
 
         4'h9: begin
-        	TX_DATA <= crc_out[7:4];
-        	txPartState <= 4'hA;
+            TX_DATA <= crc_out[7:4];
+            txPartState <= 4'hA;
         end
-	  	
-	  	4'hA: begin
-	  		TX_EN <= 0;
-	  		txPartState <= 4'h0;
-	  		txPartEnabled <= 0;
-	  		txEnableRx <= 1;
-	  		txReset <= 1;
-	  	end
-	  	endcase
-	  end
+        
+        4'hA: begin
+            TX_EN <= 0;
+            txPartState <= 4'h0;
+            txPartEnabled <= 0;
+            txEnableRx <= 1;
+            txReset <= 1;
+        end
+        endcase
+      end
 
-	  if(rxEnableTx)
-	  begin
-	  	txPartEnabled <= 1;
-	  	rxSendSize <= txSendSize;
-	  end
+      if(rxEnableTx)
+      begin
+        txPartEnabled <= 1;
+        rxSendSize <= txSendSize;
+      end
 
       if(reset | txReset)
       begin
             txPartEnabled <= 0;
             txPartState <= 0;
             txReset <= 0;
-      		TX_EN <= 0;
-      		crc_en <= 0;
-      		rxSendSize <= 0;
-      		sendingTXCounter <= 0;
+            TX_EN <= 0;
+            crc_en <= 0;
+            rxSendSize <= 0;
+            sendingTXCounter <= 0;
       end
 
 end

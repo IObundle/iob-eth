@@ -4,16 +4,16 @@
 `include "axi.vh"
 
 module iob_eth_dma_r #(
-		    parameter DMA_DATA_W = 32,
-		    // AXI4 interface parameters
-		    parameter AXI_ADDR_W = 32,
-		    parameter AXI_DATA_W = DMA_DATA_W
-		    ) (
-		       // system inputs
-		       input 		       clk,
-		       input 		       rst,
+          parameter DMA_DATA_W = 32,
+          // AXI4 interface parameters
+          parameter AXI_ADDR_W = 32,
+          parameter AXI_DATA_W = DMA_DATA_W
+          ) (
+             // system inputs
+             input             clk,
+             input             rst,
 
-		       //AXI4 Master i/f
+             //AXI4 Master i/f
            //address read
            output [`AXI_ID_W-1:0]    m_axi_arid,
            output reg [AXI_ADDR_W-1:0] m_axi_araddr,
@@ -35,16 +35,16 @@ module iob_eth_dma_r #(
            input  m_axi_rvalid,
            output reg m_axi_rready,
 
-		       // DMA Configurations
-		       input[AXI_ADDR_W-1:0] dma_addr,
-		       input 		             dma_run,
-		       output reg            dma_ready,
+             // DMA Configurations
+             input[AXI_ADDR_W-1:0] dma_addr,
+             input                   dma_run,
+             output reg            dma_ready,
            input [9:0]           dma_len,
 
-		       output wire[31:0]     in_data,
-		       output reg[8:0]       in_addr,
+             output wire[31:0]     in_data,
+             output reg[8:0]       in_addr,
            output reg            in_wr
-		       );
+             );
 
    assign m_axi_arid = 0;   // id is zero
    assign m_axi_arsize = 3'h2; // 4 bytes at a time 
@@ -117,7 +117,7 @@ module iob_eth_dma_r #(
               m_axi_arvalid <= 1'b1;
               m_axi_araddr <= {dma_addr[AXI_ADDR_W-1:2],2'b00};
               m_axi_arlen <= axi_len;
-              in_addr <= 5;
+              in_addr <= (`DMA_R_START-1); // Start one earlier since in_addr is always one value ahead (this makes the code simpler and saves either a register or a subtraction)
              end
            end
            4'h1: begin
