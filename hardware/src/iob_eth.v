@@ -69,7 +69,8 @@ module iob_eth #(
 
    wire                     dma_ready;
    wire                     dma_out_en;
-   reg                      dma_out_run,dma_out_run_en;
+   reg                      dma_out_run;
+   reg                      dma_out_run_en;
 
    // control
    reg                      send_en;
@@ -118,80 +119,122 @@ module iob_eth #(
 
 `ifdef ETH_DMA
 
-    iob_eth_dma 
-     #(
-       .DMA_DATA_W(AXI_DATA_W),
-       .AXI_ADDR_W(AXI_ADDR_W)
-       ) eth_dma (
-        // system inputs
-        .clk(clk),
-        .rst(rst),
+   wire [8:0] burst_addr;
+   wire [31:0] rd_data_out;
+   wire rd_data_valid,rd_data_ready;
 
-        .in_data(dma_tx_data),
-        .in_addr(dma_tx_address),
-        .in_wr(dma_tx_wr),
+   mem_burst_out #(.ADDR_W(9)) burst_out
+      (
+      .start_addr(`DMA_W_START),
 
-        .out_data(rx_rd_data),
-        .out_addr(dma_rx_address),
+      .start(dma_out_run & dma_read_from_not_write),
 
-        .dma_addr(dma_address_reg),
-        .dma_run(dma_out_run),
-        .dma_ready(dma_ready),
-        .dma_len(dma_len),
-        .dma_read_from_not_write(dma_read_from_not_write),
+      .addr(burst_addr),
+      .data_in(rx_rd_data),
 
-        // AXI4 Master i/f
-        // Address write
-        .m_axi_awid(m_axi_awid), 
-        .m_axi_awaddr(m_axi_awaddr), 
-        .m_axi_awlen(m_axi_awlen), 
-        .m_axi_awsize(m_axi_awsize), 
-        .m_axi_awburst(m_axi_awburst), 
-        .m_axi_awlock(m_axi_awlock), 
-        .m_axi_awcache(m_axi_awcache), 
-        .m_axi_awprot(m_axi_awprot),
-        .m_axi_awqos(m_axi_awqos), 
-        .m_axi_awvalid(m_axi_awvalid), 
-        .m_axi_awready(m_axi_awready),
-        //write
-        .m_axi_wdata(m_axi_wdata), 
-        .m_axi_wstrb(m_axi_wstrb), 
-        .m_axi_wlast(m_axi_wlast), 
-        .m_axi_wvalid(m_axi_wvalid), 
-        .m_axi_wready(m_axi_wready), 
-        //write response
-        .m_axi_bid(m_axi_bid),
-        .m_axi_bresp(m_axi_bresp), 
-        .m_axi_bvalid(m_axi_bvalid), 
-        .m_axi_bready(m_axi_bready),
+      .data_out(rd_data_out),
+      .valid(rd_data_valid),
+      .ready(rd_data_ready),
 
-        //address read
-        .m_axi_arid(m_axi_arid),
-        .m_axi_araddr(m_axi_araddr),
-        .m_axi_arlen(m_axi_arlen),
-        .m_axi_arsize(m_axi_arsize),
-        .m_axi_arburst(m_axi_arburst),
-        .m_axi_arlock(m_axi_arlock),
-        .m_axi_arcache(m_axi_arcache),
-        .m_axi_arprot(m_axi_arprot),
-        .m_axi_arqos(m_axi_arqos),
-        .m_axi_arvalid(m_axi_arvalid),
-        .m_axi_arready(m_axi_arready),
-   
-        //read
-        .m_axi_rid(m_axi_rid),
-        .m_axi_rdata(m_axi_rdata),
-        .m_axi_rresp(m_axi_rresp),
-        .m_axi_rlast(m_axi_rlast),
-        .m_axi_rvalid(m_axi_rvalid),
-        .m_axi_rready(m_axi_rready)
-        );
-   
-   // When dma is ready (not running) the software can still use the register interface to write and read the buffers
-   assign  rx_address = dma_ready ? addr[8:0] : dma_rx_address;
-   assign  tx_address = dma_ready ? addr[8:0] : dma_tx_address;
-   assign  tx_wr_data = dma_ready ? data_in : dma_tx_data;
-   assign  do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
+      .clk(clk),
+      .rst(rst)
+    );
+
+    wire [31:0] tx_data;
+    wire tx_data_valid;
+
+   mem_burst_in burst_in(
+      .start_addr(`DMA_R_START),
+
+      .start(dma_out_run & !dma_read_from_not_write),
+
+      // Simple interface for data_in (ready = 1)
+      .data_in(tx_data),
+      .valid(tx_data_valid),
+      // Connect to memory unit
+      .data(dma_tx_data),
+      .addr(dma_tx_address),
+      .write(dma_tx_wr),
+
+      // System connection
+      .clk(clk),
+      .rst(rst)
+    );
+
+   dma_transfer dma(
+    // DMA configuration 
+    .addr(dma_address_reg),
+    .length(dma_len),
+    .readNotWrite(!dma_read_from_not_write),
+    .start(dma_out_run),
+
+    // DMA status
+    .ready(dma_ready),
+
+    // Simple interface for data_in
+    .data_in(rd_data_out),
+    .valid_in(rd_data_valid),
+    .ready_in(rd_data_ready),
+
+    // Simple interface for data_out
+    .data_out(tx_data),
+    .valid_out(tx_data_valid),
+    .ready_out(1'b1),
+
+    // Address write
+    .m_axi_awid(m_axi_awid), 
+    .m_axi_awaddr(m_axi_awaddr), 
+    .m_axi_awlen(m_axi_awlen), 
+    .m_axi_awsize(m_axi_awsize), 
+    .m_axi_awburst(m_axi_awburst), 
+    .m_axi_awlock(m_axi_awlock), 
+    .m_axi_awcache(m_axi_awcache), 
+    .m_axi_awprot(m_axi_awprot),
+    .m_axi_awqos(m_axi_awqos), 
+    .m_axi_awvalid(m_axi_awvalid), 
+    .m_axi_awready(m_axi_awready),
+    //write
+    .m_axi_wdata(m_axi_wdata), 
+    .m_axi_wstrb(m_axi_wstrb), 
+    .m_axi_wlast(m_axi_wlast), 
+    .m_axi_wvalid(m_axi_wvalid), 
+    .m_axi_wready(m_axi_wready), 
+    //write response
+    //.m_axi_bid(m_axi_bid),
+    .m_axi_bresp(m_axi_bresp), 
+    .m_axi_bvalid(m_axi_bvalid), 
+    .m_axi_bready(m_axi_bready),
+
+    //address read
+    .m_axi_arid(m_axi_arid),
+    .m_axi_araddr(m_axi_araddr),
+    .m_axi_arlen(m_axi_arlen),
+    .m_axi_arsize(m_axi_arsize),
+    .m_axi_arburst(m_axi_arburst),
+    .m_axi_arlock(m_axi_arlock),
+    .m_axi_arcache(m_axi_arcache),
+    .m_axi_arprot(m_axi_arprot),
+    .m_axi_arqos(m_axi_arqos),
+    .m_axi_arvalid(m_axi_arvalid),
+    .m_axi_arready(m_axi_arready),
+
+    //read
+    //.m_axi_rid(m_axi_rid),
+    .m_axi_rdata(m_axi_rdata),
+    .m_axi_rresp(m_axi_rresp),
+    .m_axi_rlast(m_axi_rlast),
+    .m_axi_rvalid(m_axi_rvalid),
+    .m_axi_rready(m_axi_rready),
+
+    .clk(clk),
+    .rst(rst)
+    );
+
+   // When dma is not running, the software can still use the register interface to write and read the buffers
+   assign  rx_address = !dma_ready ? burst_addr : addr[8:0];
+   assign  tx_address = dma_tx_wr ? dma_tx_address : addr[8:0];
+   assign  tx_wr_data = dma_tx_wr ? dma_tx_data : data_in;
+   assign  do_tx_wr   = dma_tx_wr | tx_wr;
 
 `else // No ETH_DMA
 

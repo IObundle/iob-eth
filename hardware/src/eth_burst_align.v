@@ -5,61 +5,62 @@
 // Given the initial byte offset, this module aligns incoming data
 // If aligned, after asserting transfer, data_out will be valid after one cycle (first_transfer_valid is asserted to indicate this)
 // If unaligned, the first transfer will not produce valid data_out, but afterwards, after every transfer, data_out will be valid
-module eth_burst_align (
-        input [31:0] data,
-        input transfer,  // When asserted, indicates that a transfer occured and the bytes not sent from data are stored for the next transfer
+module eth_burst_align #(
+        parameter ADDR_W = `AXI_ADDR_W,
+        parameter DATA_W = 32,
+        parameter LEN_W = 16
+        )(
         input [1:0] offset,
-        input [9:0] len,
-        input remaining_data, // When asserted, it sets data with the remaining data left to store
 
+        // Simple interface for data_in (ready = 1)
+        input [31:0] data_in,
+        input valid_in,
+
+        // Simple interface for data_out
         output reg [31:0] data_out,
-        output reg [31:0] last_data_out,
-        output reg [7:0] axi_len,
-
-        output wire first_transfer_valid,
+        output reg valid_out,
+        input ready_out,
 
         input clk,
         input rst
     );
 
-assign first_transfer_valid = (offset == 2'b00);
+reg [LEN_W-1:0] stored_len;
 
-reg [23:0] stored_data;
+reg [31:0] stored_data;
 
 always @*
 begin
-    axi_len = 8'h0;
+    data_out = 0;
 
-    if(offset[1:0] == 2'b00)
-    last_data_out = stored_data;
-
-    if(offset[1:0] == 2'b00 & len[1:0] == 2'b00)
-        axi_len = len[9:2] - 8'h1;
-    else if((offset[1:0] == 2'b10 && len[1:0] == 2'b11) ||
-            (offset[1:0] == 2'b11 && len[1:0] >= 2'b10))
-        axi_len = len[9:2] + 8'h1;
-    else
-        axi_len = len[9:2];
+    case(offset[1:0])
+    2'b00: data_out = stored_data; 
+    2'b01: data_out = {data_in[7:0],stored_data[23:0]};
+    2'b10: data_out = {data_in[15:0],stored_data[15:0]};
+    2'b11: data_out = {data_in[23:0],stored_data[7:0]};
+    endcase
 end
 
 always @(posedge clk,posedge rst)
 begin
     if(rst) begin
         stored_data <= 0;
-    end 
-    else if(transfer || remaining_data) begin
-        case(offset[1:0])
-        2'b00:;
-        2'b01: stored_data <= data[31:8];
-        2'b10: stored_data[15:0] <= data[31:16];
-        2'b11: stored_data[7:0] <= data[31:24];
-        endcase
-        case(offset[1:0])
-        2'b00: data_out <= data; 
-        2'b01: data_out <= {data[7:0],stored_data};
-        2'b10: data_out <= {data[15:0],stored_data[15:0]};
-        2'b11: data_out <= {data[23:0],stored_data[7:0]};
-        endcase
+        valid_out <= 0;
+    end else begin
+        if(!valid_in & valid_out & ready_out) // A transfer occured
+            valid_out <= 1'b0;
+
+        if(valid_in & !valid_out)
+            valid_out <= 1'b1;
+
+        if(valid_in & (ready_out | !valid_out)) begin
+            case(offset[1:0])
+            2'b00: stored_data <= data_in;
+            2'b01: stored_data[23:0] <= data_in[31:8];
+            2'b10: stored_data[15:0] <= data_in[31:16];
+            2'b11: stored_data[7:0] <= data_in[31:24];
+            endcase
+        end
     end
 end
 

@@ -11,6 +11,10 @@ VHDR+=$(wildcard $(INTERCON_INC_DIR)/axi.vh)
 #sources
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
 
+VSRC+= $(ETHERNET_DIR)/submodules/DMA/hardware/src/dma_axi.v
+VSRC+= $(ETHERNET_DIR)/submodules/DMA/hardware/src/dma_axi_r.v
+VSRC+= $(ETHERNET_DIR)/submodules/DMA/hardware/src/dma_axi_w.v
+
 ifeq ($(SIM),1)
     DEFINE+=$(defmacro)SIM
 endif

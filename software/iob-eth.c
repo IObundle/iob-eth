@@ -41,6 +41,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     return ETH_INVALID_CRC;
   }
 
+  eth_set_rx_payload_size(eth_get_rcv_size()-4);
   eth_get_rx_buffer(data_rcv,size);
 
   // send receive ack

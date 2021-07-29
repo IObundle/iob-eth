@@ -46,6 +46,7 @@ module iob_eth_dma_r #(
            output reg            in_wr
              );
 
+/*
    assign m_axi_arid = 0;   // id is zero
    assign m_axi_arsize = 3'h2; // 4 bytes at a time 
    assign m_axi_arburst = 2'b01; // incr bursting
@@ -153,5 +154,7 @@ module iob_eth_dma_r #(
          endcase
       end
    end
+
+*/
 
 endmodule

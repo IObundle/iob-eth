@@ -50,6 +50,8 @@ module iob_eth_dma_w #(
            output reg[8:0]       out_addr
            );
 
+/*
+
    // One byte at a time, for now
    assign m_axi_awid = `AXI_ID_W'b0;
    assign m_axi_awsize = 3'h2;
@@ -186,5 +188,7 @@ module iob_eth_dma_w #(
       endcase
       end
    end
+
+*/
 
 endmodule
