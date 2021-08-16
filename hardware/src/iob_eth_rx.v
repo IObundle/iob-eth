@@ -10,7 +10,6 @@ module iob_eth_rx #(
     input             rst,
 
     // system clock domain
-    input [10:0]      nbytes,
     output reg        data_rcvd,
 
     // RX_CLK domain
@@ -34,8 +33,6 @@ module iob_eth_rx #(
    
    // data
    wire [7:0]         data_int;
-
-   reg [10:0]         nbytes_eth[1:0];
    
    
    // SYNCHRONIZERS
@@ -46,12 +43,6 @@ module iob_eth_rx #(
        rx_rst <= 2'b11;
      else
        rx_rst <= {rx_rst[0], 1'b0};
-
-   // number of bytes to receive
-   always @(posedge RX_CLK) begin
-      nbytes_eth[0] <= nbytes;
-      nbytes_eth[1] <= nbytes_eth[0];
-   end
 
    //
    // RECEIVER PROGRAM

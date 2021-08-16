@@ -54,18 +54,19 @@ module iob_eth #(
    // rx_nbytes
    reg [10:0]               rx_nbytes_reg;
    reg                      rx_nbytes_reg_en;
-   // dma address
+   
+   // dma 
    reg [AXI_ADDR_W-1:0]     dma_address_reg;
    reg                      dma_address_reg_en;
    reg                      dma_read_from_not_write;
+
+   reg [10:0]               dma_len;
+   reg                      dma_len_en;
 
    wire[8:0]                dma_rx_address;
    wire[8:0]                dma_tx_address;
    wire[31:0]               dma_tx_data;
    wire                     dma_tx_wr;
-
-   reg [9:0]                dma_len;
-   reg                      dma_len_en;
 
    wire                     dma_ready;
    wire                     dma_out_en;
@@ -120,14 +121,14 @@ module iob_eth #(
 `ifdef ETH_DMA
 
    wire [8:0] burst_addr;
-   wire [31:0] rd_data_out;
-   wire rd_data_valid,rd_data_ready;
+   wire [31:0] rd_data_out,tx_data;
+   wire rd_data_valid,rd_data_ready,tx_data_valid;
 
    mem_burst_out #(.ADDR_W(9)) burst_out
       (
-      .start_addr(`DMA_W_START),
+      .start_addr(9'd`DMA_W_START),
 
-      .start(dma_out_run & dma_read_from_not_write),
+      .start(dma_ready),
 
       .addr(burst_addr),
       .data_in(rx_rd_data),
@@ -140,13 +141,10 @@ module iob_eth #(
       .rst(rst)
     );
 
-    wire [31:0] tx_data;
-    wire tx_data_valid;
-
    mem_burst_in burst_in(
-      .start_addr(`DMA_R_START),
+      .start_addr(9'd`DMA_R_START),
 
-      .start(dma_out_run & !dma_read_from_not_write),
+      .start(dma_ready),
 
       // Simple interface for data_in (ready = 1)
       .data_in(tx_data),
@@ -161,7 +159,12 @@ module iob_eth #(
       .rst(rst)
     );
 
-   dma_transfer dma(
+   dma_transfer #(
+      .AXI_ADDR_W(AXI_ADDR_W),
+      .LEN_W(11)
+    ) 
+    dma
+    (
     // DMA configuration 
     .addr(dma_address_reg),
     .length(dma_len),
@@ -200,7 +203,7 @@ module iob_eth #(
     .m_axi_wvalid(m_axi_wvalid), 
     .m_axi_wready(m_axi_wready), 
     //write response
-    //.m_axi_bid(m_axi_bid),
+    .m_axi_bid(m_axi_bid),
     .m_axi_bresp(m_axi_bresp), 
     .m_axi_bvalid(m_axi_bvalid), 
     .m_axi_bready(m_axi_bready),
@@ -219,7 +222,7 @@ module iob_eth #(
     .m_axi_arready(m_axi_arready),
 
     //read
-    //.m_axi_rid(m_axi_rid),
+    .m_axi_rid(m_axi_rid),
     .m_axi_rdata(m_axi_rdata),
     .m_axi_rresp(m_axi_rresp),
     .m_axi_rlast(m_axi_rlast),
@@ -236,14 +239,14 @@ module iob_eth #(
    assign  tx_wr_data = dma_tx_wr ? dma_tx_data : data_in;
    assign  do_tx_wr   = dma_tx_wr | tx_wr;
 
-`else // No ETH_DMA
+`else // No DMA
 
    assign  rx_address = addr[8:0];
    assign  tx_address = addr[8:0];
    assign  tx_wr_data = data_in;
    assign  do_tx_wr   = tx_wr;
 
-`endif
+`endif // `ETH_DMA
 
    assign rst_int = rst_soft | rst;
    
@@ -377,72 +380,75 @@ module iob_eth #(
    // TX and RX BUFFERS
    //
 
-    iob_eth_alt_s2p_mem #(
-                         .DATA_W(32),
-                         .ADDR_W((`ETH_ADDR_W-1)-2)
-                         )
-    tx_buffer
-    (
-      // Front-End (written by host)
-        .clk_a(clk),
-        .addr_a(tx_address),
-        .data_a(tx_wr_data),
-        .we_a(do_tx_wr),
+   iob_2p_async_mem #(
+                       .DATA_W(32),
+                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       )
+   tx_buffer
+   (
+    // Front-End (written by host)
+      .wclk(clk),
+      .w_addr(tx_address),
+      .w_en(do_tx_wr),
+      .data_in(tx_wr_data),
 
-      // Back-End (read by core)
-        .clk_b(TX_CLK),
-        .addr_b(tx_rd_addr),
-        .data_b(tx_rd_data)
-    );
+    // Back-End (read by core)
+      .rclk(TX_CLK),
+      .r_addr(tx_rd_addr),
+      .r_en(1'b1),
+      .data_out(tx_rd_data)
+   );
 
-    reg [8:0] stored_rx_addr;
-    reg [31:0] stored_rx_data; 
-    reg stored_rx_wr;
+   // Transform 8 bit rx data to 32 bit data to be stored in rx_buffer
+   reg [8:0] stored_rx_addr;
+   reg [31:0] stored_rx_data; 
+   reg stored_rx_wr;
 
-    always @(posedge RX_CLK,posedge rst)
-    if(rst) begin
-      stored_rx_addr <= 0;
-      stored_rx_data <= 0;
-      stored_rx_wr <= 1'b0;
-    end else if(rx_wr) begin
-      stored_rx_addr <= rx_wr_addr[10:2];
-      stored_rx_data[8 * rx_wr_addr[1:0] +: 8] <= rx_wr_data;
-      stored_rx_wr <= 1'b1;
-    end
+   always @(posedge RX_CLK,posedge rst)
+   if(rst) begin
+     stored_rx_addr <= 0;
+     stored_rx_data <= 0;
+     stored_rx_wr <= 1'b0;
+   end else if(rx_wr) begin
+     stored_rx_addr <= rx_wr_addr[10:2];
+     stored_rx_data[8 * rx_wr_addr[1:0] +: 8] <= rx_wr_data;
+     stored_rx_wr <= 1'b1;
+   end
 
-    iob_eth_alt_s2p_mem #(
-                         .DATA_W(32),
-                         .ADDR_W((`ETH_ADDR_W-1)-2)
-                         )
-    rx_buffer
-    (
-      // Front-End (written by core)
-      .clk_a(RX_CLK),
-      .addr_a(stored_rx_addr),
-      .data_a(stored_rx_data),
-      .we_a(stored_rx_wr),
+   iob_2p_async_mem #(
+                       .DATA_W(32),
+                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       )
+   rx_buffer
+   (
+     // Front-End (written by core)
+     .wclk(RX_CLK),
+     .w_addr(stored_rx_addr),
+     .w_en(stored_rx_wr),
+     .data_in(stored_rx_data),
 
-      // Back-End (read by host)
-      .clk_b(clk),
-      .addr_b(rx_address),
-      .data_b(rx_rd_data)
-    );
+     // Back-End (read by host)
+     .rclk(clk),
+     .r_addr(rx_address),
+     .r_en(1'b1),
+     .data_out(rx_rd_data)
+   );
 
    //
    // TRANSMITTER
    //
 
+   // Transform 32 bit data from tx_buffer to 8 bit data for tx input
+   reg [1:0] delayed_tx_sel;
    wire [10:0] tx_out_addr;
    
-   assign tx_rd_addr = tx_out_addr[10:2];
-
-   reg [1:0] delayed_tx_sel;
    always @(posedge TX_CLK,posedge rst_int)
      if(rst_int)
        delayed_tx_sel <= 0;
      else
        delayed_tx_sel <= tx_out_addr[1:0];
 
+   assign tx_rd_addr = tx_out_addr[10:2];
    wire [7:0] tx_in_data = delayed_tx_sel[1] ? (delayed_tx_sel[0] ? tx_rd_data[8*3 +: 8] : tx_rd_data[8*2 +: 8]):
                                                (delayed_tx_sel[0] ? tx_rd_data[8*1 +: 8] : tx_rd_data[8*0 +: 8]);
 
@@ -473,7 +479,6 @@ module iob_eth #(
    rx (
        // cpu side
        .rst       (rst_int),
-       .nbytes    (rx_nbytes_reg),
        .data_rcvd (rx_data_rcvd_int),
 
        // mii side
