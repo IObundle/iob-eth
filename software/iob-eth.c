@@ -1,6 +1,7 @@
 #include "iob-eth.h"
 #include "printf.h"
 
+#define MAX(A,B) ((A) > (B) ? (A) : (B)) 
 #define RCV_TIMEOUT 500000
 
 static char buffer[ETH_NBYTES+HDR_LEN];
@@ -68,7 +69,7 @@ unsigned int eth_rcv_file(char *data, int size) {
      while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
 
      // send data back as ack
-     eth_send_frame(&data[count_bytes], bytes_to_receive);
+     eth_send_frame(&data[count_bytes], MAX(bytes_to_receive,ETH_MINIMUM_NBYTES));
 
      // update byte counter
      count_bytes += bytes_to_receive;
@@ -81,9 +82,13 @@ unsigned int eth_send_file(char *data, int size) {
   int num_frames = size/ETH_NBYTES;
   unsigned int bytes_to_send;
   unsigned int count_bytes = 0;
-  int j;
+  unsigned int error_bytes = 0;
+  int i,j;
 
   if (size % ETH_NBYTES) num_frames++;
+
+  // Wait for frame to signal start of transfer
+  while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
 
   // Loop to send data
   for(j = 0; j < num_frames; j++) {
@@ -93,16 +98,35 @@ unsigned int eth_send_file(char *data, int size) {
      else bytes_to_send = ETH_NBYTES;
 
      // send frame
-     eth_send_frame(&data[j*ETH_NBYTES], bytes_to_send);
+     eth_send_frame(&data[count_bytes], MAX(bytes_to_send,ETH_MINIMUM_NBYTES));
 
      // wait to receive frame as ack
-     if(j != (num_frames-1)) while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+     while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+
+     for(int i = 0; i < bytes_to_send; i++){
+      if(buffer[i] != data[count_bytes + i]){
+        error_bytes += 1;
+      }
+     }
 
      // update byte counter
      count_bytes += bytes_to_send;
   }
 
+  printf("File transmitted with %d errors...\n",error_bytes);
+
   return count_bytes;
+}
+
+unsigned int eth_rcv_variable_file(char *data, int max_size) {
+  // receive file size
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+
+  // send data back as ack
+  eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
+
+  // transfer file
+  return eth_rcv_file(data,*((int*) buffer));
 }
 
 void eth_print_status(void) {

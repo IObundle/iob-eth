@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
 
 // After asserting run, it outputs a burst of data coming from a memory block with a one cycle read latency (data <= block[addr])
-// It uses the simple valid & ready mechanism to synchronize the burst transfer.
 module mem_burst_in #(
 		parameter DATA_W = 32,
 		parameter ADDR_W = 9
@@ -57,7 +56,6 @@ end
 endmodule
 
 // After asserting start, it outputs a burst of data coming from a memory block with a one cycle read latency (data <= block[addr])
-// It uses the simple valid & ready mechanism to synchronize the burst transfer.
 module mem_burst_out #(
 		parameter DATA_W = 32,
 		parameter ADDR_W = 8

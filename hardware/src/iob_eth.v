@@ -63,15 +63,11 @@ module iob_eth #(
    reg [10:0]               dma_len;
    reg                      dma_len_en;
 
-   wire[8:0]                dma_rx_address;
-   wire[8:0]                dma_tx_address;
-   wire[31:0]               dma_tx_data;
-   wire                     dma_tx_wr;
-
-   wire                     dma_ready;
    wire                     dma_out_en;
    reg                      dma_out_run;
    reg                      dma_out_run_en;
+
+   wire                     dma_ready;
 
    // control
    reg                      send_en;
@@ -120,6 +116,10 @@ module iob_eth #(
 
 `ifdef ETH_DMA
 
+   wire dma_tx_wr;
+   wire[8:0] dma_rx_address;
+   wire[8:0] dma_tx_address;
+   wire[31:0] dma_tx_data;
    wire [8:0] burst_addr;
    wire [31:0] rd_data_out,tx_data;
    wire rd_data_valid,rd_data_ready,tx_data_valid;
@@ -128,7 +128,7 @@ module iob_eth #(
       (
       .start_addr(9'd`DMA_W_START),
 
-      .start(dma_ready),
+      .start(dma_out_run & dma_read_from_not_write),
 
       .addr(burst_addr),
       .data_in(rx_rd_data),
@@ -144,7 +144,7 @@ module iob_eth #(
    mem_burst_in burst_in(
       .start_addr(9'd`DMA_R_START),
 
-      .start(dma_ready),
+      .start(dma_out_run & !dma_read_from_not_write),
 
       // Simple interface for data_in (ready = 1)
       .data_in(tx_data),
@@ -176,13 +176,11 @@ module iob_eth #(
 
     // Simple interface for data_in
     .data_in(rd_data_out),
-    .valid_in(rd_data_valid),
     .ready_in(rd_data_ready),
 
     // Simple interface for data_out
     .data_out(tx_data),
     .valid_out(tx_data_valid),
-    .ready_out(1'b1),
 
     // Address write
     .m_axi_awid(m_axi_awid), 
@@ -240,6 +238,13 @@ module iob_eth #(
    assign  do_tx_wr   = dma_tx_wr | tx_wr;
 
 `else // No DMA
+
+   assign dma_ready = 1'b0;
+   assign m_axi_awvalid = 1'b0;
+   assign m_axi_wvalid = 1'b0;     
+   assign m_axi_bready = 1'b0;
+   assign m_axi_arvalid = 1'b0;
+   assign m_axi_rready = 1'b0;
 
    assign  rx_address = addr[8:0];
    assign  tx_address = addr[8:0];
