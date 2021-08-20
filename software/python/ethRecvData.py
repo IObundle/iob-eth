@@ -6,10 +6,14 @@ import struct
 import time
 
 def RecvFile(socket,output_filename,expected_size):
+    if(expected_size == 0):
+        printf("Expected size is zero. Check if parameters are correct")
+        return
+
     #Frame parameters
-    num_frames = (expected_size-1) // ETH_NBYTES
+    num_frames = ((expected_size - 1) // ETH_NBYTES) + 1
     print("file_size: %d" % expected_size)
-    print("num_frames: %d" % (num_frames+1))
+    print("num_frames: %d" % num_frames)
 
     #Send empty packet to signal ready to receive
     bytes_sent = socket.send(FormPacket(''))
@@ -21,14 +25,14 @@ def RecvFile(socket,output_filename,expected_size):
     count_bytes = 0
 
     # Loop to send input frames
-    for j in range(num_frames + 1):
-        TimedPrintProgress(j,num_frames)
+    for j in range(num_frames):
+        TimedPrintProgress(j,num_frames - 1)
 
         #receive data
         rcv = socket.recv(4096)
 
         # check if it is last packet (not enough for full payload)
-        if j == num_frames:
+        if j == (num_frames - 1):
             bytes_to_recv = expected_size - count_bytes
         else:
             bytes_to_recv = ETH_NBYTES

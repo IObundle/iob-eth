@@ -61,9 +61,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
 
 unsigned int eth_rcv_file(char *data, int size);
 
+unsigned int eth_rcv_variable_file(char *data);
+
 unsigned int eth_send_file(char *data, int size);
 
-unsigned int eth_rcv_variable_file(char *data, int max_size);
+unsigned int eth_send_variable_file(char *data, int size);
 
 void eth_print_status(void);
 

@@ -5,8 +5,6 @@ TOP_MODULE:=iob_eth
 
 # DEFAULT 
 ETH_DMA ?= 1
-ETH_DEBUG_PRINT ?= 0
-ETH_NBYTES ?= 1486
 DDR_MEM ?= 0x80000000
 
 ifeq ($(ETH_DMA),1)

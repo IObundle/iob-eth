@@ -9,7 +9,11 @@ def SendFile(socket,input_filename):
 
     #Frame parameters
     input_file_size = getsize(input_filename)
-    num_frames_input = (input_file_size-1) // ETH_NBYTES
+    if(input_file_size == 0):
+        printf("File is empty. Check if filepath is correct")
+        return 0
+
+    num_frames_input = ((input_file_size - 1) // ETH_NBYTES) + 1
     print("input_file_size: %d" % input_file_size)
     print("num_frames_input: %d" % (num_frames_input+1))
 
@@ -18,11 +22,11 @@ def SendFile(socket,input_filename):
     count_errors = 0
 
     # Loop to send input frames
-    for j in range(num_frames_input + 1):
-        TimedPrintProgress(j,num_frames_input)
+    for j in range(num_frames_input):
+        TimedPrintProgress(j,num_frames_input - 1)
 
         # check if it is last packet (not enough for full payload)
-        if j == num_frames_input:
+        if j == (num_frames_input - 1):
             bytes_to_send = input_file_size - count_bytes
         else:
             bytes_to_send = ETH_NBYTES

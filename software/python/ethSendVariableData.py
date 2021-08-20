@@ -18,6 +18,8 @@ def SendVariableFile(socket,input_filename):
 
     rcv_file_size = struct.unpack("<i",rcv[14:18])[0]
 
+    print "Size: %d " % rcv_file_size
+
     if(rcv_file_size != input_file_size):
         print("Error sending file size")
 
