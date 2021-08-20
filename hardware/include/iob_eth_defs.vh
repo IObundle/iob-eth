@@ -16,7 +16,7 @@
 `define ETH_TYPE_H 8'h60
 `define ETH_TYPE_L 8'h00
 
-`define ETH_NBYTES 1026 // minimum ethernet payload excluding FCS
+`define ETH_NBYTES 1500
 
 // Frame structure
 `define PREAMBLE_LEN 9 // 7 + 2 bytes in order to align frame data

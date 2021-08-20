@@ -76,26 +76,6 @@ unsigned int eth_rcv_file(char *data, int size) {
   return count_bytes;
 }
 
-unsigned int eth_rcv_variable_file(char *data) {
-  int size,recv_bytes = 0;
-
-  // receive file size
-  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
-
-  // send data back as ack
-  eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
-  size = *((int*) buffer);
-
-  // transfer file
-  recv_bytes = eth_rcv_file(data,size);
-
-  if(recv_bytes != size){
-
-  }
-
-  return recv_bytes;
-}
-
 unsigned int eth_send_file(char *data, int size) {
   int num_frames = ((size - 1) / ETH_NBYTES) + 1;
   unsigned int bytes_to_send;
@@ -132,6 +112,26 @@ unsigned int eth_send_file(char *data, int size) {
   printf("File transmitted with %d errors...\n",error_bytes);
 
   return count_bytes;
+}
+
+unsigned int eth_rcv_variable_file(char *data) {
+  int size,recv_bytes = 0;
+
+  // receive file size
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+
+  // send data back as ack
+  eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
+  size = *((int*) buffer);
+
+  // transfer file
+  recv_bytes = eth_rcv_file(data,size);
+
+  if(recv_bytes != size){
+
+  }
+
+  return recv_bytes;
 }
 
 unsigned int eth_send_variable_file(char *data, int size) {
