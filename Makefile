@@ -8,7 +8,7 @@ FPGA_DIR= hardware/fpga/altera/cyclone_v_gt/quartus_18.0
 # Build and run the system
 #
 sim:
-	make -C $(SIM_DIR)
+	make -C $(SIM_DIR) run
 
 sim-waves: $(SIM_DIR)/../waves.gtkw $(SIM_DIR)/iob_eth.vcd
 	gtkwave -a $^ &

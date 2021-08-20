@@ -54,22 +54,20 @@ module iob_eth #(
    // rx_nbytes
    reg [10:0]               rx_nbytes_reg;
    reg                      rx_nbytes_reg_en;
-   // dma address
+   
+   // dma 
    reg [AXI_ADDR_W-1:0]     dma_address_reg;
    reg                      dma_address_reg_en;
    reg                      dma_read_from_not_write;
 
-   wire[8:0]                dma_rx_address;
-   wire[8:0]                dma_tx_address;
-   wire[31:0]               dma_tx_data;
-   wire                     dma_tx_wr;
-
-   reg [9:0]                dma_len;
+   reg [10:0]               dma_len;
    reg                      dma_len_en;
 
-   wire                     dma_ready;
    wire                     dma_out_en;
-   reg                      dma_out_run,dma_out_run_en;
+   reg                      dma_out_run;
+   reg                      dma_out_run_en;
+
+   wire                     dma_ready;
 
    // control
    reg                      send_en;
@@ -118,89 +116,142 @@ module iob_eth #(
 
 `ifdef ETH_DMA
 
-    iob_eth_dma 
-     #(
-       .DMA_DATA_W(AXI_DATA_W),
-       .AXI_ADDR_W(AXI_ADDR_W)
-       ) eth_dma (
-        // system inputs
-        .clk(clk),
-        .rst(rst),
+   wire dma_tx_wr;
+   wire[8:0] dma_rx_address;
+   wire[8:0] dma_tx_address;
+   wire[31:0] dma_tx_data;
+   wire [8:0] burst_addr;
+   wire [31:0] rd_data_out,tx_data;
+   wire rd_data_valid,rd_data_ready,tx_data_valid;
 
-        .in_data(dma_tx_data),
-        .in_addr(dma_tx_address),
-        .in_wr(dma_tx_wr),
+   mem_burst_out #(.ADDR_W(9)) burst_out
+      (
+      .start_addr(9'd`DMA_W_START),
 
-        .out_data(rx_rd_data),
-        .out_addr(dma_rx_address),
+      .start(dma_out_run & dma_read_from_not_write),
 
-        .dma_addr(dma_address_reg),
-        .dma_run(dma_out_run),
-        .dma_ready(dma_ready),
-        .dma_len(dma_len),
-        .dma_read_from_not_write(dma_read_from_not_write),
+      .addr(burst_addr),
+      .data_in(rx_rd_data),
 
-        // AXI4 Master i/f
-        // Address write
-        .m_axi_awid(m_axi_awid), 
-        .m_axi_awaddr(m_axi_awaddr), 
-        .m_axi_awlen(m_axi_awlen), 
-        .m_axi_awsize(m_axi_awsize), 
-        .m_axi_awburst(m_axi_awburst), 
-        .m_axi_awlock(m_axi_awlock), 
-        .m_axi_awcache(m_axi_awcache), 
-        .m_axi_awprot(m_axi_awprot),
-        .m_axi_awqos(m_axi_awqos), 
-        .m_axi_awvalid(m_axi_awvalid), 
-        .m_axi_awready(m_axi_awready),
-        //write
-        .m_axi_wdata(m_axi_wdata), 
-        .m_axi_wstrb(m_axi_wstrb), 
-        .m_axi_wlast(m_axi_wlast), 
-        .m_axi_wvalid(m_axi_wvalid), 
-        .m_axi_wready(m_axi_wready), 
-        //write response
-        .m_axi_bid(m_axi_bid),
-        .m_axi_bresp(m_axi_bresp), 
-        .m_axi_bvalid(m_axi_bvalid), 
-        .m_axi_bready(m_axi_bready),
+      .data_out(rd_data_out),
+      .valid(rd_data_valid),
+      .ready(rd_data_ready),
 
-        //address read
-        .m_axi_arid(m_axi_arid),
-        .m_axi_araddr(m_axi_araddr),
-        .m_axi_arlen(m_axi_arlen),
-        .m_axi_arsize(m_axi_arsize),
-        .m_axi_arburst(m_axi_arburst),
-        .m_axi_arlock(m_axi_arlock),
-        .m_axi_arcache(m_axi_arcache),
-        .m_axi_arprot(m_axi_arprot),
-        .m_axi_arqos(m_axi_arqos),
-        .m_axi_arvalid(m_axi_arvalid),
-        .m_axi_arready(m_axi_arready),
-   
-        //read
-        .m_axi_rid(m_axi_rid),
-        .m_axi_rdata(m_axi_rdata),
-        .m_axi_rresp(m_axi_rresp),
-        .m_axi_rlast(m_axi_rlast),
-        .m_axi_rvalid(m_axi_rvalid),
-        .m_axi_rready(m_axi_rready)
-        );
-   
-   // When dma is ready (not running) the software can still use the register interface to write and read the buffers
-   assign  rx_address = dma_ready ? addr[8:0] : dma_rx_address;
-   assign  tx_address = dma_ready ? addr[8:0] : dma_tx_address;
-   assign  tx_wr_data = dma_ready ? data_in : dma_tx_data;
-   assign  do_tx_wr   = dma_ready ? tx_wr : dma_tx_wr;
+      .clk(clk),
+      .rst(rst)
+    );
 
-`else // No ETH_DMA
+   mem_burst_in burst_in(
+      .start_addr(9'd`DMA_R_START),
+
+      .start(dma_out_run & !dma_read_from_not_write),
+
+      // Simple interface for data_in (ready = 1)
+      .data_in(tx_data),
+      .valid(tx_data_valid),
+      // Connect to memory unit
+      .data(dma_tx_data),
+      .addr(dma_tx_address),
+      .write(dma_tx_wr),
+
+      // System connection
+      .clk(clk),
+      .rst(rst)
+    );
+
+   dma_transfer #(
+      .AXI_ADDR_W(AXI_ADDR_W),
+      .LEN_W(11)
+    ) 
+    dma
+    (
+    // DMA configuration 
+    .addr(dma_address_reg),
+    .length(dma_len),
+    .readNotWrite(!dma_read_from_not_write),
+    .start(dma_out_run),
+
+    // DMA status
+    .ready(dma_ready),
+
+    // Simple interface for data_in
+    .data_in(rd_data_out),
+    .ready_in(rd_data_ready),
+
+    // Simple interface for data_out
+    .data_out(tx_data),
+    .valid_out(tx_data_valid),
+
+    // Address write
+    .m_axi_awid(m_axi_awid), 
+    .m_axi_awaddr(m_axi_awaddr), 
+    .m_axi_awlen(m_axi_awlen), 
+    .m_axi_awsize(m_axi_awsize), 
+    .m_axi_awburst(m_axi_awburst), 
+    .m_axi_awlock(m_axi_awlock), 
+    .m_axi_awcache(m_axi_awcache), 
+    .m_axi_awprot(m_axi_awprot),
+    .m_axi_awqos(m_axi_awqos), 
+    .m_axi_awvalid(m_axi_awvalid), 
+    .m_axi_awready(m_axi_awready),
+    //write
+    .m_axi_wdata(m_axi_wdata), 
+    .m_axi_wstrb(m_axi_wstrb), 
+    .m_axi_wlast(m_axi_wlast), 
+    .m_axi_wvalid(m_axi_wvalid), 
+    .m_axi_wready(m_axi_wready), 
+    //write response
+    .m_axi_bid(m_axi_bid),
+    .m_axi_bresp(m_axi_bresp), 
+    .m_axi_bvalid(m_axi_bvalid), 
+    .m_axi_bready(m_axi_bready),
+
+    //address read
+    .m_axi_arid(m_axi_arid),
+    .m_axi_araddr(m_axi_araddr),
+    .m_axi_arlen(m_axi_arlen),
+    .m_axi_arsize(m_axi_arsize),
+    .m_axi_arburst(m_axi_arburst),
+    .m_axi_arlock(m_axi_arlock),
+    .m_axi_arcache(m_axi_arcache),
+    .m_axi_arprot(m_axi_arprot),
+    .m_axi_arqos(m_axi_arqos),
+    .m_axi_arvalid(m_axi_arvalid),
+    .m_axi_arready(m_axi_arready),
+
+    //read
+    .m_axi_rid(m_axi_rid),
+    .m_axi_rdata(m_axi_rdata),
+    .m_axi_rresp(m_axi_rresp),
+    .m_axi_rlast(m_axi_rlast),
+    .m_axi_rvalid(m_axi_rvalid),
+    .m_axi_rready(m_axi_rready),
+
+    .clk(clk),
+    .rst(rst)
+    );
+
+   // When dma is not running, the software can still use the register interface to write and read the buffers
+   assign  rx_address = !dma_ready ? burst_addr : addr[8:0];
+   assign  tx_address = dma_tx_wr ? dma_tx_address : addr[8:0];
+   assign  tx_wr_data = dma_tx_wr ? dma_tx_data : data_in;
+   assign  do_tx_wr   = dma_tx_wr | tx_wr;
+
+`else // No DMA
+
+   assign dma_ready = 1'b0;
+   assign m_axi_awvalid = 1'b0;
+   assign m_axi_wvalid = 1'b0;     
+   assign m_axi_bready = 1'b0;
+   assign m_axi_arvalid = 1'b0;
+   assign m_axi_rready = 1'b0;
 
    assign  rx_address = addr[8:0];
    assign  tx_address = addr[8:0];
    assign  tx_wr_data = data_in;
    assign  do_tx_wr   = tx_wr;
 
-`endif
+`endif // `ETH_DMA
 
    assign rst_int = rst_soft | rst;
    
@@ -334,72 +385,75 @@ module iob_eth #(
    // TX and RX BUFFERS
    //
 
-    iob_eth_alt_s2p_mem #(
-                         .DATA_W(32),
-                         .ADDR_W((`ETH_ADDR_W-1)-2)
-                         )
-    tx_buffer
-    (
-      // Front-End (written by host)
-        .clk_a(clk),
-        .addr_a(tx_address),
-        .data_a(tx_wr_data),
-        .we_a(do_tx_wr),
+   iob_2p_async_mem #(
+                       .DATA_W(32),
+                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       )
+   tx_buffer
+   (
+    // Front-End (written by host)
+      .wclk(clk),
+      .w_addr(tx_address),
+      .w_en(do_tx_wr),
+      .data_in(tx_wr_data),
 
-      // Back-End (read by core)
-        .clk_b(TX_CLK),
-        .addr_b(tx_rd_addr),
-        .data_b(tx_rd_data)
-    );
+    // Back-End (read by core)
+      .rclk(TX_CLK),
+      .r_addr(tx_rd_addr),
+      .r_en(1'b1),
+      .data_out(tx_rd_data)
+   );
 
-    reg [8:0] stored_rx_addr;
-    reg [31:0] stored_rx_data; 
-    reg stored_rx_wr;
+   // Transform 8 bit rx data to 32 bit data to be stored in rx_buffer
+   reg [8:0] stored_rx_addr;
+   reg [31:0] stored_rx_data; 
+   reg stored_rx_wr;
 
-    always @(posedge RX_CLK,posedge rst)
-    if(rst) begin
-      stored_rx_addr <= 0;
-      stored_rx_data <= 0;
-      stored_rx_wr <= 1'b0;
-    end else if(rx_wr) begin
-      stored_rx_addr <= rx_wr_addr[10:2];
-      stored_rx_data[8 * rx_wr_addr[1:0] +: 8] <= rx_wr_data;
-      stored_rx_wr <= 1'b1;
-    end
+   always @(posedge RX_CLK,posedge rst)
+   if(rst) begin
+     stored_rx_addr <= 0;
+     stored_rx_data <= 0;
+     stored_rx_wr <= 1'b0;
+   end else if(rx_wr) begin
+     stored_rx_addr <= rx_wr_addr[10:2];
+     stored_rx_data[8 * rx_wr_addr[1:0] +: 8] <= rx_wr_data;
+     stored_rx_wr <= 1'b1;
+   end
 
-    iob_eth_alt_s2p_mem #(
-                         .DATA_W(32),
-                         .ADDR_W((`ETH_ADDR_W-1)-2)
-                         )
-    rx_buffer
-    (
-      // Front-End (written by core)
-      .clk_a(RX_CLK),
-      .addr_a(stored_rx_addr),
-      .data_a(stored_rx_data),
-      .we_a(stored_rx_wr),
+   iob_2p_async_mem #(
+                       .DATA_W(32),
+                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       )
+   rx_buffer
+   (
+     // Front-End (written by core)
+     .wclk(RX_CLK),
+     .w_addr(stored_rx_addr),
+     .w_en(stored_rx_wr),
+     .data_in(stored_rx_data),
 
-      // Back-End (read by host)
-      .clk_b(clk),
-      .addr_b(rx_address),
-      .data_b(rx_rd_data)
-    );
+     // Back-End (read by host)
+     .rclk(clk),
+     .r_addr(rx_address),
+     .r_en(1'b1),
+     .data_out(rx_rd_data)
+   );
 
    //
    // TRANSMITTER
    //
 
+   // Transform 32 bit data from tx_buffer to 8 bit data for tx input
+   reg [1:0] delayed_tx_sel;
    wire [10:0] tx_out_addr;
    
-   assign tx_rd_addr = tx_out_addr[10:2];
-
-   reg [1:0] delayed_tx_sel;
    always @(posedge TX_CLK,posedge rst_int)
      if(rst_int)
        delayed_tx_sel <= 0;
      else
        delayed_tx_sel <= tx_out_addr[1:0];
 
+   assign tx_rd_addr = tx_out_addr[10:2];
    wire [7:0] tx_in_data = delayed_tx_sel[1] ? (delayed_tx_sel[0] ? tx_rd_data[8*3 +: 8] : tx_rd_data[8*2 +: 8]):
                                                (delayed_tx_sel[0] ? tx_rd_data[8*1 +: 8] : tx_rd_data[8*0 +: 8]);
 
@@ -430,7 +484,6 @@ module iob_eth #(
    rx (
        // cpu side
        .rst       (rst_int),
-       .nbytes    (rx_nbytes_reg),
        .data_rcvd (rx_data_rcvd_int),
 
        // mii side

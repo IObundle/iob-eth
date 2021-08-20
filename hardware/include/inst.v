@@ -1,8 +1,6 @@
    //
    // ETHERNET
    //
-   wire eth_dma_ready;
-   wire [63:0] eth_ila_data;
 
    iob_eth #(
       .AXI_ADDR_W(`DDR_ADDR_W)     

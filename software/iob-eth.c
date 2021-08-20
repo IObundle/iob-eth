@@ -1,6 +1,7 @@
 #include "iob-eth.h"
 #include "printf.h"
 
+#define MAX(A,B) ((A) > (B) ? (A) : (B)) 
 #define RCV_TIMEOUT 500000
 
 static char buffer[ETH_NBYTES+HDR_LEN];
@@ -11,8 +12,8 @@ void eth_send_frame(char *data, unsigned int size) {
   // wait for ready
   while(!eth_tx_ready());
 
-  // set frame size
-  eth_set_tx_payload_size(size + 24); // 24 - 14 + 10 bytes from preamble
+  // set frame size (preamble + header + payload)
+  eth_set_tx_payload_size(size + 24);
 
   // payload
   eth_set_tx_buffer(data,size);
@@ -42,7 +43,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   }
 
   eth_get_rx_buffer(data_rcv,size);
-
+  
   // send receive ack
   eth_ack();
   
@@ -50,12 +51,10 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 }
 
 unsigned int eth_rcv_file(char *data, int size) {
-  int num_frames = size/ETH_NBYTES;
+  int num_frames = ((size - 1) / ETH_NBYTES) + 1;
   unsigned int bytes_to_receive;
   unsigned int count_bytes = 0;
   int i, j;
-
-  if (size % ETH_NBYTES) num_frames++;
 
   // Loop to receive intermediate data frames
   for(j = 0; j < num_frames; j++) {
@@ -68,7 +67,7 @@ unsigned int eth_rcv_file(char *data, int size) {
      while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
 
      // send data back as ack
-     eth_send_frame(&data[count_bytes], bytes_to_receive);
+     eth_send_frame(&data[count_bytes], MAX(bytes_to_receive,ETH_MINIMUM_NBYTES));
 
      // update byte counter
      count_bytes += bytes_to_receive;
@@ -78,12 +77,14 @@ unsigned int eth_rcv_file(char *data, int size) {
 }
 
 unsigned int eth_send_file(char *data, int size) {
-  int num_frames = size/ETH_NBYTES;
+  int num_frames = ((size - 1) / ETH_NBYTES) + 1;
   unsigned int bytes_to_send;
   unsigned int count_bytes = 0;
-  int j;
+  unsigned int error_bytes = 0;
+  int i,j;
 
-  if (size % ETH_NBYTES) num_frames++;
+  // Wait to receive frame to signal start of transfer
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
 
   // Loop to send data
   for(j = 0; j < num_frames; j++) {
@@ -93,16 +94,56 @@ unsigned int eth_send_file(char *data, int size) {
      else bytes_to_send = ETH_NBYTES;
 
      // send frame
-     eth_send_frame(&data[j*ETH_NBYTES], bytes_to_send);
+     eth_send_frame(&data[count_bytes], MAX(bytes_to_send,ETH_MINIMUM_NBYTES));
 
      // wait to receive frame as ack
-     if(j != (num_frames-1)) while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+     while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+
+     for(int i = 0; i < bytes_to_send; i++){
+      if(buffer[i] != data[count_bytes + i]){
+        error_bytes += 1;
+      }
+     }
 
      // update byte counter
      count_bytes += bytes_to_send;
   }
 
+  printf("File transmitted with %d errors...\n",error_bytes);
+
   return count_bytes;
+}
+
+unsigned int eth_rcv_variable_file(char *data) {
+  int size,recv_bytes = 0;
+
+  // receive file size
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+
+  // send data back as ack
+  eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
+  size = *((int*) buffer);
+
+  // transfer file
+  recv_bytes = eth_rcv_file(data,size);
+
+  if(recv_bytes != size){
+
+  }
+
+  return recv_bytes;
+}
+
+unsigned int eth_send_variable_file(char *data, int size) {
+  // Wait to receive frame to signal start of transfer
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+
+  // Send size
+  *((int*) buffer) = size;
+  eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
+
+  // Transfer file
+  return eth_send_file(data,*((int*) buffer));
 }
 
 void eth_print_status(void) {

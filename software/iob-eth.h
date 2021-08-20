@@ -63,6 +63,10 @@ unsigned int eth_rcv_file(char *data, int size);
 
 unsigned int eth_send_file(char *data, int size);
 
+unsigned int eth_rcv_variable_file(char *data);
+
+unsigned int eth_send_variable_file(char *data, int size);
+
 void eth_print_status(void);
 
 #define eth_tx_ready() eth_get_status_field(ETH_TX_READY)

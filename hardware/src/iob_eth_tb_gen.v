@@ -47,10 +47,10 @@ wire [7:0] data = {`SEND_ARRAY[sendingTXCounter],`SEND_ARRAY[sendingTXCounter-1]
 
 reg rxPartEnabled;
 reg [3:0] rxPartState;
-reg [10:0] rxWaitReg;
+reg [15:0] rxWaitReg;
 reg rxReset;
 
-reg [10:0] txSendSize,rxSendSize; // Do not send the last 4 crc bytes, since 
+reg [15:0] txSendSize,rxSendSize; // Do not send the last 4 crc bytes, since 
 
 reg txPartEnabled;
 reg [3:0] txPartState;

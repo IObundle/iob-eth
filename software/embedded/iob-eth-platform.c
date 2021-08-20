@@ -177,10 +177,21 @@ void eth_set_tx_buffer(char* buffer,int size){
 
     while(eth_get_status_field(ETH_DMA_READY) != 1);
   } else {
-    int* buffer_int = (int*) buffer;
+    if(((int) buffer) % 4 == 0){
+      int* buffer_int = (int*) buffer;
 
-    for (int i = 0; i < DWORD_ALIGN(size) / 4; i++) {
-      IO_SET(base,ETH_DATA + TEMPLATE_LEN + i * 4,buffer_int[i]);
+      for (int i = 0; i < DWORD_ALIGN(size) / 4; i++)
+        IO_SET(base,ETH_DATA + TEMPLATE_LEN + i * 4,buffer_int[i]);
+    }
+    else
+    {
+      union {int32_t i32; int8_t i8[4];} data;
+      for (int i = 0; i < DWORD_ALIGN(size) / 4; i++) {
+        for(int j = 0; j < 4; j++)
+          data.i8[j] = buffer[i*4+j];
+
+        IO_SET(base,ETH_DATA + TEMPLATE_LEN + i * 4,data.i32);
+      }
     }
   }
 }

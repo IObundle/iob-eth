@@ -5,12 +5,15 @@ incdir:=-I
 
 include ../simulation.mk
 
-VC = iverilog
-CFLAGS := -W all -g2005-sv $(INCLUDE) -DVCD
+DEFINE+=$(defmacro)VCD
 
-all: $(VSRC) $(VHDR)
-	$(VC) $(CFLAGS) $(VSRC)
+VLOG:=iverilog -W all -g2005-sv
+
+run: a.out
 	./a.out
+
+a.out: $(VSRC) $(VHDR)
+	$(VLOG) $(INCLUDE) $(DEFINE) $(VSRC)
 
 clean:
 	@rm -f *.vcd 
