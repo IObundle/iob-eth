@@ -110,6 +110,9 @@ void eth_init(int base_address) {
   }
 }
 
+void eth_on_transfer_start(void){
+}
+
 int eth_get_status(void) {
   return (IO_GET(base, ETH_STATUS));
 }
@@ -135,11 +138,7 @@ void eth_set_soft_rst(char value) {
 }
 
 void eth_set_tx_payload_size(unsigned int size) {
-  IO_SET(base, ETH_TX_NBYTES, size);
-}
-
-void eth_set_rx_payload_size(unsigned int size) {
-  IO_SET(base, ETH_RX_NBYTES, size);
+  IO_SET(base, ETH_TX_NBYTES, (size + TEMPLATE_LEN));
 }
 
 int eth_get_crc(void) {
