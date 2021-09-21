@@ -1,11 +1,11 @@
 #Import libraries
-from ethBase import PrintBaseUsage,TimedPrintProgress,CreateSocket,FormPacket,ETH_NBYTES
+from ethBase import PrintBaseUsage,TimedPrintProgress,CreateSocket,FormPacket,SyncAckLast,RcvAndAck,ETH_NBYTES
 from os.path import getsize
 import sys
 import struct
 import time
 
-def RecvFile(socket,output_filename,expected_size):
+def RcvFile(socket,output_filename,expected_size):
     if(expected_size == 0):
         printf("Expected size is zero. Check if parameters are correct")
         return
@@ -14,9 +14,6 @@ def RecvFile(socket,output_filename,expected_size):
     num_frames = ((expected_size - 1) // ETH_NBYTES) + 1
     print("file_size: %d" % expected_size)
     print("num_frames: %d" % num_frames)
-
-    #Send empty packet to signal ready to receive
-    bytes_sent = socket.send(FormPacket(''))
 
     #Open output file
     f_output = open(output_filename, 'wb')
@@ -29,27 +26,16 @@ def RecvFile(socket,output_filename,expected_size):
         TimedPrintProgress(j,num_frames - 1)
 
         #receive data
-        rcv = socket.recv(4096)
-
-        # check if it is last packet (not enough for full payload)
-        if j == (num_frames - 1):
-            bytes_to_recv = expected_size - count_bytes
-        else:
-            bytes_to_recv = ETH_NBYTES
-
-        #form frame
-        payload = rcv[14:bytes_to_recv+14]
+        payload = RcvAndAck(socket)
 
         # Write into file
         f_output.write(payload)
 
         # accumulate sent bytes
-        count_bytes += ETH_NBYTES
+        count_bytes += len(payload)
 
-        #Send packet as ack
-        packet = FormPacket(payload)
-
-        bytes_sent = socket.send(packet)
+    if(count_bytes != expected_size):
+        print("Error, bytes received (%d) is different than expected (%d)" % (count_bytes,expected_size))
 
     #Close file
     f_output.close()
@@ -61,4 +47,8 @@ if __name__ == "__main__":
         sys.exit()
     
     print("\nStarting file reception...")
-    RecvFile(CreateSocket(),sys.argv[3],int(sys.argv[4]))
+    
+    socket = CreateSocket()
+
+    SyncAckLast(socket)
+    RcvFile(socket,sys.argv[3],int(sys.argv[4]))

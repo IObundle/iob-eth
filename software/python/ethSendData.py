@@ -1,5 +1,5 @@
 #Import libraries
-from ethBase import TimedPrintProgress,CreateSocket,FormPacket,ETH_NBYTES
+from ethBase import TimedPrintProgress,CreateSocket,SendAndAck,SyncAckFirst,ETH_NBYTES
 from os.path import getsize
 import sys
 
@@ -15,7 +15,7 @@ def SendFile(socket,input_filename):
 
     num_frames_input = ((input_file_size - 1) // ETH_NBYTES) + 1
     print("input_file_size: %d" % input_file_size)
-    print("num_frames_input: %d" % (num_frames_input+1))
+    print("num_frames_input: %d" % num_frames_input)
 
     #Reset byte counter
     count_bytes = 0
@@ -37,18 +37,7 @@ def SendFile(socket,input_filename):
         # accumulate sent bytes
         count_bytes += ETH_NBYTES
 
-        #Send packet
-        packet = FormPacket(payload)
-
-        bytes_sent = socket.send(packet)
-
-        #receive data back as ack
-        rcv = socket.recv(4096)
-
-        curErrors = count_errors
-        for sent_byte, rcv_byte in zip(payload, rcv[14:bytes_to_send+14]):
-            if sent_byte != rcv_byte:
-                count_errors += 1
+        count_errors += SendAndAck(socket,payload)
 
     #Close file
     f_input.close()
@@ -56,4 +45,8 @@ def SendFile(socket,input_filename):
 
 if __name__ == "__main__":
     print("\nStarting file transmission...")
-    SendFile(CreateSocket(),sys.argv[3])
+
+    socket = CreateSocket()
+
+    SyncAckFirst(socket)
+    SendFile(socket,sys.argv[3])

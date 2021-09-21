@@ -1,6 +1,7 @@
-from socket import socket, AF_PACKET, SOCK_RAW, htons
+from socket import socket, AF_PACKET, AF_UNIX, SOCK_RAW, SOCK_SEQPACKET, htons, timeout
 import time
 import sys
+import os
 
 def PrintBaseUsage():
     print "<usage>: python eth_comm.py <interface> <RMAC> <file path>",
@@ -9,6 +10,8 @@ def PrintBaseUsage():
 if len(sys.argv) < 4:
     PrintBaseUsage()
     sys.exit()
+
+addr = "/tmp/tmpLocalSocket"
 
 #Ethernet parameters
 interface = sys.argv[1]
@@ -24,10 +27,23 @@ ETH_MINIMUM_NBYTES = (64-18)
 #Frame header
 ETH_HEADER = dst_addr + src_addr + eth_type
 
+TIMEOUT = 0.1
+
 #Open socket and bind
 def CreateSocket():
-    s = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))
-    s.bind((interface, 0))
+    if "PC" in os.environ:
+        s = socket(AF_UNIX, SOCK_SEQPACKET)
+        while True:
+            try:
+                s.connect(addr)
+                break
+            except:
+                pass
+    else:
+        s = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))
+        s.bind((interface, 0))
+
+    s.settimeout(None)
 
     return s
 
@@ -37,6 +53,59 @@ def FormPacket(payload):
         payload = payload + (b'\x00' * (ETH_MINIMUM_NBYTES - length))
 
     return ETH_HEADER + payload
+
+def SendAndAck(socket,payload):
+    packet = FormPacket(payload)
+
+    bytes_sent = socket.send(packet)
+
+    rcv = socket.recv(4096)
+
+    errors = 0
+    for sent_byte, rcv_byte in zip(payload, rcv[len(ETH_HEADER):]):
+        if sent_byte != rcv_byte:
+            errors += 1
+
+    return errors
+
+def RcvAndAck(socket):   
+    rcv = socket.recv(4096)
+
+    payload = rcv[len(ETH_HEADER):]
+
+    socket.send(FormPacket(payload))
+
+    return payload
+
+def SyncAckFirst(socket):
+    previous = socket.gettimeout()
+    socket.settimeout(TIMEOUT)
+
+    while True:
+        socket.send(FormPacket(""))
+
+        try:
+            rcv = socket.recv(4096)
+            break
+        except timeout:
+            pass
+
+    socket.settimeout(previous)
+
+def SyncAckLast(socket):
+    previous = socket.gettimeout()
+    socket.settimeout(TIMEOUT)
+
+    while True:
+        try:
+            recv = socket.recv(4096)
+            break
+        except timeout:
+            pass
+
+    socket.send(FormPacket(""))
+
+    socket.settimeout(previous)
 
 # Print progress every so often 
 def TimedPrintProgress(current,n_frames):
