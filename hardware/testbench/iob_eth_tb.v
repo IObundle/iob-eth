@@ -278,7 +278,7 @@ module iob_eth_tb;
       output [7:0] val;
       reg [31:0] temp;
 
-      addr = addr + 2;
+      addr = addr + `RX_BUFFER_OFFSET;
 
       cpu_read(`ETH_DATA + (addr / 4),temp); 
    
