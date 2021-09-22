@@ -30,7 +30,8 @@ module dma_tb;
 
   // DMA
   reg dma_read_from_not_write,dma_out_run;
-  reg [31:0] dma_address_reg,dma_len;
+  reg [15:0] dma_len;
+  reg [31:0] dma_address_reg;
 
   // AXI Input 
   reg m_axi_awready;
@@ -85,13 +86,11 @@ module dma_tb;
 
     // Simple interface for data_in
     .data_in(rd_data_out),
-    .valid_in(rd_data_valid),
     .ready_in(rd_data_ready),
 
     // Simple interface for data_out
     .data_out(tx_data),
     .valid_out(tx_data_valid),
-    .ready_out(1'b1),
 
     // Address write
     .m_axi_awid(m_axi_awid), 
@@ -142,22 +141,23 @@ module dma_tb;
     .rst(rst)
   );
 
-  iob_eth_alt_s2p_mem #(
+  iob_2p_async_mem #(
                .DATA_W(32),
                .ADDR_W(11)
                )
   rx_buffer
   (
     // Front-End (written by core)
-    .clk_a(clk),
-    .addr_a(rx_addr_a),
-    .data_a(rx_data_a),
-    .we_a(rx_write),
+    .wclk(clk),
+    .w_addr(rx_addr_a),
+    .data_in(rx_data_a),
+    .w_en(rx_write),
 
     // Back-End (read by host)
-    .clk_b(clk),
-    .addr_b(rx_addr_b),
-    .data_b(rx_data_b)
+    .rclk(clk),
+    .r_addr(rx_addr_b),
+    .data_out(rx_data_b),
+    .r_en(1'b1)
   );
 
   mem_burst_out #(.ADDR_W(11)) burst_out
@@ -177,22 +177,23 @@ module dma_tb;
     .rst(rst)
   );
 
-  iob_eth_alt_s2p_mem #(
+  iob_2p_async_mem #(
                .DATA_W(32),
                .ADDR_W(11)
                )
   tx_buffer
   (
     // Front-End (written by host)
-    .clk_a(clk),
-    .addr_a(tx_addr_a),
-    .data_a(tx_data_a),
-    .we_a(tx_write),
+    .wclk(clk),
+    .w_addr(tx_addr_a),
+    .data_in(tx_data_a),
+    .w_en(tx_write),
 
     // Back-End (read by core)
-    .clk_b(clk),
-    .addr_b(tx_addr_b),
-    .data_b(tx_data_b)
+    .rclk(clk),
+    .r_addr(tx_addr_b),
+    .data_out(tx_data_b),
+    .r_en(1'b1)
   );
 
   mem_burst_in #(.ADDR_W(11)) burst_in(
@@ -249,11 +250,11 @@ module dma_tb;
   begin
     if(tx_write) begin
       if(tx_addr_a != tx_data_a)
-        ;//$display("%t Error on tx_data, addr: %x current value: %x",$time,tx_addr_a,tx_data_a);
+        $display("%t Error on tx_data, addr: %x current value: %x",$time,tx_addr_a,tx_data_a);
     end
   end
 
-`define ADDRESS   2
+`define ADDRESS   0
 `define LENGTH 1000
 
   initial
@@ -284,9 +285,7 @@ module dma_tb;
     clk = 0;
 
     // Init buffer
-    memory[0] = 32'hFFFEFDFC;
-    memory[1] = 32'h030201AA;
-    for(i = 2; i < 2048; i = i + 1) begin
+    for(i = 0; i < 2048; i = i + 1) begin
       memory[i] = i;
     end
 
@@ -311,15 +310,20 @@ module dma_tb;
     dma_address_reg = `ADDRESS;
     dma_len = `LENGTH;
     dma_read_from_not_write = 1'b1; // Initially read
-    
+  
     dma_out_run = 1;#10; 
     dma_out_run = 0;#10;
+
     while(!m_axi_arvalid)
       #10;
+
     m_axi_arready = 1'b1;#10;
     m_axi_arready = 1'b0;#10;
+
     while(!m_axi_rready)
       #10;
+
+    // Ensure transfer respects valid and ready signals
     #10;  m_axi_rvalid = 1'b1;
     #10;  m_axi_rvalid = 1'b0;
     #10;  m_axi_rvalid = 1'b1;
@@ -333,6 +337,7 @@ module dma_tb;
     #20;  m_axi_rvalid = 1'b1;
     #10;  m_axi_rvalid = 1'b0;
     #10;  m_axi_rvalid = 1'b1;  #10;
+
     while(!m_axi_rlast)
       #10;
     m_axi_rvalid = 1'b1;#10;
@@ -345,10 +350,13 @@ module dma_tb;
     m_axi_awready = 1;
     m_axi_wready = 1;
     m_axi_bvalid = 1;
+
     #10;
     dma_out_run = 0;
     while(!m_axi_wvalid)
       #10;
+
+    // Ensure transfer respects valid and ready signals
     #10;m_axi_wready = 1'b0;
     #10;m_axi_wready = 1'b1;
     #10;m_axi_wready = 1'b0;

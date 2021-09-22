@@ -14,18 +14,20 @@
 `define ETH_TYPE_PTR     (`MAC_SRC_PTR + `MAC_ADDR_LEN)
 `define PAYLOAD_PTR      (`ETH_TYPE_PTR + 2)
 
+`define RX_BUFFER_OFFSET 2
+
 module iob_eth_tb;
 
    parameter clk_per = 10;
    parameter pclk_per = 40;
 
    // CPU SIDE
-   reg 			rst;
-   reg 			clk;
+   reg         rst;
+   reg         clk;
 
    reg [`ETH_ADDR_W-1:0] addr;
-   reg 			 valid;
-   reg       			 wstrb;
+   reg          valid;
+   reg [3:0]             wstrb;
    reg [31:0]            data_in;
    wire [31:0]           data_out;
 
@@ -45,8 +47,8 @@ module iob_eth_tb;
 
    // iterator
    integer               i;
-   integer				 rx_index;
-   integer 				 nibble_index;
+   integer            rx_index;
+   integer            nibble_index;
 
    // data vector
    reg [7:0] data[`FRAME_SIZE-1:0];
@@ -61,30 +63,42 @@ module iob_eth_tb;
    // Instantiate the Unit Under Test (UUT)
 
    iob_eth uut (
-		.clk			(clk),
-		.rst			(rst),
+      .clk        (clk),
+      .rst        (rst),
 
-		// CPU side
-		.valid			(valid),
-		.wstrb			(wstrb),
-		.addr			(addr),
-		.data_in		(data_in),
-		.data_out		(data_out),
+      // CPU side
+      .valid         (valid),
+      .wstrb         (wstrb),
+      .addr       (addr),
+      .data_in    (data_in),
+      .data_out      (data_out),
 
         //PLL
         .PLL_LOCKED(1'b1),
                 
-		//PHY
-		.ETH_PHY_RESETN		(ETH_RESETN),
+      //PHY
+      .ETH_PHY_RESETN      (ETH_RESETN),
 
-		.TX_CLK			(TX_CLK),
-		.TX_DATA		(TX_DATA),
-		.TX_EN			(TX_EN),
+      .TX_CLK        (TX_CLK),
+      .TX_DATA    (TX_DATA),
+      .TX_EN         (TX_EN),
 
-		.RX_CLK			(RX_CLK),
-		.RX_DATA		(RX_DATA),
-		.RX_DV			(RX_DV)
-		);
+      .RX_CLK        (RX_CLK),
+      .RX_DATA    (RX_DATA),
+      .RX_DV         (RX_DV),
+
+      .m_axi_awready(1'b0),
+      .m_axi_wready(1'b0),
+      .m_axi_bid(1'b0),
+      .m_axi_bresp(2'b0),
+      .m_axi_bvalid(1'b0),
+      .m_axi_arready(1'b0),
+      .m_axi_rid(1'b0),
+      .m_axi_rdata(32'h0),
+      .m_axi_rresp(2'b0),
+      .m_axi_rlast(1'b0),
+      .m_axi_rvalid(1'b0)
+      );
 
    initial begin
 
@@ -93,9 +107,9 @@ module iob_eth_tb;
       $dumpvars;
 `endif
 
-	  nibble_index = 0;
-	  rx_index = 0;
-	  RX_DV = 0;
+     nibble_index = 0;
+     rx_index = 0;
+     RX_DV = 0;
 
       //preamble
       for(i=0; i < `PREAMBLE_LEN; i= i+1)
@@ -124,36 +138,36 @@ module iob_eth_tb;
       // generate test data
 
       // Fill the rest with increasing values
-      for(i = 0; i < `ETH_NBYTES; i = i + 1)
-        data[`PAYLOAD_PTR+i] = i;
+      for(i = `PAYLOAD_PTR; i < `FRAME_SIZE; i = i + 1)
+        data[i] = i;
 
       // Initialize the same data in a nibble array
-	  for(i = 0; i < `FRAME_NIBBLE_SIZE; i = i + 1) begin
-		 dataNibbleView[i] = data[i/2][(i%2)*4 +: 4];
-	  end
+     for(i = 0; i < `FRAME_NIBBLE_SIZE; i = i + 1) begin
+       dataNibbleView[i] = data[i/2][(i%2)*4 +: 4];
+     end
 
+      if(0) begin
       $display("Byte to receive");
       for(i = 0; i < `FRAME_SIZE; i = i + 1)
       begin
-      	$write("%x ",data[i]);
-      	if((i+1) % 16 == 0)
-      		$display("");
-      end
-
-      $display("");
-      $display("Nibbles to receive");
-      for(i = 0; i < `FRAME_NIBBLE_SIZE; i = i + 1)
-      begin
-      	$write("%x ",dataNibbleView[i]);
-      	if((i+1) % 16 == 0)
-      		$display("");
+         $write("%x ",data[i]);
+         if((i+1) % 16 == 0)
+            $display("");
       end
       $display("");
+      end
 
+      if(0) begin
+         $display("Nibbles to receive");
+         for(i = 0; i < `FRAME_NIBBLE_SIZE; i = i + 1)
+         begin
+            $write("%x ",dataNibbleView[i]);
+            if((i+1) % 16 == 0)
+               $display("");
+         end
+         $display("");
+      end
 
-      //$finish;
-
-      
       rst = 1;
       clk = 1;
       RX_CLK = 1;
@@ -188,11 +202,12 @@ module iob_eth_tb;
 
        // read and check received data
       for(i=0; i < `FRAME_SIZE; i= i+1) begin
-	 cpu_read (`ETH_DATA + i, cpu_reg);
-	 if (cpu_reg[7:0] != data[i+16]) begin
-	    $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i+16]);
-	    $finish;
-	 end
+         get_rx_byte(i,cpu_reg[7:0]);
+
+         if (cpu_reg[7:0] != data[i+`MAC_DEST_PTR]) begin
+            $display("Test failed on vector %d: %x / %x", i, cpu_reg[7:0], data[i + `MAC_DEST_PTR]);
+            $finish;
+         end
       end
 
       // send receive command
@@ -200,7 +215,7 @@ module iob_eth_tb;
       
       #400;
 
-      $display("Test completed.");
+      $display("Test successfully completed.");
       $finish;
 
    end // initial begin
@@ -215,14 +230,14 @@ module iob_eth_tb;
    //rx clock
    always #(pclk_per/2)
    begin 
-   		RX_CLK = ~RX_CLK;
-   		if(RX_DV & !RX_CLK) // Transition on the neg edge of the clk
-   		begin
-   			rx_index = rx_index + 1;
-   			if(rx_index == `FRAME_NIBBLE_SIZE)
-   				RX_DV = 0;
-   		end
-   	end
+         RX_CLK = ~RX_CLK;
+         if(RX_DV & !RX_CLK) // Transition on the neg edge of the clk
+         begin
+            rx_index = rx_index + 1;
+            if(rx_index == `FRAME_NIBBLE_SIZE)
+               RX_DV = 0;
+         end
+      end
 
    //tx clock
    always @* begin
@@ -255,6 +270,24 @@ module iob_eth_tb;
       valid = 1;
       @ (posedge clk) #1 read_reg = data_out;
       @ (posedge clk) #1 valid = 0;
+   endtask
+
+   // get individual byte
+   task get_rx_byte;
+      input [10:0] addr;
+      output [7:0] val;
+      reg [31:0] temp;
+
+      addr = addr + 2;
+
+      cpu_read(`ETH_DATA + (addr / 4),temp); 
+   
+      case(addr % 4)
+         2'b00: val = temp[7:0];
+         2'b01: val = temp[15:8];
+         2'b10: val = temp[23:16];
+         2'b11: val = temp[31:24];
+      endcase
    endtask
 
 endmodule
