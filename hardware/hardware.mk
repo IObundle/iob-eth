@@ -28,7 +28,7 @@ VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
 
 #sources
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
-
+VSRC+=$(MEM_DIR)/2p_assim_async_mem/iob_2p_async_mem.v
 
 ifeq ($(SIM),1)
     DEFINE+=$(defmacro)SIM

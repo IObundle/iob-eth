@@ -3,7 +3,6 @@
 #include "iob-eth.h"
 #include "eth_mem_map.h"
 #include "printf.h"
-#include "iob-ila.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
