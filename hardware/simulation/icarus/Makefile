@@ -9,12 +9,10 @@ DEFINE+=$(defmacro)VCD
 
 VLOG:=iverilog -W all -g2005-sv
 
-run: a.out
-	./a.out
-
-a.out: $(VSRC) $(VHDR)
+run:
 	$(VLOG) $(INCLUDE) $(DEFINE) $(VSRC)
-
+	./a.out
+	
 clean:
 	@rm -f *.vcd 
 	@rm -f *#
