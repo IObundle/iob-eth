@@ -1,0 +1,42 @@
+TOP_MODULE=iob_eth
+
+# DEFAULT 
+ETH_DMA ?= 1
+DDR_MEM ?= 0x80000000
+
+ifeq ($(ETH_DMA),1)
+	ifeq ($(DDR_MEM),)
+		$(error ETH_DMA set but DDR_MEM not set) 
+	endif
+endif
+
+#ETHERNET PATHS
+ETHERNET_HW_DIR:=$(ETHERNET_DIR)/hardware
+ETHERNET_INC_DIR:=$(ETHERNET_HW_DIR)/include
+ETHERNET_SRC_DIR:=$(ETHERNET_HW_DIR)/src
+ETHERNET_FPGA_DIR:=$(ETHERNET_DIR)/fpga
+ETHERNET_SW_DIR:=$(ETHERNET_DIR)/software
+ETHERNET_PYTHON_DIR=$(ETHERNET_SW_DIR)/python
+SUBMODULES_DIR:=$(ETHERNET_DIR)/submodules
+
+# SUBMODULE PATHS
+SUBMODULES=
+SUBMODULE_DIRS=$(shell ls $(SUBMODULES_DIR))
+$(foreach d, $(SUBMODULE_DIRS), $(eval TMP=$(shell make -C $(SUBMODULES_DIR)/$d corename | grep -v make)) $(eval SUBMODULES+=$(TMP)) $(eval $(TMP)_DIR ?=$(SUBMODULES_DIR)/$d))
+
+#DEFAULT FPGA FAMILY
+FPGA_FAMILY ?=CYCLONEV-GT
+FPGA_FAMILY_LIST ?=CYCLONEV-GT XCKU
+
+#DEFAULT DOC
+DOC ?=pb
+DOC_LIST ?=pb ug
+
+# VERSION
+VERSION ?=0.1
+VLINE ?="V$(VERSION)"
+ETHERNET_version.txt:
+ifeq ($(VERSION),)
+	$(error "variable VERSION is not set")
+endif
+	echo $(VLINE) > version.txt
