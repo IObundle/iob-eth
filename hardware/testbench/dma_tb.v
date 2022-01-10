@@ -74,7 +74,7 @@ module dma_tb;
   wire m_axi_arvalid;
   wire m_axi_rready;
 
-   dma_transfer dma(
+   dma_transfer #(.AXI_ADDR_W(32),.LEN_W(16)) dma(
     // DMA configuration 
     .addr(dma_address_reg),
     .length(dma_len),
@@ -141,7 +141,7 @@ module dma_tb;
     .rst(rst)
   );
 
-  iob_2p_async_mem #(
+  iob_t2p_ram #(
                .DATA_W(32),
                .ADDR_W(11)
                )
@@ -150,13 +150,13 @@ module dma_tb;
     // Front-End (written by core)
     .wclk(clk),
     .w_addr(rx_addr_a),
-    .data_in(rx_data_a),
+    .w_data(rx_data_a),
     .w_en(rx_write),
 
     // Back-End (read by host)
     .rclk(clk),
     .r_addr(rx_addr_b),
-    .data_out(rx_data_b),
+    .r_data(rx_data_b),
     .r_en(1'b1)
   );
 
@@ -177,7 +177,7 @@ module dma_tb;
     .rst(rst)
   );
 
-  iob_2p_async_mem #(
+  iob_t2p_ram #(
                .DATA_W(32),
                .ADDR_W(11)
                )
@@ -186,13 +186,13 @@ module dma_tb;
     // Front-End (written by host)
     .wclk(clk),
     .w_addr(tx_addr_a),
-    .data_in(tx_data_a),
+    .w_data(tx_data_a),
     .w_en(tx_write),
 
     // Back-End (read by core)
     .rclk(clk),
     .r_addr(tx_addr_b),
-    .data_out(tx_data_b),
+    .r_data(tx_data_b),
     .r_en(1'b1)
   );
 
@@ -290,8 +290,8 @@ module dma_tb;
     end
 
     for(i = 0; i < 2048; i = i + 1) begin
-      tx_buffer.ram[i] = 0;
-      rx_buffer.ram[i] = {i[7:0],i[7:0],i[7:0],i[7:0]};
+      tx_buffer.mem[i] = 0;
+      rx_buffer.mem[i] = {i[7:0],i[7:0],i[7:0],i[7:0]};
     end
 
     `ifdef VCD

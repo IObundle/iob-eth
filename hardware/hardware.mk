@@ -18,6 +18,7 @@ VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
 
 VSRC+=$(ETHERNET_DIR)/submodules/MEM/hardware/ram/t2p_ram/iob_t2p_ram.v
+VSRC+=$(ETHERNET_DIR)/submodules/DMA/hardware/src/dma_transfer.v
 
 ifeq ($(SIM),1)
     DEFINE+=$(defmacro)SIM
