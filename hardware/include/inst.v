@@ -2,13 +2,6 @@
    // ETHERNET
    //
 
-   assign m_axi_awvalid[1] = 1'b0;
-   assign m_axi_wvalid[1] = 1'b0;
-   assign m_axi_bready[1] = 1'b0;
-   assign m_axi_arvalid[1] = 1'b0;
-   assign m_axi_rready[1] = 1'b0;
-
-/*
    iob_eth #(
       .AXI_ADDR_W(`DDR_ADDR_W)     
      )
@@ -81,5 +74,4 @@
       .TX_DATA(TX_DATA),
       .TX_EN(TX_EN)
       );
-   */
 
