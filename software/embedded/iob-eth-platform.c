@@ -19,6 +19,8 @@
 
 #define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
 
+#define ETH_DEBUG_PRINT 1
+
 // Base address
 static int base;
 
