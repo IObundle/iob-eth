@@ -1,7 +1,7 @@
 TOP_MODULE=iob_eth
 
 # DEFAULT 
-ETH_DMA ?= 1
+ETH_DMA ?= 0
 DDR_MEM ?= 0x80000000
 
 ifeq ($(ETH_DMA),1)
