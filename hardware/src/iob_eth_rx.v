@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-`include "iob_eth_defs.vh"
+`include "ETHERNET.vh"
 
 module iob_eth_rx #(
                     parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
