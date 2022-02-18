@@ -23,9 +23,10 @@ SIM_DIR ?=$(ETHERNET_SIM_DIR)
 SUBMODULES_DIR:=$(ETHERNET_DIR)/submodules
 
 # SUBMODULE PATHS
-SUBMODULES=
-SUBMODULE_DIRS=$(shell ls $(SUBMODULES_DIR))
-$(foreach d, $(SUBMODULE_DIRS), $(eval TMP=$(shell make -C $(SUBMODULES_DIR)/$d corename | grep -v make)) $(eval SUBMODULES+=$(TMP)) $(eval $(TMP)_DIR ?=$(SUBMODULES_DIR)/$d))
+LIB_DIR ?=$(ETHERNET_DIR)/submodules/LIB
+MEM_DIR ?=$(ETHERNET_DIR)/submodules/MEM
+DMA_DIR ?=$(ETHERNET_DIR)/submodules/DMA
+AXI_DIR ?=$(ETHERNET_DIR)/submodules/AXI
 
 #DEFAULT FPGA FAMILY
 FPGA_FAMILY ?=CYCLONEV-GT
