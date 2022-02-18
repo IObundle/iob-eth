@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-`include "iob_eth_defs.vh"
+`include "ETHERNET.vh"
 
 // FRAME_SIZE (bytes) = PREAMBLE + SFD + HDR + DATA + CRC -> Ethernet Frame
 `define FRAME_SIZE (`PREAMBLE_LEN + 1 + `HDR_LEN + `ETH_NBYTES + 4)
