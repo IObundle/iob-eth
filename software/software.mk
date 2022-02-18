@@ -1,4 +1,4 @@
-include $(ETHERNET_DIR)/core.mk
+include $(ETHERNET_DIR)/config.mk
 
 #submodules
 ifneq (INTERCON,$(filter INTERCON, $(SUBMODULES)))

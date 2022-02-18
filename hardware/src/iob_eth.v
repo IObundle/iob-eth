@@ -374,7 +374,23 @@ module iob_eth #(
        dma_len <= data_in[10:0];
    
    // SYNCHRONIZERS
-   
+
+  // Clock crossing for a pulse (signal asserted for only one cycle) in a faster clock (clock A) to a slower or equal clock (clock B) 
+  `define PULSE_SYNC(PULSE_IN,CLK_A,PULSE_OUT,CLK_B,RST) \
+     reg PULSE_IN``_sync; \
+     always @(posedge CLK_A, posedge RST) \
+        if(RST) \
+           PULSE_IN``_sync <= 1'b0; \
+        else \
+           PULSE_IN``_sync <= PULSE_IN``_sync ^ PULSE_IN; \
+     reg [2:0] PULSE_OUT``_sync; \
+     always @(posedge CLK_B,posedge RST) \
+        if(RST) \
+           PULSE_OUT``_sync <= 3'b000; \
+        else \
+           PULSE_OUT``_sync <= {PULSE_OUT``_sync[1],PULSE_OUT``_sync[0],PULSE_IN``_sync}; \
+     `COMB PULSE_OUT = PULSE_OUT``_sync[2] ^ PULSE_OUT``_sync[1];
+
    // Clock cross send_en from clk to TX_CLK domain
    `PULSE_SYNC(send_en,clk,send,TX_CLK,rst)
 
@@ -385,7 +401,7 @@ module iob_eth #(
    // TX and RX BUFFERS
    //
 
-   iob_2p_async_mem #(
+   iob_t2p_ram #(
                        .DATA_W(32),
                        .ADDR_W((`ETH_ADDR_W-1)-2)
                        )
@@ -395,13 +411,13 @@ module iob_eth #(
       .wclk(clk),
       .w_addr(tx_address),
       .w_en(do_tx_wr),
-      .data_in(tx_wr_data),
+      .w_data(tx_wr_data),
 
     // Back-End (read by core)
       .rclk(TX_CLK),
       .r_addr(tx_rd_addr),
       .r_en(1'b1),
-      .data_out(tx_rd_data)
+      .r_data(tx_rd_data)
    );
 
    // Transform 8 bit rx data to 32 bit data to be stored in rx_buffer
@@ -420,7 +436,7 @@ module iob_eth #(
      stored_rx_wr <= 1'b1;
    end
 
-   iob_2p_async_mem #(
+   iob_t2p_ram #(
                        .DATA_W(32),
                        .ADDR_W((`ETH_ADDR_W-1)-2)
                        )
@@ -430,13 +446,13 @@ module iob_eth #(
      .wclk(RX_CLK),
      .w_addr(stored_rx_addr),
      .w_en(stored_rx_wr),
-     .data_in(stored_rx_data),
+     .w_data(stored_rx_data),
 
      // Back-End (read by host)
      .rclk(clk),
      .r_addr(rx_address),
      .r_en(1'b1),
-     .data_out(rx_rd_data)
+     .r_data(rx_rd_data)
    );
 
    //

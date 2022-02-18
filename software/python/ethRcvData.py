@@ -7,7 +7,7 @@ import time
 
 def RcvFile(socket,output_filename,expected_size):
     if(expected_size == 0):
-        printf("Expected size is zero. Check if parameters are correct")
+        print("Expected size is zero. Check if parameters are correct")
         return
 
     #Frame parameters

@@ -3,7 +3,6 @@
 #include "iob-eth.h"
 #include "eth_mem_map.h"
 #include "printf.h"
-#include "iob-ila.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
@@ -19,6 +18,8 @@
 #define ETH_DMA_READ_FROM_MEM 1
 
 #define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
+
+#define ETH_DEBUG_PRINT 1
 
 // Base address
 static int base;
