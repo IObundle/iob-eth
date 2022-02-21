@@ -39,8 +39,8 @@ endif
 
 DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)
 
-eth_mem_map.h: $(ETHERNET_DIR)/hardware/include/ETHERNET.vh
-	@sed -n 's/`ETH_ADDR_W//p' $(ETHERNET_DIR)/hardware/include/ETHERNET.vh | sed 's/`/#/g' | sed "s/'d//g" > ./$@
+eth_mem_map.h: $(ETHERNET_DIR)/hardware/include/ETHERNETsw_reg_def.vh
+	@sed -n 's/`ETH_ADDR_W//p' $< | sed 's/`/#/g' | sed "s/'d//g" > ./$@
 
 eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/ETHERNET.vh
 	@sed -n '/ ETH_PREAMBLE /p' $(ETHERNET_DIR)/hardware/include/ETHERNET.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' > ./$@
