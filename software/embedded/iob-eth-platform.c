@@ -1,5 +1,5 @@
 #include "stdint.h"
-#include "interconnect.h"
+#include "iob-lib.h"
 #include "iob-eth.h"
 #include "eth_mem_map.h"
 #include "printf.h"

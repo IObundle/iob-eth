@@ -2,7 +2,8 @@
 
 `include "axi.vh"
 `include "iob_lib.vh"
-`include "iob_eth_defs.vh"
+`include "ETHERNET.vh"
+`include "ETHERNETsw_reg_def.vh"
 
 /*
  Ethernet Core
@@ -25,7 +26,7 @@ module iob_eth #(
     output reg [31:0]       data_out,
     input [31:0]            data_in,
 
-    `include "cpu_axi4_m_if.v"
+    `include "axi_m_if.vh"
 
     // PHY side
     output reg              ETH_PHY_RESETN,
@@ -401,20 +402,20 @@ module iob_eth #(
    // TX and RX BUFFERS
    //
 
-   iob_t2p_ram #(
+   iob_ram_t2p #(
                        .DATA_W(32),
                        .ADDR_W((`ETH_ADDR_W-1)-2)
                        )
    tx_buffer
    (
     // Front-End (written by host)
-      .wclk(clk),
+      .w_clk(clk),
       .w_addr(tx_address),
       .w_en(do_tx_wr),
       .w_data(tx_wr_data),
 
     // Back-End (read by core)
-      .rclk(TX_CLK),
+      .r_clk(TX_CLK),
       .r_addr(tx_rd_addr),
       .r_en(1'b1),
       .r_data(tx_rd_data)
@@ -436,20 +437,20 @@ module iob_eth #(
      stored_rx_wr <= 1'b1;
    end
 
-   iob_t2p_ram #(
+   iob_ram_t2p #(
                        .DATA_W(32),
                        .ADDR_W((`ETH_ADDR_W-1)-2)
                        )
    rx_buffer
    (
      // Front-End (written by core)
-     .wclk(RX_CLK),
+     .w_clk(RX_CLK),
      .w_addr(stored_rx_addr),
      .w_en(stored_rx_wr),
      .w_data(stored_rx_data),
 
      // Back-End (read by host)
-     .rclk(clk),
+     .r_clk(clk),
      .r_addr(rx_address),
      .r_en(1'b1),
      .r_data(rx_rd_data)
