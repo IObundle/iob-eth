@@ -1,10 +1,14 @@
+"""ethBase.py
+
+Base functions for socket communication with board.
+"""
 from socket import socket, AF_PACKET, AF_UNIX, SOCK_RAW, SOCK_SEQPACKET, htons, timeout
 import time
 import sys
 import os
 
 def PrintBaseUsage():
-    print "<usage>: python eth_comm.py <interface> <RMAC> <file path>",
+    print("<usage>: python eth_comm.py <interface> <RMAC> <file path>")
 
 #Check arguments common to all scripts
 if len(sys.argv) < 4:
@@ -15,9 +19,10 @@ addr = "/tmp/tmpLocalSocket"
 
 #Ethernet parameters
 interface = sys.argv[1]
-src_addr = bytearray.fromhex(sys.argv[2])   # sender MAC address
-dst_addr = "\x01\x60\x6e\x11\x02\x0f"       # receiver MAC address
-eth_type = "\x60\x00"                       # ethernet frame type
+# use byte arrays by default
+src_addr = bytes.fromhex(sys.argv[2])       # sender MAC address
+dst_addr = bytes.fromhex("01606e11020f")    # receiver MAC address
+eth_type = bytes.fromhex("6000")            # ethernet frame type
 ETH_P_ALL = 0x6000  
 
 #Frame parameters
@@ -31,6 +36,12 @@ TIMEOUT = 0.1
 
 #Open socket and bind
 def CreateSocket():
+    """
+    Create raw socket. If "PC" is defined in the environment, creates an AF_UNIX
+    socket instead.
+
+    returns: socket object
+    """
     if "PC" in os.environ:
         s = socket(AF_UNIX, SOCK_SEQPACKET)
         while True:
@@ -48,13 +59,30 @@ def CreateSocket():
     return s
 
 def FormPacket(payload):
+    """ 
+    Generate packet from payload. Add padding to ensure minimum ethernet 
+    packet size.
+
+    payload: byte array with payload data
+
+    return: byte array with {Eth header + payload + (optional padding)}
+    """
+
     length = len(payload)
     if(length < ETH_MINIMUM_NBYTES):
         payload = payload + (b'\x00' * (ETH_MINIMUM_NBYTES - length))
 
+
     return ETH_HEADER + payload
 
 def SendAndAck(socket,payload):
+    """ 
+    Send payload and receive acknowledge with same data.
+
+    socket: socket for communication
+    payload: bytes data payload
+    return: difference count between send and received data
+    """
     packet = FormPacket(payload)
 
     bytes_sent = socket.send(packet)
@@ -69,6 +97,12 @@ def SendAndAck(socket,payload):
     return errors
 
 def RcvAndAck(socket):   
+    """ 
+    Receive payload and send acknowledge with same data.
+
+    socket: socket for communication
+    return: received payload data (bytes)
+    """
     rcv = socket.recv(4096)
 
     payload = rcv[len(ETH_HEADER):]
@@ -78,11 +112,17 @@ def RcvAndAck(socket):
     return payload
 
 def SyncAckFirst(socket):
+    """ 
+    Ping destination and wait for response at TIMEOUT intervals.
+
+    socket: socket connection
+    return: nothing
+    """
     previous = socket.gettimeout()
     socket.settimeout(TIMEOUT)
 
     while True:
-        socket.send(FormPacket(""))
+        socket.send(FormPacket(bytes('', encoding='ascii')))
 
         try:
             rcv = socket.recv(4096)
@@ -93,6 +133,12 @@ def SyncAckFirst(socket):
     socket.settimeout(previous)
 
 def SyncAckLast(socket):
+    """
+    Wait for initial message from socket destination at TIMEOUT intervals.
+
+    socket: socket connection
+    return: nothing
+    """
     previous = socket.gettimeout()
     socket.settimeout(TIMEOUT)
 
@@ -103,17 +149,24 @@ def SyncAckLast(socket):
         except timeout:
             pass
 
-    socket.send(FormPacket(""))
+    socket.send(FormPacket(bytes('', encoding='ascii')))
 
     socket.settimeout(previous)
 
 # Print progress every so often 
 def TimedPrintProgress(current,n_frames):
+    """
+    Print progress.
+
+    current: current status.
+    n_frames: total number of frames.
+    return: nothing
+    """
     TimedPrintProgress.storedMilli
     milli = int(round(time.time() * 1000))
 
     if(milli > (TimedPrintProgress.storedMilli + 100) or current == 0 or current == n_frames):
-        print "\rProgress: %d / %d" % (current + 1,n_frames + 1),
+        print("\rProgress: %d / %d" % (current + 1,n_frames + 1))
         sys.stdout.flush()
         TimedPrintProgress.storedMilli = milli
 

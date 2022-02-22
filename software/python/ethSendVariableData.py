@@ -1,3 +1,7 @@
+"""ethSendVariableData.py
+
+Size of data transfered is not known by destination address.
+"""
 #Import libraries
 from ethBase import CreateSocket,SendAndAck,SyncAckFirst
 from ethSendData import SendFile
@@ -8,7 +12,7 @@ import struct
 def SendVariableFile(socket,input_filename):
     input_file_size = getsize(input_filename)
 
-    print "Size: %d " % input_file_size
+    print("Size: %d " % input_file_size)
     
     errors = SendAndAck(socket,struct.pack("<i",input_file_size))
 
