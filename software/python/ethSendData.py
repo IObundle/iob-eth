@@ -1,3 +1,8 @@
+"""ethSendData.py
+
+Size of data transfered is known by destination address.
+"""
+
 #Import libraries
 from ethBase import TimedPrintProgress,CreateSocket,SendAndAck,SyncAckFirst,ETH_NBYTES
 from os.path import getsize
@@ -10,7 +15,7 @@ def SendFile(socket,input_filename):
     #Frame parameters
     input_file_size = getsize(input_filename)
     if(input_file_size == 0):
-        printf("File is empty. Check if filepath is correct")
+        print("File is empty. Check if filepath is correct")
         return 0
 
     num_frames_input = ((input_file_size - 1) // ETH_NBYTES) + 1

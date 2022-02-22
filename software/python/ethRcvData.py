@@ -1,3 +1,7 @@
+"""ethRcvData.py
+
+Size of data to be received is known at the start.
+"""
 #Import libraries
 from ethBase import PrintBaseUsage,TimedPrintProgress,CreateSocket,FormPacket,SyncAckLast,RcvAndAck,ETH_NBYTES
 from os.path import getsize
@@ -43,7 +47,7 @@ def RcvFile(socket,output_filename,expected_size):
 if __name__ == "__main__":
     if(len(sys.argv) < 5):
         PrintBaseUsage()
-        print "<expected size>"
+        print("<expected size>")
         sys.exit()
     
     print("\nStarting file reception...")
