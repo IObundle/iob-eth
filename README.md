@@ -37,7 +37,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     RMAC_INTERFACE=<RMAC_INTERFACE>
     ```
     See 
-    [this FAQ question](https://github.com/IObundle/iob-eth###Get-`RMAC_INTERFACE`-Value
+    [this FAQ question](https://github.com/IObundle/iob-eth/tree/CodeRevamp#obtaining-rmac_interface-value)
     for more details.
     2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
     environment variables to `~/.bashrc`:
@@ -74,9 +74,9 @@ The main steps to integrate iob-eth core into an iob-soc system:
   - another interface named enBBBB but without `inet` values
     - this should be the one connected to the FPGA BOARD
 - set `RMAC_INTERFACE=enBBBB` in your `~/.bashrc`
-### System simulation takes a long time to initialize ethernet (`eth_init(ETHERNET_BASE);`):
-- ethernet simulation requires `DEFINE+=$(defmacro)SIM`, so that internal reset takes less time 
-  - check for `SIM` in `ETHERNET/hardware/src/iob_eth.v`
+### System simulation takes a long time to initialize ethernet:
+- ethernet simulation requires `DEFINE+=$(defmacro)SIM` so that internal reset takes less time 
+  - check for `SIM` in `ETHERNET/hardware/src/iob_eth.v` for more details
 ### No permissions to open raw sockets
 - Running raw sockets requires elevated privileges. This is solved by 
 configuring a dedicated python3 virtual environment where the interpreter has 
