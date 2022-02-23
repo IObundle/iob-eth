@@ -36,7 +36,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```
     RMAC_INTERFACE=<RMAC_INTERFACE>
     ``` 
-        See [this FAQ question](https://github.com/IObundle/iob-eth/tree/CodeRevamp#obtaining-rmac_interface-value) for more details.
+    Check the Common Issues section for more details.
     2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
     environment variables to `~/.bashrc`:
     ```
