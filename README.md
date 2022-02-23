@@ -17,16 +17,16 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```
     PERIPHERALS ?= UART <...> ETHERNET
     ```
-    4. Add path to iob-eth submodule in `config.mk` file:
+    3. Add path to iob-eth submodule in `config.mk` file:
     ```
     ETHERNET_DIR=$(ROOT_DIR)/submodules/ETHERNET
     ```
-    3. Include iob-eth makefile segments in `hardware/hardware.mk` file:
+    4. Include iob-eth makefile segments in `hardware/hardware.mk` file:
     ```
     # ETHERNET
     include $(ETHERNET_DIR)/hardware/hardware.mk
     ```
-    3. Include iob-eth makefile segments in `software/firmware/Makefile` file:
+    5. Include iob-eth makefile segments in `software/firmware/Makefile` file:
     ```
     # ethernet
     include $(ETHERNET_DIR)/software/embedded/embedded.mk
@@ -35,8 +35,8 @@ The main steps to integrate iob-eth core into an iob-soc system:
     1. Add `RMAC_INTERFACE` to `~/.bashrc`:
     ```
     RMAC_INTERFACE=<RMAC_INTERFACE>
-    ```
-    See [this FAQ question](https://github.com/IObundle/iob-eth/tree/CodeRevamp#obtaining-rmac_interface-value) for more details.
+    ``` 
+        See [this FAQ question](https://github.com/IObundle/iob-eth/tree/CodeRevamp#obtaining-rmac_interface-value) for more details.
     2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
     environment variables to `~/.bashrc`:
     ```
