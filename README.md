@@ -66,7 +66,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
 7. Run in FPGA
     1. Target to run FPGA Console and Ethernet scripts:
     ```
-    make fpga-run-eth
+    make run-fpga-eth
     ```
     2. Check `fpga.log` and `ethernet.log` for respective logs.
 

@@ -7,10 +7,10 @@
 ################################################################################
 
 ## Run Build, load and run FPGA Console in parallel with Ethernet scripts
-fpga-run-eth:
-	make -j2 fpga-run-eth-parallel
+run-fpga-eth:
+	make -j2 run-fpga-eth-parallel
 
-fpga-eth-parallel: run-fpga-int run-eth-int
+run-fpga-eth-parallel: run-fpga-int run-eth-int
 
 # Write FPGA Console prints to fpga.log
 run-fpga-int:
