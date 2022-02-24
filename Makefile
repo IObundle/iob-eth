@@ -3,8 +3,7 @@ SHELL:=/bin/bash
 ETHERNET_DIR:=.
 include config.mk
 
-.PHONY: corename \
-	sim sim-test sim-clean \
+.PHONY: sim sim-test sim-clean \
 	pc-test-eth test-eth \
 	fpga \
 	clean
@@ -12,9 +11,6 @@ include config.mk
 #
 # Build and run the system
 #
-
-corename:
-	@echo "ETHERNET"
 
 #
 # SIMULATE
@@ -46,13 +42,13 @@ run-eth-scripts:
 	rm -f data.bin
 	rm -f data2.bin
 
-test-eth:
+run-eth:
 ifeq ($(ETH_SERVER),)
 	make run-eth-scripts
 else
 	ssh $(ETH_USER)@$(ETH_SERVER) "if [ ! -d $(REMOTE_ROOT_DIR) ]; then mkdir -p $(REMOTE_ROOT_DIR); fi"
 	rsync -avz --delete --force --exclude .git $(ROOT_DIR) $(ETH_USER)@$(ETH_SERVER):$(REMOTE_ROOT_DIR)
-	bash -c "trap 'make kill-remote-eth' INT TERM KILL; ssh $(ETH_USER)@$(ETH_SERVER) 'cd $(REMOTE_ROOT_DIR)/submodules/ETHERNET; make test-eth'"
+	bash -c "trap 'make kill-remote-eth' INT TERM KILL; ssh $(ETH_USER)@$(ETH_SERVER) 'cd $(REMOTE_ROOT_DIR); make run-eth'"
 endif
 
 

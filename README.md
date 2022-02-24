@@ -58,7 +58,17 @@ The main steps to integrate iob-eth core into an iob-soc system:
     1. Check `ETHERNET/software/example_firmware.c` for an example program with
     ethernet communication.
 6. Add target to run FPGA firmware and python scripts in parallel
-    1. TODO:
+    1. Include iob-eth targets in system top level `Makefile`:
+    ```
+    # Ethernet targets
+    include $(ETHERNET_DIR)/top_targets.mk
+    ```
+7. Run in FPGA
+    1. Target to run FPGA Console and Ethernet scripts:
+    ```
+    make fpga-run-eth
+    ```
+    2. Check `fpga.log` and `ethernet.log` for respective logs.
 
 * * *
 ## Common Issues
