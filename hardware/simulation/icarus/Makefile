@@ -5,17 +5,20 @@ incdir:=-I
 
 include ../simulation.mk
 
-VC = iverilog
-CFLAGS := -W all -g2005-sv $(INCLUDE) -DVCD
+#icarus verilog simulator
+VLOG:=iverilog -W all -g2005-sv
 
-all: $(VSRC) $(VHDR)
-	$(VC) $(CFLAGS) $(VSRC)
-	./a.out
+run: a.out
+	./$< $(TEST_LOG)
+ifeq ($(VCD),1)
+	if [ "`pgrep -u $(USER) gtkwave`" ]; then killall -q -9 gtkwave; fi
+	gtkwave -a waves.gtkw iob_eth.vcd &
+endif
 
-clean:
-	@rm -f *.vcd 
-	@rm -f *#
-	@rm -f *~ 
+a.out: $(VSRC) $(VHDR)
+	$(VLOG) $(INCLUDE) $(DEFINE) $(VSRC)
+
+clean: ethernet-sim-clean
 	@rm -f a.out
 
 .phony: all clean
