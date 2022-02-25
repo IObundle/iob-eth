@@ -18,6 +18,7 @@
       .data_out(slaves_resp[`rdata(`ETHERNET)]),
       .ready(slaves_resp[`ready(`ETHERNET)]),
 
+`ifdef ETH_DMA
       // AXI4 master interface
       //address write
       .m_axi_awid(m_axi_awid[1*1+:1]), 
@@ -61,6 +62,7 @@
       .m_axi_rlast(m_axi_rlast[1*1+:1]), 
       .m_axi_rvalid(m_axi_rvalid[1*1+:1]),  
       .m_axi_rready(m_axi_rready[1*1+:1]),
+`endif
 
       // ethernet interface
       .ETH_PHY_RESETN(ETH_PHY_RESETN),
