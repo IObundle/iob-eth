@@ -7,7 +7,19 @@ data link layer (2) of the OSI Model.
 * * *
 ## Setup
 The main steps to integrate iob-eth core into an iob-soc system:
-1. Add iob-eth as a submodule/peripheral:
+1. Setup environment variables
+    1. Add `RMAC_INTERFACE` to `~/.bashrc` of the machine directly connected to
+    the FPGA Board. Check the Common Issues section for more details:
+    ```
+    RMAC_INTERFACE=<RMAC_INTERFACE>
+    ``` 
+    2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
+    environment variables to `~/.bashrc`:
+    ```
+    ETH_SERVER=<machine.connected.to.server>
+    ETH_USER=<user_in_machine>
+    ```
+2. Add iob-eth as a submodule/peripheral:
     1. Add the submodule to the repository:
     ```
     git submodule add git@github.com:IObundle/iob-eth.git submodules/ETHERNET
@@ -21,27 +33,26 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```
     ETHERNET_DIR=$(ROOT_DIR)/submodules/ETHERNET
     ```
-    4. Include iob-eth makefile segments in `hardware/hardware.mk` file:
+    4. Add `RMAC_ADDR` in `config.mk` file:
+    ```
+    RMAC_ADDR:=<RMAC_ADDR>
+    ```
+    Obtain `<RMAC_ADDR>` with the command:
+    ```
+    # On machine connected to FPGA Board
+    ethtool -P $RMAC_INTERFACE | sed s/://g
+    # From remote machine
+    ssh $ETH_USER@$ETH_SERVER 'ethtool -P $RMAC_INTERFACE | sed s/://g '
+    ```
+    5. Include iob-eth makefile segments in `hardware/hardware.mk` file:
     ```
     # ETHERNET
     include $(ETHERNET_DIR)/hardware/hardware.mk
     ```
-    5. Include iob-eth makefile segments in `software/firmware/Makefile` file:
+    6. Include iob-eth makefile segments in `software/firmware/Makefile` file:
     ```
     # ethernet
     include $(ETHERNET_DIR)/software/embedded/embedded.mk
-    ```
-2. Setup environment variables
-    1. Add `RMAC_INTERFACE` to `~/.bashrc`:
-    ```
-    RMAC_INTERFACE=<RMAC_INTERFACE>
-    ``` 
-    Check the Common Issues section for more details.
-    2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
-    environment variables to `~/.bashrc`:
-    ```
-    ETH_SERVER=<machine.connected.to.server>
-    ETH_USER=<user_in_machine>
     ```
 3. Update FPGA Board files:
     1. Check 
