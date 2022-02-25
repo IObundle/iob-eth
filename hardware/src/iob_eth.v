@@ -26,7 +26,9 @@ module iob_eth #(
     output reg [31:0]       data_out,
     input [31:0]            data_in,
 
+`ifdef ETH_DMA
     `include "axi_m_if.vh"
+`endif
 
     // PHY side
     output reg              ETH_PHY_RESETN,
@@ -241,11 +243,6 @@ module iob_eth #(
 `else // No DMA
 
    assign dma_ready = 1'b0;
-   assign m_axi_awvalid = 1'b0;
-   assign m_axi_wvalid = 1'b0;     
-   assign m_axi_bready = 1'b0;
-   assign m_axi_arvalid = 1'b0;
-   assign m_axi_rready = 1'b0;
 
    assign  rx_address = addr[8:0];
    assign  tx_address = addr[8:0];

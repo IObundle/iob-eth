@@ -13,17 +13,17 @@
 
 #define PAGE_ALIGN(val) ((val + 0xfff) & ~0xfff)
 
-#ifdef DDR_MEM
+#ifdef USE_DDR
   #ifdef PC
     static char memory[100000];  
     #define BASE_ADDRESS ((intptr_t) memory)
   #else
-  #define BASE_ADDRESS (DDR_MEM + (1 << (FIRM_ADDR_W)))
+  #define BASE_ADDRESS (EXTRA_BASE + (1 << (FIRM_ADDR_W)))
   #endif // PC
 #else
   static char memory[3000];
   #define BASE_ADDRESS ((intptr_t) memory)
-#endif // DDR_MEM
+#endif // USE_DDR
 
 #ifdef SIM
   #undef ETH_NBYTES
