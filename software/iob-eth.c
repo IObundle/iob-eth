@@ -89,50 +89,6 @@ static unsigned int eth_send_file_impl(char *data, int size) {
   return count_bytes;
 }
 
-void eth_send_frame(char *data, unsigned int size) {
-  int i;
-
-  // wait for ready
-  while(!eth_tx_ready());
-
-  // set frame size
-  eth_set_tx_payload_size(size);
-
-  // payload
-  eth_set_tx_buffer(data,size);
-
-  // start sending
-  eth_send();
-
-  return;
-}
-
-int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
-  int i;
-  int cnt = timeout;
-
-  // wait until data received
-  while (!eth_rx_ready()) {
-     timeout--;
-     if (!timeout) {
-       return ETH_NO_DATA;
-     }
-  }
-
-  if(eth_get_crc() != 0xc704dd7b) {
-    eth_ack();
-    printf("Bad CRC\n");
-    return ETH_INVALID_CRC;
-  }
-
-  eth_get_rx_buffer(data_rcv,size);
-  
-  // send receive ack
-  eth_ack();
-  
-  return ETH_DATA_RCV;
-}
-
 unsigned int eth_rcv_file(char *data, int size) {
   eth_on_transfer_start();
 

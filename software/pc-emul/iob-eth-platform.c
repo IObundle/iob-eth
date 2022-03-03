@@ -80,14 +80,14 @@ void eth_init(int base_address)
   memcpy(send_buffer, TX_FRAME, 14*sizeof(char));
 }
 
-#if 0
 void eth_send_frame(char *data, unsigned int size) {
+  int i = 0;
 
-  char buffer[BUFFER_SIZE+14];
+  /* copy data to send buffer */
+  for(i = 0; i < size; i++)
+      send_buffer[i+14] = data[i];
 
-  
-  
-  int ret = write(data_socket, buffer, size+14);
+  int ret = write(data_socket, send_buffer, size+14);
   /* check for errors */
   if(ret == -1){
     printf("Failed in eth_send_frame()");
@@ -106,9 +106,19 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   }
   printf("Received message: ret = %d\n", ret);
 
+  /* shift from DST | SRC | ETH | Data | CRC to
+  *            Data | CRC
+  *            */
+  int i = 0;
+  for(i = 0; i < size; i++){
+      data_rcv[i] = data_rcv[i+14];
+  }
+  for(; i<size+18; i++){
+      data_rcv[i] = 0;
+  }
+
   return ETH_DATA_RCV;
 }
-#endif
 
 void eth_on_transfer_start(void){
   printf("Waiting for client connection...\n");
