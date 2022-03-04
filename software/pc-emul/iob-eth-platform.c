@@ -10,6 +10,11 @@
 #define BUFFER_SIZE 2048
 #define SOCKET_NAME "/tmp/tmpLocalSocket"
 
+static typedef enum IO_Type_t {
+    io_get = 0,
+    io_set = 1
+} IO_Type
+
 static int data_socket = -1;
 static int connection_socket = -1;
 static int payload_size;
@@ -18,6 +23,185 @@ static int payload_size;
 static char TX_FRAME[14];
 
 static char send_buffer[BUFFER_SIZE+14];
+static char rcv_buffer[BUFFER_SIZE+14];
+static int rcv_size_reg = 0;
+
+/* pc emulation functions */
+void pc_eth_send(int value){
+    // use correct bit width
+    int send_int = value & 0x01;
+    // TODO: trigger send message
+    // don't check for send_int value
+    return;
+}
+
+void pc_eth_rcvack(int value){
+    // use correct bit width
+    int rcvack_int = value & 0x01;
+    // TODO: get ready to receive another message?
+    // don't check for rcvack_int value
+    return;
+}
+
+void pc_eth_softrst(int value){
+    // use correct bit width
+    int softrst_int = value & 0x01;
+    // TODO: reset ethernet
+    // don't check for softrst_int value
+    return;
+}
+
+/* dummy is a read / write register to validate correct
+ * access to SWREGs of the ethernet core */
+int pc_eth_dummy(int value, IO_Type type){
+    // use correct bit width
+    int dummy_int = value & 0xFFFFFFFF;
+    if(type == io_set)
+        dummy_reg = dummy_int;
+    else if(type == io_get)
+        return dummy_reg;
+    else
+        return -1;
+    return 0;
+}
+
+/* set TX_NBYTES */
+void pc_eth_tx_nbytes(int value){
+    // use correct bit width
+    int tx_nbytes_int = value & ((1<<11)-1);
+    tx_nbytes_reg = tx_nbytes_int;
+    return;
+}
+
+/* set RX_NBYTES */
+void pc_eth_rx_nbytes(int value){
+    // use correct bit width
+    int rx_nbytes_int = value & ((1<<11)-1);
+    rx_nbytes_reg = rx_nbytes_int;
+    return;
+}
+
+/* TODO: set dma address */
+void pc_eth_dma_address(int value){
+    return;
+}
+
+/* TODO: set dma len */
+void pc_eth_dma_len(int value){
+    return;
+}
+
+/* TODO: set dma run */
+void pc_eth_dma_run(int value){
+    return;
+}
+
+/* write data to sending frame
+ * or
+ * read data from received frame
+ */
+int pc_eth_data(int location, int value, IO_Type type){
+    // use correct bit width
+    int data_int = value & 0xFFFFFFFF;
+    int location_int = location & ((1<<10)-1);
+    if(type == io_set) {
+        // write data to send buffer
+        send_buffer[location_int] = data_int;
+    } else if(type == io_get) {
+        // read data from rcv buffer
+        // TODO: check if we need to skip ETH Frame header
+        return rcv_buffer[location_int];
+    } else
+        return -1;
+    return 0;
+}
+
+int pc_eth_status(){
+    // TODO: return status
+    return 0x0001FFFF;
+}
+
+/* always return correct CRC value */
+int pc_eth_crc(){
+    return 0xc704dd7b;
+}
+
+/* return size of last received frame */
+int pc_eth_rcv_size(){
+    return rcv_size_reg;
+}
+
+/* Ethernet Core access simulation */
+
+void MEM_SET(int type, int location, int value){
+    return;
+}
+
+int MEM_GET(int type, int location){
+    return 0;
+}
+
+void IO_SET(int base, int location, int value){
+    switch(location){
+        case ETH_SEND:
+            pc_eth_send(value);
+            break;
+        case ETH_RCVACK:
+            pc_eth_rcvack(value);
+            break;
+        case ETH_SOFTRST:
+            pc_eth_softrst(value);
+            break;
+        case ETH_DUMMY:
+            pc_eth_dummy(value, io_set);
+            break;
+        case ETH_TX_NBYTES:
+            pc_eth_tx_nbytes(value);
+            break;
+        case ETH_RX_NBYTES:
+            pc_eth_rx_nbytes(value);
+            break;
+        case ETH_DMA_ADDRESS:
+            pc_eth_dma_address(value);
+            break;
+        case ETH_DMA_LEN:
+            pc_eth_dma_len(value);
+            break;
+        case ETH_DMA_RUN:
+            pc_eth_dma_run(value);
+            break;
+        default:
+            pc_eth_dma_data(location, value, io_set);
+            break;
+    }
+    return;
+}
+
+int IO_GET(int base, int location){
+    int ret_val = 0;
+    switch(location){
+        case ETH_STATUS:
+            ret_val = pc_eth_status();
+            break;
+        case ETH_DUMMY:
+            ret_val = pc_eth_dummy(0, io_get);
+            break;
+        case ETH_CRC:
+            ret_val = pc_eth_crc();
+            break;
+        case ETH_RCV_SIZE:
+            ret_val = pc_eth_rcv_size();
+            break;
+        default:
+            ret_val = pc_eth_data(location, 0, io_get);
+            break;
+    }
+    return ret_val;
+}
+
+
+
+/* ******************************* */
 
 void eth_init(int base_address)
 {
