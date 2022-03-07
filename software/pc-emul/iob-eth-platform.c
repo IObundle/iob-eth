@@ -17,7 +17,6 @@ static typedef enum IO_Type_t {
 
 static int data_socket = -1;
 static int connection_socket = -1;
-static int payload_size;
 
 /* dest mac | src mac | eth type*/
 static char TX_FRAME[14];
@@ -25,29 +24,106 @@ static char TX_FRAME[14];
 static char send_buffer[BUFFER_SIZE+14];
 static char rcv_buffer[BUFFER_SIZE+14];
 static int rcv_size_reg = 0;
+static int tx_nbytes_reg = 0, rx_nbytes_reg = 0;
+static int dummy_reg = 0;
+
+    wret = send(data_socket, buffer, nsize, MSG_NOSIGNAL);
+    if(wret == -1){
+        data_socket = accept(connection_socket, NULL, NULL);
+        if(data_socket == -1){
+            printf("Failed to accept connection");
+            exit(EXIT_FAILURE);
+        }
+        wret = send(data_socket, buffer, nsize, MSG_NOSIGNAL);
+    }
+void eth_on_transfer_start(void){
+  printf("Waiting for client connection...\n");
+
+  /1* accept connection *1/ 
+  data_socket = accept(connection_socket, NULL, NULL); 
+  /1* check for errors *1/ 
+  if(data_socket == -1){ 
+    printf("Failed to accept connection"); 
+    exit(EXIT_FAILURE); 
+  } 
+} 
 
 /* pc emulation functions */
 void pc_eth_send(int value){
     // use correct bit width
     int send_int = value & 0x01;
-    // TODO: trigger send message
-    // don't check for send_int value
+    // write data to socket
+    if(send_int){
+        int wret = -1;
+        // by default try to write data
+        wret = send(data_socket, send_buffer, tx_nbytes_reg+TEMPLATE_LEN, MSG_NOSIGNAL);
+        // if sending data fails, try to open new connection and send data again
+        while(wret == -1){
+            data_socket = accept(connection_socket, NULL, NULL);
+            if(data_socket == -1){
+                printf("Failed to accept connection");
+                exit(EXIT_FAILURE);
+            }
+            wret = send(data_socket, send_buffer, tx_nbytes_reg+TEMPLATE_LEN, MSG_NOSIGNAL);
+        }
+    }
     return;
 }
 
 void pc_eth_rcvack(int value){
     // use correct bit width
     int rcvack_int = value & 0x01;
-    // TODO: get ready to receive another message?
-    // don't check for rcvack_int value
+    // no action needed for ack in pc emul
     return;
 }
 
+/* Reset AF_UNIX Socket
+ * this AF_UNIX socket is used to emulate the ethernet communication
+ * the payload in the messages send has the contents of a Raw Ethernet Frame:
+ * [ Preamble | SFD | DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implitic) ]
+ */
 void pc_eth_softrst(int value){
     // use correct bit width
     int softrst_int = value & 0x01;
-    // TODO: reset ethernet
-    // don't check for softrst_int value
+    if(softrst_int) {
+        struct sockaddr_un name;
+        int ret = 0;
+
+        /* remove socket if it exists*/
+        unlink(SOCKET_NAME);
+
+        /*create socket to receive connections */
+        connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+        /* check for errors */
+        if(connection_socket == -1){
+            perror("Failed to create socket");
+            exit(EXIT_FAILURE);
+        }
+        /*clear structure*/
+        memset(&name, 0, sizeof(struct sockaddr_un));
+
+        /*bind socket*/
+        name.sun_family = AF_UNIX;
+        strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);
+
+        ret = bind(connection_socket, (const struct sockaddr*) &name, sizeof(struct sockaddr_un));
+        /* check for errors */
+        if(ret == -1){
+        printf("Failed to bind socket");
+        exit(EXIT_FAILURE);
+        }
+
+        /* wait for eth_comm connections */
+        ret = listen(connection_socket, 1);
+        /* check for errors */
+        if(ret == -1){
+        printf("Error in listen");
+        exit(EXIT_FAILURE);
+        }
+
+        printf("Ethernet Core Initialized\n");
+
+    }
     return;
 }
 
@@ -106,11 +182,12 @@ int pc_eth_data(int location, int value, IO_Type type){
     int location_int = location & ((1<<10)-1);
     if(type == io_set) {
         // write data to send buffer
-        send_buffer[location_int] = data_int;
+        // cpu writes integer to buffer at a time
+        *( ((int*)send_buffer) + location_int) = data_int;
     } else if(type == io_get) {
         // read data from rcv buffer
-        // TODO: check if we need to skip ETH Frame header
-        return rcv_buffer[location_int];
+        // cpu reads integer from buffer
+        return *( ((int*)rcv_buffer) + location_int);
     } else
         return -1;
     return 0;
@@ -171,7 +248,7 @@ void IO_SET(int base, int location, int value){
             pc_eth_dma_run(value);
             break;
         default:
-            pc_eth_dma_data(location, value, io_set);
+            pc_eth_data(location, value, io_set);
             break;
     }
     return;
@@ -203,66 +280,66 @@ int IO_GET(int base, int location){
 
 /* ******************************* */
 
-void eth_init(int base_address)
-{
-  int i;
-  struct sockaddr_un name;
+/*void eth_init(int base_address)*/
+/*{*/
+/*  int i;*/
+/*  struct sockaddr_un name;*/
   
 
-  /* set TX_FRAME*/
-  uint64_t mac_addr = ETH_MAC_ADDR;
-  for(i=0;i<6;i++){
-    TX_FRAME[i] = mac_addr << 8;
-  }
-  mac_addr = ETH_MAC_ADDR;
-  for(i=0;i<6;i++){
-    TX_FRAME[i+6] = mac_addr << 8;
-  }
-  TX_FRAME[12] = 0x08;
-  TX_FRAME[13] = 0x00;
+/*  /* set TX_FRAME*/*/
+/*  uint64_t mac_addr = ETH_MAC_ADDR;*/
+/*  for(i=0;i<6;i++){*/
+/*    TX_FRAME[i] = mac_addr << 8;*/
+/*  }*/
+/*  mac_addr = ETH_MAC_ADDR;*/
+/*  for(i=0;i<6;i++){*/
+/*    TX_FRAME[i+6] = mac_addr << 8;*/
+/*  }*/
+/*  TX_FRAME[12] = 0x08;*/
+/*  TX_FRAME[13] = 0x00;*/
 
-  /* set payload size*/
-  payload_size = 46; 
+/*  /* set payload size*/*/
+/*  payload_size = 46;*/ 
 
-  int ret = 0;
+/*  int ret = 0;*/
 
-  /* remove socket if it exists*/
-  unlink(SOCKET_NAME);
+/*  /* remove socket if it exists*/*/
+/*  unlink(SOCKET_NAME);*/
 
-  /*create socket to receive connections */
-  connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-  /* check for errors */
-  if(connection_socket == -1){
-    perror("Failed to create socket");
-    exit(EXIT_FAILURE);
-  }
-  /*clear structure*/
-  memset(&name, 0, sizeof(struct sockaddr_un));
+/*  /*create socket to receive connections */*/
+/*  connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);*/
+/*  /* check for errors */*/
+/*  if(connection_socket == -1){*/
+/*    perror("Failed to create socket");*/
+/*    exit(EXIT_FAILURE);*/
+/*  }*/
+/*  /*clear structure*/*/
+/*  memset(&name, 0, sizeof(struct sockaddr_un));*/
 
 
-  /*bind socket*/
-  name.sun_family = AF_UNIX;
-  strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);
+/*  /*bind socket*/*/
+/*  name.sun_family = AF_UNIX;*/
+/*  strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);*/
 
-  ret = bind(connection_socket, (const struct sockaddr*) &name, sizeof(struct sockaddr_un));
-  /* check for errors */
-  if(ret == -1){
-    printf("Failed to bind socket");
-    exit(EXIT_FAILURE);
-  }
+/*  ret = bind(connection_socket, (const struct sockaddr*) &name, sizeof(struct sockaddr_un));*/
+/*  /* check for errors */*/
+/*  if(ret == -1){*/
+/*    printf("Failed to bind socket");*/
+/*    exit(EXIT_FAILURE);*/
+/*  }*/
 
-  /* wait for eth_comm connections */
-  ret = listen(connection_socket, 1);
-  /* check for errors */
-  if(ret == -1){
-    printf("Error in listen");
-    exit(EXIT_FAILURE);
-  }
+/*  /* wait for eth_comm connections */*/
+/*  ret = listen(connection_socket, 1);*/
+/*  /* check for errors */*/
+/*  if(ret == -1){*/
+/*    printf("Error in listen");*/
+/*    exit(EXIT_FAILURE);*/
+/*  }*/
 
-  printf("Ethernet Core Initialized\n");
+/*  printf("Ethernet Core Initialized\n");*/
 
-  memcpy(send_buffer, TX_FRAME, 14*sizeof(char));
-}
+/*  memcpy(send_buffer, TX_FRAME, 14*sizeof(char));*/
+/*}*/
 
 void eth_send_frame(char *data, unsigned int size) {
   int i = 0;
@@ -304,24 +381,37 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   return ETH_DATA_RCV;
 }
 
-void eth_on_transfer_start(void){
-  printf("Waiting for client connection...\n");
+/* /* TODO: move this code to the write part of the drivers:*/
+/*  * remove eth_on_transfer_start() function and do something like this:*/
+/*  * Try to write data with send function:*/
+/*     wret = send(data_socket, buffer, nsize, MSG_NOSIGNAL);*/
+/*     if(wret == -1){*/
+/*         data_socket = accept(connection_socket, NULL, NULL);*/
+/*         if(data_socket == -1){*/
+/*             printf("Failed to accept connection");*/
+/*             exit(EXIT_FAILURE);*/
+/*         }*/
+/*         wret = send(data_socket, buffer, nsize, MSG_NOSIGNAL);*/
+/*     }*/
+/* */*/  
+/* void eth_on_transfer_start(void){*/
+/*   printf("Waiting for client connection...\n");*/
 
-  /* accept connection */
-  data_socket = accept(connection_socket, NULL, NULL);
-  /* check for errors */
-  if(data_socket == -1){
-    printf("Failed to accept connection");
-    exit(EXIT_FAILURE);
-  }
-}
+/*   /1* accept connection *1/ */
+/*   data_socket = accept(connection_socket, NULL, NULL); */
+/*   /1* check for errors *1/ */
+/*   if(data_socket == -1){ */
+/*     printf("Failed to accept connection"); */
+/*     exit(EXIT_FAILURE); */
+/*   } */
+/* } */
 
-void eth_set_rcvack(char value){
-}
+/* void eth_set_rcvack(char value){ */
+/* } */
 
-void eth_set_send(char value){
-  int ret = write(data_socket, send_buffer, payload_size+14);
-}
+/* void eth_set_send(char value){ */
+/*   int ret = write(data_socket, send_buffer, payload_size+14); */
+/* } */
 
 void eth_set_tx_buffer(char* buffer,int size){
   memcpy(&(send_buffer[14]), buffer, size*sizeof(char));
@@ -335,18 +425,18 @@ void eth_get_rx_buffer(char* buffer,int size){
   memcpy(buffer,&temp[14],size);
 }
 
-int eth_get_crc(void){
-  return 0xc704dd7b;
-}
+/* int eth_get_crc(void){ */
+/*   return 0xc704dd7b; */
+/* } */
 
-void eth_set_tx_payload_size(unsigned int size) {
-  //set frame size
-  payload_size = size;
-}
+/* void eth_set_tx_payload_size(unsigned int size) { */
+/*   //set frame size */
+/*   payload_size = size; */
+/* } */
 
-int eth_get_status(void){
-  return 0xffff;
-}
+/* int eth_get_status(void){ */
+/*   return 0xffff; */
+/* } */
 
 int eth_get_status_field(char field){
   return 1;
