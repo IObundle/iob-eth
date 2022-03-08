@@ -166,7 +166,6 @@ char eth_get_data(int i) {
   return ((char) data & 0xff);
 }
 
-/* TODO: checke code after this point */
 void eth_set_tx_buffer(char* buffer,int size){
   int dma_transfer = 0,dma_address = 0;
 
@@ -379,7 +378,7 @@ static unsigned int eth_send_file_impl(char *data, int size) {
 }
 
 unsigned int eth_rcv_file(char *data, int size) {
-  eth_on_transfer_start();
+  /* eth_on_transfer_start(); */
 
   SyncAckLast();
 
@@ -387,7 +386,7 @@ unsigned int eth_rcv_file(char *data, int size) {
 }
 
 unsigned int eth_send_file(char *data, int size) {
-  eth_on_transfer_start();
+  /* eth_on_transfer_start(); */
 
   SyncAckFirst();
 
@@ -397,7 +396,7 @@ unsigned int eth_send_file(char *data, int size) {
 unsigned int eth_rcv_variable_file(char *data) {
   int size = 0;
 
-  eth_on_transfer_start();
+  /* eth_on_transfer_start(); */
 
   SyncAckLast();
 
@@ -412,7 +411,7 @@ unsigned int eth_rcv_variable_file(char *data) {
 }
 
 unsigned int eth_send_variable_file(char *data, int size) {
-  eth_on_transfer_start();
+  /* eth_on_transfer_start(); */
   
   SyncAckFirst();
 

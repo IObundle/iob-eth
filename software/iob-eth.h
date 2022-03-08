@@ -15,6 +15,24 @@
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
 
+
+#define PREAMBLE_PTR     0
+#define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
+#define MAC_DEST_PTR     (SDF_PTR + 1)
+#define MAC_SRC_PTR      (MAC_DEST_PTR + MAC_ADDR_LEN)
+//#define TAG_PTR          (MAC_SRC_PTR + MAC_ADDR_LEN) // Optional - not supported
+#define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
+#define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
+
+#define TEMPLATE_LEN     (PAYLOAD_PTR)
+
+#define ETH_DMA_WRITE_TO_MEM  0
+#define ETH_DMA_READ_FROM_MEM 1
+
+#define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
+
+#define ETH_DEBUG_PRINT 1
+
 // driver functions
 void eth_init(int base);
 
@@ -44,7 +62,7 @@ void eth_get_rx_buffer(char* buffer,int size);
 
 void eth_init_frame(void);
 
-void eth_on_transfer_start(void); // A hook function used to correctly implement pc-emul
+/* void eth_on_transfer_start(void); // A hook function used to correctly implement pc-emul */
 
 // Care when using this function directly, too small a size or too large might not work (frame does not get sent)
 void eth_send_frame(char *data_to_send, unsigned int size);
