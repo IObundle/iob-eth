@@ -108,3 +108,5 @@ void eth_print_status(void);
       eth_set_soft_rst(1);\
       eth_set_soft_rst(0);\
     })
+
+void print_buffer(char *buffer, int size);

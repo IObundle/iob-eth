@@ -435,3 +435,19 @@ void eth_print_status(void) {
   printf("CRC = %x\n", eth_get_crc());
 }
 
+void print_buffer(char *buffer, int size){
+    if(buffer == NULL || size < 1){
+        printf("DEBUG print buffer: invalid inputs\n");
+        return;
+    }
+    int i = 0, ch = 0;
+    char HexTable[16] = "0123456789abcdef";
+    printf("\tDEBUG: Buffer:");
+    for( i=0; i<size; i++){
+        ch = (int) ((unsigned char) buffer[i]);
+        printf("%c%c ", HexTable[ch >> 4], HexTable[ch & 0xF]);
+    }
+    printf("\n\n");
+    return;
+}
+
