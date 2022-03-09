@@ -24,13 +24,21 @@ static int connection_socket = -1;
 /* dest mac | src mac | eth type*/
 static char TX_FRAME[14];
 
-static char send_buffer[BUFFER_SIZE+14];
-static char rcv_buffer[BUFFER_SIZE+14];
+static char send_buffer[BUFFER_SIZE];
+static char rcv_buffer[BUFFER_SIZE];
+static char rcv_buffer_int[BUFFER_SIZE];
 static int rcv_size_reg = 0;
 static int tx_nbytes_reg = 0, rx_nbytes_reg = 0;
 static int dummy_reg = 0;
 
-/* pc emulation functions */
+/* pc emulation functions 
+ * this AF_UNIX socket is used to emulate the ethernet communication
+ * a Raw Ethernet Frame has the following fields:
+ * [ Preamble | SFD | DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implicit) ]
+ * but the pc-emul version only sends and receives:
+ * [ DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implicit) ]
+ * (the preamble and SDF bytes are not transfered)
+ */
 void pc_eth_send(int value){
     // use correct bit width
     int send_int = value & 0x01;
@@ -51,9 +59,6 @@ void pc_eth_rcvack(int value){
 }
 
 /* Reset AF_UNIX Socket
- * this AF_UNIX socket is used to emulate the ethernet communication
- * the payload in the messages send has the contents of a Raw Ethernet Frame:
- * [ Preamble | SFD | DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implitic) ]
  */
 void pc_eth_softrst(int value){
     // use correct bit width
@@ -93,9 +98,6 @@ void pc_eth_softrst(int value){
             printf("Error in listen");
             exit(EXIT_FAILURE);
         }
-
-        printf("Ethernet Core Initialized\n");
-
     }
     return;
 }

@@ -70,11 +70,11 @@ void eth_init(int base_address) {
   #ifdef ETH_DEBUG_PRINT
   printf("\nSender:");
   for(i=0; i < MAC_ADDR_LEN; i++){
-    printf("%02x ",TEMPLATE[MAC_SRC_PTR+i]);
+    printf("%02x ", (unsigned char) TEMPLATE[MAC_SRC_PTR+i]);
   }
   printf("\nDest: ");
   for(i=0; i < MAC_ADDR_LEN; i++){
-    printf("%02x ",TEMPLATE[MAC_DEST_PTR+i]);
+    printf("%02x ", (unsigned char) TEMPLATE[MAC_DEST_PTR+i]);
   }
   printf("\n");
   #endif
