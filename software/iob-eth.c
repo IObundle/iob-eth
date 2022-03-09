@@ -224,7 +224,7 @@ void eth_get_rx_buffer(char* buffer,int size){
     while(eth_get_status_field(ETH_DMA_READY) != 1);
   } else {
     for(int i = 0; i < size; i++){
-      buffer[i] = eth_get_data(i+16);
+      buffer[i] = eth_get_data(i+14);
     }
   }
 }

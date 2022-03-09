@@ -132,7 +132,7 @@ int pc_eth_dummy(int value, IO_Type type){
 void pc_eth_tx_nbytes(int value){
     // use correct bit width
     int tx_nbytes_int = value & ((1<<11)-1);
-    tx_nbytes_reg = tx_nbytes_int;
+    tx_nbytes_reg = tx_nbytes_int - MAC_DEST_PTR; // discount PREAMBLE and SDF bytes
     return;
 }
 
@@ -182,15 +182,17 @@ int pc_eth_data(int location, int value, IO_Type type){
 
 int pc_eth_status(){
     // Emulate rx_ready() behaviour to receive data
-    int ret = read(data_socket, rcv_buffer, BUFFER_SIZE);
+    int ret = -1;
+    ret = recv(data_socket, rcv_buffer_int, BUFFER_SIZE, MSG_DONTWAIT);
     int rx_status_mask = ~(0x0); /* all 1s */
     if ( ret < 1 ){
         /* nothing read -> rx_status == 0 */
         rx_status_mask = ~(1 << ETH_RX_READY);
     } else {
         /* received data -> rx_status == 0 */
-        /* save data received size */
         rx_nbytes_reg = ret;
+        /* save data received size */
+        memcpy(rcv_buffer, rcv_buffer_int, ret);
     }
 
     return (0x0001FFFF & rx_status_mask);
