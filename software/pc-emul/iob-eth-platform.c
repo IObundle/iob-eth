@@ -38,21 +38,7 @@ void pc_eth_send(int value){
     if(send_int){
         int wret = -1;
         // by default try to write data
-        wret = send(data_socket, send_buffer, tx_nbytes_reg+TEMPLATE_LEN, MSG_NOSIGNAL);
-        // if sending data fails, try to open new connection and send data again
-        while(wret == -1){
-            data_socket = accept(connection_socket, NULL, NULL);
-            if(data_socket == -1){
-                printf("Failed to accept connection\n");
-                exit(EXIT_FAILURE);
-            }
-            // set data_socket to non-blocking
-            if( fcntl(data_socket, F_SETFL, O_NONBLOCK) == -1 ){
-                printf("Failed to set non-blocking socket()\n");
-                exit(EXIT_FAILURE);
-            }
-            wret = send(data_socket, send_buffer, tx_nbytes_reg+TEMPLATE_LEN, MSG_NOSIGNAL);
-        }
+        wret = send(data_socket, (send_buffer+MAC_DEST_PTR), tx_nbytes_reg, MSG_NOSIGNAL);
     }
     return;
 }
@@ -166,14 +152,13 @@ void pc_eth_dma_run(int value){
 int pc_eth_data(int location, int value, IO_Type type){
     // use correct bit width
     int data_int = value & 0xFFFFFFFF;
-    int location_int = location & ((1<<10)-1);
+    /* int location_int = location & ((1<<12)-1); */
+    int location_int = location - ETH_DATA;
     if(type == io_set) {
         // write data to send buffer
-        // cpu writes integer to buffer at a time
-        *( ((int*)send_buffer) + location_int) = data_int;
+        send_buffer[location_int] = (char) data_int;
     } else if(type == io_get) {
         // read data from rcv buffer
-        // cpu reads integer from buffer
         return *( ((int*)rcv_buffer) + location_int);
     } else
         return -1;
