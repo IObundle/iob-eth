@@ -62,7 +62,7 @@ void eth_get_rx_buffer(char* buffer,int size);
 
 void eth_init_frame(void);
 
-/* void eth_on_transfer_start(void); // A hook function used to correctly implement pc-emul */
+void eth_on_transfer_start(void); // A hook function used to correctly implement pc-emul
 
 // Care when using this function directly, too small a size or too large might not work (frame does not get sent)
 void eth_send_frame(char *data_to_send, unsigned int size);
