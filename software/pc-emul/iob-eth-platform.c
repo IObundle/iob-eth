@@ -98,6 +98,15 @@ void pc_eth_softrst(int value){
             printf("Error in listen");
             exit(EXIT_FAILURE);
         }
+        printf("Waiting for client connection...\n");
+
+        /* accept connection */
+        data_socket = accept(connection_socket, NULL, NULL);
+        /* check for errors */
+        if(data_socket == -1){
+            printf("Failed to accept connection\n");
+            exit(EXIT_FAILURE);
+        }
     }
     return;
 }
@@ -261,19 +270,5 @@ int IO_GET(int base, int location){
             break;
     }
     return ret_val;
-}
-
-/* Temporary functions */
-void eth_on_transfer_start(void){
-    printf("Waiting for client connection...\n");
-
-    /* accept connection */
-    data_socket = accept(connection_socket, NULL, NULL);
-    /* check for errors */
-    if(data_socket == -1){
-        printf("Failed to accept connection\n");
-        exit(EXIT_FAILURE);
-    }
-    return;
 }
 
