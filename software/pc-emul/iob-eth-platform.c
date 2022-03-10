@@ -154,11 +154,11 @@ void pc_eth_dma_run(int value){
 int pc_eth_data(int location, int value, IO_Type type){
     // use correct bit width
     int data_int = value & 0xFFFFFFFF;
-    /* int location_int = location & ((1<<12)-1); */
-    int location_int = location - ETH_DATA;
+    int location_int = location & ((1<<9)-1);
     if(type == io_set) {
         // write data to send buffer
-        send_buffer[location_int] = (char) data_int;
+        int *send_buffer_int = (int*) (send_buffer);
+        send_buffer_int[location_int] = data_int;
     } else if(type == io_get) {
         // read data from rcv buffer
         return *( ((int*)rcv_buffer) + location_int);

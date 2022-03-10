@@ -185,9 +185,12 @@ void eth_set_tx_buffer(char* buffer,int size){
 
     while(eth_get_status_field(ETH_DMA_READY) != 1);
   } else {
+      int size_int = size/4 + (size%4 > 0); // ceil()
+      int *buffer_int = (int*) buffer;
       int i = 0;
-      for( i=0; i<size; i++){
-          IO_SET(base, ETH_DATA + TEMPLATE_LEN + i, (unsigned int) buffer[i]);
+      int eth_data_payload_addr = ETH_DATA + TEMPLATE_LEN/4;
+      for( i=0; i<size_int; i++){
+          IO_SET(base, eth_data_payload_addr + i, buffer_int[i]);
       }
   }
 }
@@ -220,7 +223,7 @@ void eth_get_rx_buffer(char* buffer,int size){
 void eth_init_frame(void) {
   int i;
   
-  for (i = 0; i < TEMPLATE_LEN; i++) {
+  for (i = 0; i < TEMPLATE_LEN/4; i++) {
     IO_SET(base, ETH_DATA + i, TEMPLATE[i]);
   }
 }
