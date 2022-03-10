@@ -3,7 +3,7 @@
 Size of data to be received is known at the start.
 """
 #Import libraries
-from ethBase import PrintBaseUsage,TimedPrintProgress,CreateSocket,FormPacket,SyncAckLast,RcvAndAck,ETH_NBYTES
+from .ethBase import PrintBaseUsage,TimedPrintProgress,CreateSocket,FormPacket,SyncAckLast,RcvAndAck,ETH_NBYTES
 from os.path import getsize
 import sys
 import struct

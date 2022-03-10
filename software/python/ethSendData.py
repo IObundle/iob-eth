@@ -4,7 +4,7 @@ Size of data transfered is known by destination address.
 """
 
 #Import libraries
-from ethBase import TimedPrintProgress,CreateSocket,SendAndAck,SyncAckFirst,ETH_NBYTES
+from .ethBase import TimedPrintProgress,CreateSocket,SendAndAck,SyncAckFirst,ETH_NBYTES
 from os.path import getsize
 import sys
 

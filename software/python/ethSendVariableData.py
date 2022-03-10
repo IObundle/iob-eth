@@ -3,8 +3,8 @@
 Size of data transfered is not known by destination address.
 """
 #Import libraries
-from ethBase import CreateSocket,SendAndAck,SyncAckFirst
-from ethSendData import SendFile
+from .ethBase import CreateSocket,SendAndAck,SyncAckFirst
+from .ethSendData import SendFile
 from os.path import getsize
 import sys
 import struct
