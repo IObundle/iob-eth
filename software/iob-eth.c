@@ -219,9 +219,10 @@ void eth_get_rx_buffer(char* buffer,int size){
 
 void eth_init_frame(void) {
   int i;
+  int *template_int = (int*) TEMPLATE;
   
   for (i = 0; i < TEMPLATE_LEN/4; i++) {
-    IO_SET(base, ETH_DATA + i, TEMPLATE[i]);
+    IO_SET(base, ETH_DATA + i, template_int[i]);
   }
 }
 
