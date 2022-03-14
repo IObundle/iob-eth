@@ -35,10 +35,7 @@ pc-test-eth:
 
 run-eth-scripts:
 	$(eval RMAC := $(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed 's/://g'))
-	source /opt/pyeth3/bin/activate; python ./software/python/ethRcvData.py $(RMAC_INTERFACE) $(RMAC) ./data.bin 2048; deactivate;
-	source /opt/pyeth3/bin/activate; python ./software/python/ethRcvVariableData.py $(RMAC_INTERFACE) $(RMAC) ./data2.bin; deactivate;
-	source /opt/pyeth3/bin/activate; python ./software/python/ethSendData.py $(RMAC_INTERFACE) $(RMAC) ./data.bin; deactivate;
-	source /opt/pyeth3/bin/activate; python ./software/python/ethSendVariableData.py $(RMAC_INTERFACE) $(RMAC) ./data2.bin; deactivate;
+	source /opt/pyeth3/bin/activate; python ./software/example_python.py $(RMAC_INTERFACE) $(RMAC) ./data.bin 2048 ./data2.bin; deactivate;
 	rm -f data.bin
 	rm -f data2.bin
 
