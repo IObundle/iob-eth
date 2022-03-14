@@ -24,6 +24,6 @@
 
 // RX and TX buffer and DMA parameters
 
-`define ETH_RX_BUFFER_START 2 // In order to align frame data, start saving from byte 2 onwards
+`define ETH_RX_BUFFER_START 0 // In order to align frame data, start saving from byte 2 onwards
 `define DMA_W_START 4 // First 4 DWORDS are the header, data starts from DWORD 4
 `define DMA_R_START 6 // First 6 DWORDS are the template. 

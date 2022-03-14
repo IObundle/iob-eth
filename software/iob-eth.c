@@ -194,6 +194,9 @@ void eth_set_tx_buffer(char* buffer,int size){
 
 void eth_get_rx_buffer(char* buffer,int size){
   int dma_transfer = 0,dma_address = 0;
+  /* skip MAC DST ADDR, MAC SRC ADDR and ETH TYPE from rx buffer */
+  /* the PREAMBLE and SDF are not stored into the rx buffer */
+  int rx_data_offset = PAYLOAD_PTR - MAC_DEST_PTR;
 
 #ifdef ETH_DMA
   if(((int) buffer) >= DDR_MEM){
@@ -212,7 +215,7 @@ void eth_get_rx_buffer(char* buffer,int size){
     while(eth_get_status_field(ETH_DMA_READY) != 1);
   } else {
     for(int i = 0; i < size; i++){
-      buffer[i] = eth_get_data(i+14);
+      buffer[i] = eth_get_data(i+rx_data_offset);
     }
   }
 }
