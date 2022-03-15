@@ -1,4 +1,3 @@
-TOP_MODULE=iob_eth
 
 # DEFAULT 
 ETH_DMA ?= 0
@@ -38,10 +37,6 @@ DOC ?=pb
 DOC_LIST ?=pb ug
 
 # VERSION
-VERSION ?=0.1
-VLINE ?="V$(VERSION)"
-ETHERNET_version.txt:
-ifeq ($(VERSION),)
-	$(error "variable VERSION is not set")
-endif
-	echo $(VLINE) > version.txt
+VERSION ?=V0.1
+iob_eth_version.txt:
+	echo $(VERSION) > version.txt
