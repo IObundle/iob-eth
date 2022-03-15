@@ -2,8 +2,8 @@
 
 `include "axi.vh"
 `include "iob_lib.vh"
-`include "ETHERNET.vh"
-`include "ETHERNETsw_reg_def.vh"
+`include "iob_eth.vh"
+`include "iob_eth_swreg_def.vh"
 
 /*
  Ethernet Core

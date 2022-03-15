@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-`include "ETHERNET.vh"
+`include "iob_eth.vh"
 
 module iob_eth_tx
   (
