@@ -5,7 +5,7 @@
 #include "stdint.h"
 #include "iob-lib.h"
 #include "iob-eth.h"
-#include "eth_mem_map.h"
+#include "iob_eth_swreg.h"
 #include "printf.h"
 
 /*******************************************/

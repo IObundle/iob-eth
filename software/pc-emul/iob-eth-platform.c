@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 
-#include "eth_mem_map.h"
+#include "iob_eth_swreg.h"
 
 #define BUFFER_SIZE 2048
 #define SOCKET_NAME "/tmp/tmpLocalSocket"

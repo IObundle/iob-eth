@@ -14,7 +14,7 @@ INCLUDE+=-I$(ETHERNET_SW_DIR)
 HDR+=$(ETHERNET_SW_DIR)/*.h
 
 #headers
-HDR+=eth_mem_map.h \
+HDR+=iob_eth_swreg.h \
 eth_frame_struct.h
 
 #sources
@@ -39,7 +39,7 @@ endif
 
 DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)
 
-eth_mem_map.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg_def.vh
+iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg_def.vh
 	@sed -n 's/`ETH_ADDR_W//p' $< | sed 's/`/#/g' | sed "s/'d//g" > ./$@
 
 eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/iob_eth.vh
