@@ -1,8 +1,12 @@
 
-   //ethernet clock
-   parameter eth_per = clk_per * 4;
-   reg eth_clk = 1;
-   always #(eth_per/2) eth_clk = ~eth_clk;
+   //ethernet clock: 4x slower than system clock
+   reg [1:0] eth_cnt = 2'b0;
+   reg eth_clk;
+
+   always @(posedge clk) begin
+       eth_cnt <= eth_cnt + 1'b1;
+       eth_clk <= eth_cnt[1];
+   end
 
    // Ethernet Interface signals
    assign RX_CLK = eth_clk;
