@@ -2,8 +2,8 @@
 
 `include "axi.vh"
 `include "iob_lib.vh"
-`include "ETHERNET.vh"
-`include "ETHERNETsw_reg_def.vh"
+`include "iob_eth.vh"
+`include "iob_eth_swreg_def.vh"
 
 /*
  Ethernet Core
@@ -387,7 +387,7 @@ module iob_eth #(
            PULSE_OUT``_sync <= 3'b000; \
         else \
            PULSE_OUT``_sync <= {PULSE_OUT``_sync[1],PULSE_OUT``_sync[0],PULSE_IN``_sync}; \
-     `COMB PULSE_OUT = PULSE_OUT``_sync[2] ^ PULSE_OUT``_sync[1];
+     `IOB_COMB PULSE_OUT = PULSE_OUT``_sync[2] ^ PULSE_OUT``_sync[1];
 
    // Clock cross send_en from clk to TX_CLK domain
    `PULSE_SYNC(send_en,clk,send,TX_CLK,rst)

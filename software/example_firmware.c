@@ -96,7 +96,6 @@ int main()
       buffer[bufferAddress + i] = (i % 4) + '0'; // Fill buffer with a repeating pattern of "0123"
     }
 
-    #if 1
     printf("Testing send file\n");
     eth_send_file(&buffer[bufferAddress],TEST_SIZE);
     
@@ -115,7 +114,6 @@ int main()
       printf("Error, the size of the file received is different\n");
       printf("Should be: %d but it is: %d\n",TEST_SIZE,res);
     }
-    #endif
   #endif
 
   uart_puts("\nFinish\n");

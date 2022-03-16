@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-`include "ETHERNET.vh"
+`include "iob_eth.vh"
 
 // Testbench module to exercise the iob_eth module
 // For now, simple acts as a loopback, sending any message received back after a few cycles
