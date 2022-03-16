@@ -6,6 +6,9 @@
 #
 ################################################################################
 
+#
+# FPGA Targets
+#
 ## Run Build, load and run FPGA Console in parallel with Ethernet scripts
 run-fpga-eth:
 	make -j2 run-fpga-eth-parallel
@@ -23,3 +26,22 @@ run-eth-int:
 # Run iob-eth core example targets
 run-eth:
 	make -C $(ETHERNET_DIR) run-eth ROOT_DIR=$(ROOT_DIR)/../../ REMOTE_ROOT_DIR=$(REMOTE_ROOT_DIR)
+
+#
+# PC Emul Targets
+#
+## Build and run PC-Emul in parallel with Ethernet scripts
+pc-emul-eth:
+	make -j2 pc-emul-parallel
+
+pc-emul-parallel: pc-emul-int pc-eth-int
+
+# Run pc-emul, write prints to pc-emul.log
+pc-emul-int:
+	make pc-emul > pc-emul.log
+
+# Run python scripts, write prints to pc-eth.log
+pc-eth-int:
+	make -C $(ETHERNET_DIR) pc-eth > pc-eth.log
+
+

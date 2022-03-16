@@ -33,9 +33,15 @@ pc-test-eth:
 	rm -f data.bin
 	rm -f data2.bin
 
+pc-eth:
+	$(eval RMAC := $(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed 's/://g'))
+	PC=1 python3 ./software/example_python.py $(RMAC_INTERFACE) $(RMAC) ./data.bin 2048 ./data2.bin
+	rm -f data.bin
+	rm -f data2.bin
+
 run-eth-scripts:
 	$(eval RMAC := $(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed 's/://g'))
-	source /opt/pyeth3/bin/activate; python ./software/example_python.py $(RMAC_INTERFACE) $(RMAC) ./data.bin 2048 ./data2.bin; deactivate;
+	source /opt/pyeth3/bin/activate; python3 ./software/example_python.py $(RMAC_INTERFACE) $(RMAC) ./data.bin 2048 ./data2.bin; deactivate;
 	rm -f data.bin
 	rm -f data2.bin
 
