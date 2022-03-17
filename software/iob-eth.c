@@ -8,6 +8,8 @@
 #include "iob_eth_swreg.h"
 #include "printf.h"
 
+#include "iob-eth-platform.h"
+
 /*******************************************/
 /********** EMBEDDED DRIVERS ***************/
 /*******************************************/

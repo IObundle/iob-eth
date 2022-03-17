@@ -1,3 +1,5 @@
+#ifdef PC
+
 #include "iob-eth.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +41,7 @@ static int dummy_reg = 0;
  * [ DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implicit) ]
  * (the preamble and SDF bytes are not transfered)
  */
-void pc_eth_send(int value){
+static void pc_eth_send(int value){
     // use correct bit width
     int send_int = value & 0x01;
     // write data to socket
@@ -51,7 +53,7 @@ void pc_eth_send(int value){
     return;
 }
 
-void pc_eth_rcvack(int value){
+static void pc_eth_rcvack(int value){
     // use correct bit width
     int rcvack_int = value & 0x01;
     // no action needed for ack in pc emul
@@ -60,7 +62,7 @@ void pc_eth_rcvack(int value){
 
 /* Reset AF_UNIX Socket
  */
-void pc_eth_softrst(int value){
+static void pc_eth_softrst(int value){
     // use correct bit width
     int softrst_int = value & 0x01;
     if(softrst_int) {
@@ -113,7 +115,7 @@ void pc_eth_softrst(int value){
 
 /* dummy is a read / write register to validate correct
  * access to SWREGs of the ethernet core */
-int pc_eth_dummy(int value, IO_Type type){
+static int pc_eth_dummy(int value, IO_Type type){
     // use correct bit width
     int dummy_int = value & 0xFFFFFFFF;
     if(type == io_set)
@@ -126,7 +128,7 @@ int pc_eth_dummy(int value, IO_Type type){
 }
 
 /* set TX_NBYTES */
-void pc_eth_tx_nbytes(int value){
+static void pc_eth_tx_nbytes(int value){
     // use correct bit width
     int tx_nbytes_int = value & ((1<<11)-1);
     tx_nbytes_reg = tx_nbytes_int - MAC_DEST_PTR; // discount PREAMBLE and SDF bytes
@@ -134,7 +136,7 @@ void pc_eth_tx_nbytes(int value){
 }
 
 /* set RX_NBYTES */
-void pc_eth_rx_nbytes(int value){
+static void pc_eth_rx_nbytes(int value){
     // use correct bit width
     int rx_nbytes_int = value & ((1<<11)-1);
     rx_nbytes_reg = rx_nbytes_int;
@@ -142,17 +144,17 @@ void pc_eth_rx_nbytes(int value){
 }
 
 /* TODO: set dma address */
-void pc_eth_dma_address(int value){
+static void pc_eth_dma_address(int value){
     return;
 }
 
 /* TODO: set dma len */
-void pc_eth_dma_len(int value){
+static void pc_eth_dma_len(int value){
     return;
 }
 
 /* TODO: set dma run */
-void pc_eth_dma_run(int value){
+static void pc_eth_dma_run(int value){
     return;
 }
 
@@ -160,7 +162,7 @@ void pc_eth_dma_run(int value){
  * or
  * read data from received frame
  */
-int pc_eth_data(int location, int value, IO_Type type){
+static int pc_eth_data(int location, int value, IO_Type type){
     // use correct bit width
     int data_int = value & 0xFFFFFFFF;
     int location_int = location & ((1<<9)-1);
@@ -176,7 +178,7 @@ int pc_eth_data(int location, int value, IO_Type type){
     return 0;
 }
 
-int pc_eth_status(){
+static int pc_eth_status(){
     // Emulate rx_ready() behaviour to receive data
     int ret = -1;
     ret = recv(data_socket, rcv_buffer_int, BUFFER_SIZE, MSG_DONTWAIT);
@@ -195,26 +197,26 @@ int pc_eth_status(){
 }
 
 /* always return correct CRC value */
-int pc_eth_crc(){
+static int pc_eth_crc(){
     return 0xc704dd7b;
 }
 
 /* return size of last received frame */
-int pc_eth_rcv_size(){
+static int pc_eth_rcv_size(){
     return rcv_size_reg;
 }
 
 /* Ethernet Core access simulation */
 
-void MEM_SET(int type, int location, int value){
+static void MEM_SET(int type, int location, int value){
     return;
 }
 
-int MEM_GET(int type, int location){
+static int MEM_GET(int type, int location){
     return 0;
 }
 
-void IO_SET(int base, int location, int value){
+static void IO_SET(int base, int location, int value){
     switch(location){
         case ETH_SEND:
             pc_eth_send(value);
@@ -250,7 +252,7 @@ void IO_SET(int base, int location, int value){
     return;
 }
 
-int IO_GET(int base, int location){
+static int IO_GET(int base, int location){
     int ret_val = 0;
     switch(location){
         case ETH_STATUS:
@@ -271,4 +273,5 @@ int IO_GET(int base, int location){
     }
     return ret_val;
 }
+#endif // ifdef PC
 
