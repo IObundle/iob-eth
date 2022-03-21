@@ -373,27 +373,8 @@ module iob_eth #(
    
    // SYNCHRONIZERS
 
-  // Clock crossing for a pulse (signal asserted for only one cycle) in a faster clock (clock A) to a slower or equal clock (clock B) 
-  `define PULSE_SYNC(PULSE_IN,CLK_A,PULSE_OUT,CLK_B,RST) \
-     reg PULSE_IN``_sync; \
-     always @(posedge CLK_A, posedge RST) \
-        if(RST) \
-           PULSE_IN``_sync <= 1'b0; \
-        else \
-           PULSE_IN``_sync <= PULSE_IN``_sync ^ PULSE_IN; \
-     reg [2:0] PULSE_OUT``_sync; \
-     always @(posedge CLK_B,posedge RST) \
-        if(RST) \
-           PULSE_OUT``_sync <= 3'b000; \
-        else \
-           PULSE_OUT``_sync <= {PULSE_OUT``_sync[1],PULSE_OUT``_sync[0],PULSE_IN``_sync}; \
-     `IOB_COMB PULSE_OUT = PULSE_OUT``_sync[2] ^ PULSE_OUT``_sync[1];
-
-   // Clock cross send_en from clk to TX_CLK domain
-   `PULSE_SYNC(send_en,clk,send,TX_CLK,rst)
-
-   // Clock cross rcv_ack_en from clk to RX_CLK domain
-   `PULSE_SYNC(rcv_ack_en,clk,rcv_ack,RX_CLK,rst)
+  `IOB_F2S_SYNC(TX_CLK, send_en, send_sync, send)
+  `IOB_F2S_SYNC(RX_CLK, rcv_ack_en, rck_ack_sync, rcv_ack)
 
    //
    // TX and RX BUFFERS
