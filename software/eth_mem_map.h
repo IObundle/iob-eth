@@ -7,7 +7,4 @@
 #define ETH_RX_NBYTES        7
 #define ETH_CRC              8
 #define ETH_RCV_SIZE         9
-#define ETH_DMA_ADDRESS      10
-#define ETH_DMA_LEN          11
-#define ETH_DMA_RUN          12
 #define ETH_DATA             2048

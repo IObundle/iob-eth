@@ -143,21 +143,6 @@ static void pc_eth_rx_nbytes(int value){
     return;
 }
 
-/* TODO: set dma address */
-static void pc_eth_dma_address(int value){
-    return;
-}
-
-/* TODO: set dma len */
-static void pc_eth_dma_len(int value){
-    return;
-}
-
-/* TODO: set dma run */
-static void pc_eth_dma_run(int value){
-    return;
-}
-
 /* write data to sending frame
  * or
  * read data from received frame
@@ -235,15 +220,6 @@ static void IO_SET(int base, int location, int value){
             break;
         case ETH_RX_NBYTES:
             pc_eth_rx_nbytes(value);
-            break;
-        case ETH_DMA_ADDRESS:
-            pc_eth_dma_address(value);
-            break;
-        case ETH_DMA_LEN:
-            pc_eth_dma_len(value);
-            break;
-        case ETH_DMA_RUN:
-            pc_eth_dma_run(value);
             break;
         default:
             pc_eth_data(location, value, io_set);
