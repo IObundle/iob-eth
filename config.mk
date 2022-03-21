@@ -1,13 +1,6 @@
 
 # DEFAULT 
-ETH_DMA ?= 0
 DDR_MEM ?= 0x80000000
-
-ifeq ($(ETH_DMA),1)
-	ifeq ($(DDR_MEM),)
-		$(error ETH_DMA set but DDR_MEM not set) 
-	endif
-endif
 
 #ETHERNET PATHS
 ETHERNET_HW_DIR:=$(ETHERNET_DIR)/hardware
@@ -23,7 +16,6 @@ SUBMODULES_DIR:=$(ETHERNET_DIR)/submodules
 # SUBMODULE PATHS
 LIB_DIR ?=$(ETHERNET_DIR)/submodules/LIB
 MEM_DIR ?=$(ETHERNET_DIR)/submodules/MEM
-DMA_DIR ?=$(ETHERNET_DIR)/submodules/DMA
 AXI_DIR ?=$(ETHERNET_DIR)/submodules/AXI
 
 SIMULATOR ?=icarus

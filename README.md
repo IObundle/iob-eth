@@ -108,8 +108,3 @@ raw socket capabilities.
   ```
   sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg on
   ```
-
-## DMA
-
-The Ethernet core provides an internal DMA for fast memory transfers between the internal buffers and DDR.
-Care must be taken when integrating the core with IOb-SoC: The memory address must reside in DDR space in order to take advantage of the DMA

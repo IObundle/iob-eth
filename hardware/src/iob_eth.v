@@ -10,9 +10,7 @@
 */
 
 module iob_eth #(
-                 parameter ETH_MAC_ADDR = `ETH_MAC_ADDR,
-                 parameter AXI_ADDR_W = 32, //NODOC addressable memory space (log2)
-                 parameter AXI_DATA_W = 32 //NODOC Memory data width = DMA_DATA_W
+                 parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
                  )
    (
     // CPU side
@@ -25,10 +23,6 @@ module iob_eth #(
     input [`ETH_ADDR_W-1:0] addr,
     output reg [31:0]       data_out,
     input [31:0]            data_in,
-
-`ifdef ETH_DMA
-    `include "axi_m_if.vh"
-`endif
 
     // PHY side
     output reg              ETH_PHY_RESETN,
@@ -58,20 +52,6 @@ module iob_eth #(
    reg [10:0]               rx_nbytes_reg;
    reg                      rx_nbytes_reg_en;
    
-   // dma 
-   reg [AXI_ADDR_W-1:0]     dma_address_reg;
-   reg                      dma_address_reg_en;
-   reg                      dma_read_from_not_write;
-
-   reg [10:0]               dma_len;
-   reg                      dma_len_en;
-
-   wire                     dma_out_en;
-   reg                      dma_out_run;
-   reg                      dma_out_run_en;
-
-   wire                     dma_ready;
-
    // control
    reg                      send_en;
    reg                      send;
@@ -117,139 +97,12 @@ module iob_eth #(
    wire [31:0]              tx_wr_data;
    wire                     do_tx_wr;
 
-`ifdef ETH_DMA
-
-   wire dma_tx_wr;
-   wire[8:0] dma_rx_address;
-   wire[8:0] dma_tx_address;
-   wire[31:0] dma_tx_data;
-   wire [8:0] burst_addr;
-   wire [31:0] rd_data_out,tx_data;
-   wire rd_data_valid,rd_data_ready,tx_data_valid;
-
-   mem_burst_out #(.ADDR_W(9)) burst_out
-      (
-      .start_addr(9'd`DMA_W_START),
-
-      .start(dma_out_run & dma_read_from_not_write),
-
-      .addr(burst_addr),
-      .data_in(rx_rd_data),
-
-      .data_out(rd_data_out),
-      .valid(rd_data_valid),
-      .ready(rd_data_ready),
-
-      .clk(clk),
-      .rst(rst)
-    );
-
-   mem_burst_in burst_in(
-      .start_addr(9'd`DMA_R_START),
-
-      .start(dma_out_run & !dma_read_from_not_write),
-
-      // Simple interface for data_in (ready = 1)
-      .data_in(tx_data),
-      .valid(tx_data_valid),
-      // Connect to memory unit
-      .data(dma_tx_data),
-      .addr(dma_tx_address),
-      .write(dma_tx_wr),
-
-      // System connection
-      .clk(clk),
-      .rst(rst)
-    );
-
-   dma_transfer #(
-      .AXI_ADDR_W(AXI_ADDR_W),
-      .LEN_W(11)
-    ) 
-    dma
-    (
-    // DMA configuration 
-    .addr(dma_address_reg),
-    .length(dma_len),
-    .readNotWrite(!dma_read_from_not_write),
-    .start(dma_out_run),
-
-    // DMA status
-    .ready(dma_ready),
-
-    // Simple interface for data_in
-    .data_in(rd_data_out),
-    .ready_in(rd_data_ready),
-
-    // Simple interface for data_out
-    .data_out(tx_data),
-    .valid_out(tx_data_valid),
-
-    // Address write
-    .m_axi_awid(m_axi_awid), 
-    .m_axi_awaddr(m_axi_awaddr), 
-    .m_axi_awlen(m_axi_awlen), 
-    .m_axi_awsize(m_axi_awsize), 
-    .m_axi_awburst(m_axi_awburst), 
-    .m_axi_awlock(m_axi_awlock), 
-    .m_axi_awcache(m_axi_awcache), 
-    .m_axi_awprot(m_axi_awprot),
-    .m_axi_awqos(m_axi_awqos), 
-    .m_axi_awvalid(m_axi_awvalid), 
-    .m_axi_awready(m_axi_awready),
-    //write
-    .m_axi_wdata(m_axi_wdata), 
-    .m_axi_wstrb(m_axi_wstrb), 
-    .m_axi_wlast(m_axi_wlast), 
-    .m_axi_wvalid(m_axi_wvalid), 
-    .m_axi_wready(m_axi_wready), 
-    //write response
-    .m_axi_bid(m_axi_bid),
-    .m_axi_bresp(m_axi_bresp), 
-    .m_axi_bvalid(m_axi_bvalid), 
-    .m_axi_bready(m_axi_bready),
-
-    //address read
-    .m_axi_arid(m_axi_arid),
-    .m_axi_araddr(m_axi_araddr),
-    .m_axi_arlen(m_axi_arlen),
-    .m_axi_arsize(m_axi_arsize),
-    .m_axi_arburst(m_axi_arburst),
-    .m_axi_arlock(m_axi_arlock),
-    .m_axi_arcache(m_axi_arcache),
-    .m_axi_arprot(m_axi_arprot),
-    .m_axi_arqos(m_axi_arqos),
-    .m_axi_arvalid(m_axi_arvalid),
-    .m_axi_arready(m_axi_arready),
-
-    //read
-    .m_axi_rid(m_axi_rid),
-    .m_axi_rdata(m_axi_rdata),
-    .m_axi_rresp(m_axi_rresp),
-    .m_axi_rlast(m_axi_rlast),
-    .m_axi_rvalid(m_axi_rvalid),
-    .m_axi_rready(m_axi_rready),
-
-    .clk(clk),
-    .rst(rst)
-    );
-
-   // When dma is not running, the software can still use the register interface to write and read the buffers
-   assign  rx_address = !dma_ready ? burst_addr : addr[8:0];
-   assign  tx_address = dma_tx_wr ? dma_tx_address : addr[8:0];
-   assign  tx_wr_data = dma_tx_wr ? dma_tx_data : data_in;
-   assign  do_tx_wr   = dma_tx_wr | tx_wr;
-
-`else // No DMA
-
-   assign dma_ready = 1'b0;
 
    assign  rx_address = addr[8:0];
    assign  tx_address = addr[8:0];
    assign  tx_wr_data = data_in;
    assign  do_tx_wr   = tx_wr;
 
-`endif // `ETH_DMA
 
    assign rst_int = rst_soft | rst;
    
@@ -298,9 +151,6 @@ module iob_eth #(
       tx_nbytes_reg_en = 0;
       rx_nbytes_reg_en = 0;
       tx_wr = 1'b0;
-      dma_address_reg_en = 1'b0;
-      dma_out_run_en = 1'b0;
-      dma_len_en = 1'b0;
 
       if(valid & (|wstrb))
         case (addr)
@@ -310,9 +160,6 @@ module iob_eth #(
           `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
           `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
           `ETH_SOFTRST: rst_soft_en  = 1'b1;
-          `ETH_DMA_ADDRESS: dma_address_reg_en = 1'b1;
-          `ETH_DMA_LEN: dma_len_en = 1'b1;
-          `ETH_DMA_RUN: dma_out_run_en = 1'b1;
           default: tx_wr = addr[11] & 1'b1; // ETH_DATA
         endcase
    end
@@ -321,7 +168,7 @@ module iob_eth #(
    // read
    always @* begin
       case (addr)
-        `ETH_STATUS: data_out = {15'b0, dma_ready, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
+        `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
         `ETH_DUMMY: data_out = dummy_reg;
         `ETH_CRC: data_out = crc_value_cpu[1];
         `ETH_RCV_SIZE: data_out = rx_wr_addr;
@@ -343,33 +190,16 @@ module iob_eth #(
        rst_soft <= 1'b0;
 
    always @ (posedge clk, posedge rst_int)
-     if(rst_int)
-        dma_out_run <= 0;
-     else if(dma_out_run_en)
-        dma_out_run <= 1;
-     else
-        dma_out_run <= 0;
-
-   always @ (posedge clk, posedge rst_int)
      if (rst_int) begin
         tx_nbytes_reg <= 11'd46;
         rx_nbytes_reg <= 11'd46;
         dummy_reg <= 0;
-        dma_address_reg <= 0;
-        dma_len <= 0;
-        dma_read_from_not_write <= 0;
      end else if (dummy_reg_en)
        dummy_reg <= data_in;
      else if (tx_nbytes_reg_en)
        tx_nbytes_reg <= data_in[10:0];
      else if (rx_nbytes_reg_en)
        rx_nbytes_reg <= data_in[10:0];
-     else if (dma_address_reg_en)
-       dma_address_reg <= data_in;
-     else if (dma_out_run_en)
-       dma_read_from_not_write <= data_in[0];
-     else if (dma_len_en)
-       dma_len <= data_in[10:0];
    
    // SYNCHRONIZERS
 

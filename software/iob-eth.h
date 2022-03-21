@@ -7,8 +7,6 @@
 #define ETH_PHY_CLK           3
 #define ETH_RX_WR_ADDR        4
 #define ETH_TX_CLK_PLL_LOCKED 15
-#define ETH_DMA_READY         16
-
 #define ETH_MAC_ADDR 0x01606e11020f
 
 #define ETH_INVALID_CRC -2
@@ -25,9 +23,6 @@
 #define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
 #define TEMPLATE_LEN     (PAYLOAD_PTR)
-
-#define ETH_DMA_WRITE_TO_MEM  0
-#define ETH_DMA_READ_FROM_MEM 1
 
 #define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
 

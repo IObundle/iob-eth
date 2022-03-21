@@ -8,7 +8,6 @@ endif
 
 # Testbench sources
 VSRC+=$(ETHERNET_TB_DIR)/iob_eth_tb.v
-# VSRC+=$(ETHERNET_TB_DIR)/dma_tb.v
 
 all: clean 
 	make run

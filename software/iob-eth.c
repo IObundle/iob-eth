@@ -24,9 +24,6 @@
 
 #define TEMPLATE_LEN     (PAYLOAD_PTR)
 
-#define ETH_DMA_WRITE_TO_MEM  0
-#define ETH_DMA_READ_FROM_MEM 1
-
 #define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
 
 #define ETH_DEBUG_PRINT 1
@@ -166,59 +163,23 @@ char eth_get_data(int i) {
 }
 
 void eth_set_tx_buffer(char* buffer,int size){
-  int dma_transfer = 0,dma_address = 0;
+  int size_int = size/4 + (size%4 > 0); // ceil()
+  int *buffer_int = (int*) buffer;
+  int i = 0;
+  int eth_data_payload_addr = ETH_DATA + TEMPLATE_LEN/4;
 
-#ifdef ETH_DMA
-  if(((int) buffer) >= DDR_MEM){
-    dma_transfer = 1;
-  }
-  dma_address = (((int) buffer) - DDR_MEM);
-#endif
-
-  if(dma_transfer) {
-    while(eth_get_status_field(ETH_DMA_READY) != 1);
-
-    IO_SET(base,ETH_DMA_ADDRESS, dma_address);     // Memory address
-    IO_SET(base,ETH_DMA_LEN,size);                 // Length
-    IO_SET(base,ETH_DMA_RUN,ETH_DMA_WRITE_TO_MEM); // DMA run
-
-    while(eth_get_status_field(ETH_DMA_READY) != 1);
-  } else {
-      int size_int = size/4 + (size%4 > 0); // ceil()
-      int *buffer_int = (int*) buffer;
-      int i = 0;
-      int eth_data_payload_addr = ETH_DATA + TEMPLATE_LEN/4;
-      for( i=0; i<size_int; i++){
-          IO_SET(base, eth_data_payload_addr + i, buffer_int[i]);
-      }
+  for( i=0; i<size_int; i++){
+      IO_SET(base, eth_data_payload_addr + i, buffer_int[i]);
   }
 }
 
 void eth_get_rx_buffer(char* buffer,int size){
-  int dma_transfer = 0,dma_address = 0;
   /* skip MAC DST ADDR, MAC SRC ADDR and ETH TYPE from rx buffer */
   /* the PREAMBLE and SDF are not stored into the rx buffer */
   int rx_data_offset = PAYLOAD_PTR - MAC_DEST_PTR;
 
-#ifdef ETH_DMA
-  if(((int) buffer) >= DDR_MEM){
-    dma_transfer = 1;
-  }
-  dma_address = (((int) buffer) - DDR_MEM);
-#endif
-
-  if(dma_transfer){
-    while(eth_get_status_field(ETH_DMA_READY) != 1);
-
-    IO_SET(base,ETH_DMA_ADDRESS,dma_address);       // Memory address
-    IO_SET(base,ETH_DMA_LEN,size);                  // Length
-    IO_SET(base,ETH_DMA_RUN,ETH_DMA_READ_FROM_MEM); // DMA run
-
-    while(eth_get_status_field(ETH_DMA_READY) != 1);
-  } else {
-    for(int i = 0; i < size; i++){
-      buffer[i] = eth_get_data(i+rx_data_offset);
-    }
+  for(int i = 0; i < size; i++){
+    buffer[i] = eth_get_data(i+rx_data_offset);
   }
 }
 

@@ -27,12 +27,6 @@ ifeq ($(SIM),1)
     DEFINE+=$(defmacro)SIM
 endif
 
-#define ETH_DMA
-ifeq ($(ETH_DMA),1)
-DEFINE+=$(defmacro)ETH_DMA 
-VSRC+=$(ETHERNET_DIR)/submodules/DMA/hardware/src/dma_transfer.v
-endif
-
 # Verilator simulation
 VERILATOR_FLAGS += --unroll-count 4096 # Allow for loop unrolling up to 4096
 endif

@@ -1,12 +1,5 @@
 include $(ETHERNET_DIR)/config.mk
 
-#submodules
-ifneq (INTERCON,$(filter INTERCON, $(SUBMODULES)))
-SUBMODULES+=INTERCON
-INTERCON_DIR ?=$(DMA_DIR)/submodules/INTERCON
-include $(INTERCON_DIR)/software/software.mk
-endif
-
 #include
 INCLUDE+=-I$(ETHERNET_SW_DIR)
 
@@ -25,11 +18,6 @@ ifneq ($(SIM),)
 DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x001200feaa00
 else
 DEFINE+=$(defmacro)ETH_RMAC_ADDR=0x$(RMAC_ADDR)
-endif
-
-#define ETH_DMA
-ifeq ($(ETH_DMA),1)
-DEFINE+=$(defmacro)ETH_DMA 
 endif
 
 #define ETH_DEBUG_PRINT

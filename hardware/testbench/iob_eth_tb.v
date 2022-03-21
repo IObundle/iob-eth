@@ -85,19 +85,8 @@ module iob_eth_tb;
 
       .RX_CLK        (RX_CLK),
       .RX_DATA    (RX_DATA),
-      .RX_DV         (RX_DV),
+      .RX_DV         (RX_DV)
 
-      .m_axi_awready(1'b0),
-      .m_axi_wready(1'b0),
-      .m_axi_bid(1'b0),
-      .m_axi_bresp(2'b0),
-      .m_axi_bvalid(1'b0),
-      .m_axi_arready(1'b0),
-      .m_axi_rid(1'b0),
-      .m_axi_rdata(32'h0),
-      .m_axi_rresp(2'b0),
-      .m_axi_rlast(1'b0),
-      .m_axi_rvalid(1'b0)
       );
 
    initial begin
