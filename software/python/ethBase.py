@@ -85,9 +85,19 @@ def SendAndAck(socket,payload):
     """
     packet = FormPacket(payload)
 
-    bytes_sent = socket.send(packet)
+    prev_timeout = socket.gettimeout()
+    socket.settimeout(TIMEOUT)
 
-    rcv = socket.recv(4096)
+    while True:
+        bytes_sent = socket.send(packet)
+
+        try:
+            rcv = socket.recv(4096)
+            break
+        except timeout:
+            pass
+
+    socket.settimeout(prev_timeout)
 
     errors = 0
     for sent_byte, rcv_byte in zip(payload, rcv[len(ETH_HEADER):]):
