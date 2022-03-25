@@ -10,10 +10,6 @@
 
 #include "iob-eth-platform.h"
 
-/*******************************************/
-/********** EMBEDDED DRIVERS ***************/
-/*******************************************/
-
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
 #define MAC_DEST_PTR     (SDF_PTR + 1)
@@ -33,6 +29,55 @@ static int base;
 
 // Frame template
 static char TEMPLATE[TEMPLATE_LEN];
+
+/*******************************************/
+/********** AUXILIAR FUNCTIONS *************/
+/*******************************************/
+
+/* read integer value
+ * return number of bytes read */
+static int get_int(char *ptr, unsigned int *i_val) {
+    *i_val = (unsigned char) ptr[3];
+    *i_val <<= 8;
+    *i_val += (unsigned char) ptr[2];
+    *i_val <<= 8;
+    *i_val += (unsigned char) ptr[1];
+    *i_val <<= 8;
+    *i_val += (unsigned char) ptr[0];
+    return sizeof(int);
+}
+
+/* write integer value to ptr position */
+static void set_int(char *ptr, unsigned int i_val) {
+    ptr[0] = i_val & 0xFF;
+    i_val >>= 8;
+    ptr[1] = i_val & 0xFF;
+    i_val >>= 8;
+    ptr[2] = i_val & 0xFF;
+    i_val >>= 8;
+    ptr[3] = i_val & 0xFF;
+    return;
+}
+
+static void print_buffer(char *buffer, int size){
+    if(buffer == NULL || size < 1){
+        printf("DEBUG print buffer: invalid inputs\n");
+        return;
+    }
+    int i = 0, ch = 0;
+    char HexTable[16] = "0123456789abcdef";
+    printf("\tDEBUG: Buffer:");
+    for( i=0; i<size; i++){
+        ch = (int) ((unsigned char) buffer[i]);
+        printf("%c%c ", HexTable[ch >> 4], HexTable[ch & 0xF]);
+    }
+    printf("\n\n");
+    return;
+}
+
+/*******************************************/
+/*********** ETHERNET DRIVERS **************/
+/*******************************************/
 
 void eth_init(int base_address) {
   int i,ret;
@@ -163,13 +208,13 @@ char eth_get_data(int i) {
 }
 
 void eth_set_tx_buffer(char* buffer,int size){
-  int size_int = size/4 + (size%4 > 0); // ceil()
-  int *buffer_int = (int*) buffer;
-  int i = 0;
+  int i = 0, j = 0;
+  int i_val = 0;
   int eth_data_payload_addr = ETH_DATA + TEMPLATE_LEN/4;
 
-  for( i=0; i<size_int; i++){
-      IO_SET(base, eth_data_payload_addr + i, buffer_int[i]);
+  for( i=0, j=0; i<size; j++){
+      i += get_int(buffer + i, &i_val);
+      IO_SET(base, eth_data_payload_addr + j, i_val);
   }
 }
 
@@ -184,11 +229,12 @@ void eth_get_rx_buffer(char* buffer,int size){
 }
 
 void eth_init_frame(void) {
-  int i;
-  int *template_int = (int*) TEMPLATE;
+  int i = 0, j = 0;
+  int i_val = 0;
   
-  for (i = 0; i < TEMPLATE_LEN/4; i++) {
-    IO_SET(base, ETH_DATA + i, template_int[i]);
+  for (i = 0, j = 0; i < TEMPLATE_LEN; j++) {
+    i += get_int(TEMPLATE + i, &i_val);
+    IO_SET(base, ETH_DATA + j, i_val);
   }
 }
 
@@ -237,10 +283,6 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 }
 
 
-
-/*******************************************/
-/*********** COMMON DRIVERS ****************/
-/*******************************************/
 
 #define MAX(A,B) ((A) > (B) ? (A) : (B)) 
 #define RCV_TIMEOUT 500000
@@ -354,7 +396,7 @@ unsigned int eth_rcv_variable_file(char *data) {
 
   // Send data back as ack
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
-  size = *((int*) buffer);
+  get_int(buffer, &size);
 
   return eth_rcv_file_impl(data,size);
 }
@@ -364,7 +406,7 @@ unsigned int eth_send_variable_file(char *data, int size) {
   SyncAckFirst();
 
   // Send size
-  *((int*) buffer) = size;
+  set_int(buffer, size);
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
 
   // Wait for ack
@@ -381,21 +423,5 @@ void eth_print_status(void) {
   printf("phy_clk_detected = %x\n", eth_phy_clk());
   printf("rx_wr_addr = %x\n", eth_rx_wr_addr());
   printf("CRC = %x\n", eth_get_crc());
-}
-
-void print_buffer(char *buffer, int size){
-    if(buffer == NULL || size < 1){
-        printf("DEBUG print buffer: invalid inputs\n");
-        return;
-    }
-    int i = 0, ch = 0;
-    char HexTable[16] = "0123456789abcdef";
-    printf("\tDEBUG: Buffer:");
-    for( i=0; i<size; i++){
-        ch = (int) ((unsigned char) buffer[i]);
-        printf("%c%c ", HexTable[ch >> 4], HexTable[ch & 0xF]);
-    }
-    printf("\n\n");
-    return;
 }
 
