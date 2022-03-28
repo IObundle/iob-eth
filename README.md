@@ -84,7 +84,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
 * * *
 ## Common Issues
 ### Obtaining `RMAC_INTERFACE` value:
-- on the machine that connects to the FPGA Board via ethernet run: `ifconfig`
+- on the machine that connects to the FPGA Board via ethernet run: `ip a`
 - this command will show multiple interfaces (at least 3):
   - lookback interface (with inet 127.0.0.1)
   - interface with internet connection: (enAAAA:)
