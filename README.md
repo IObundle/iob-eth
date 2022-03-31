@@ -13,12 +13,6 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```
     RMAC_INTERFACE=<RMAC_INTERFACE>
     ``` 
-    2. [Optional] For remote execution add `ETH_SERVER` and `ETH_USER` 
-    environment variables to `~/.bashrc`:
-    ```
-    ETH_SERVER=<machine.connected.to.server>
-    ETH_USER=<user_in_machine>
-    ```
 2. Add iob-eth as a submodule/peripheral:
     1. Add the submodule to the repository:
     ```
@@ -69,11 +63,13 @@ The main steps to integrate iob-eth core into an iob-soc system:
     1. Check `ETHERNET/software/example_firmware.c` for an example program with
     ethernet communication.
 6. Add target to run FPGA firmware and python scripts in parallel
-    1. Include iob-eth targets in system top level `Makefile`:
+    1. Override the console targets by copying the
+       `ETHERNET/software/console/makefile` file:
     ```
-    # Ethernet targets
-    include $(ETHERNET_DIR)/top_targets.mk
+    cp submodules/ETHERNET/software/console/makefile software/console/
     ```
+    This runs the console and python script in parallel during fpga execution.
+    2. TODO: add instructions for pc-emul
 7. Run in FPGA
     1. Target to run FPGA Console and Ethernet scripts:
     ```
