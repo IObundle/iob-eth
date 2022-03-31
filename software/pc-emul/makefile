@@ -1,8 +1,8 @@
 #
-# console/makefile
+# pc-emul/makefile
 #
-# This makefile overrides some console/Makefile targets
-# copy this file to $(CONSOLE_DIR)
+# This makefile overrides some pc-emul/Makefile targets
+# copy this file to $(PC_DIR)
 #
 # Based on the GNU Make manual example:
 # https://www.gnu.org/software/make/manual/html_node/Overriding-Makefiles.html
@@ -11,13 +11,13 @@
 # https://www.gnu.org/software/make/manual/html_node/Makefile-Names.html
 #
 
-ROOT_DIR=../..
-include $(ROOT_DIR)/config.mk
+ROOT_DIR:=../..
+include ../software.mk
 
 #
 # Override original targets
 #
-run: 
+all: build 
 	make -j2 run-parallel
 
 clean:
@@ -33,7 +33,7 @@ run-int:
 	@$(MAKE) -f Makefile run > soc.log
 
 run-eth-int:
-	@$(MAKE) -C $(ETHERNET_DIR) run-eth-scripts > ethernet.log
+	@$(MAKE) -C $(ETHERNET_DIR) pc-eth > ethernet.log
 
 #
 # Run target from original makefile
