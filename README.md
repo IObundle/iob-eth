@@ -36,7 +36,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     # On machine connected to FPGA Board
     ethtool -P $RMAC_INTERFACE | sed s/://g
     # From remote machine
-    ssh $ETH_USER@$ETH_SERVER 'ethtool -P $RMAC_INTERFACE | sed s/://g '
+    ssh user@<remove_server> 'ethtool -P $RMAC_INTERFACE | sed s/://g '
     ```
     5. Include iob-eth makefile segments in `hardware/hardware.mk` file:
     ```
@@ -48,7 +48,28 @@ The main steps to integrate iob-eth core into an iob-soc system:
     # ethernet
     include $(ETHERNET_DIR)/software/embedded/embedded.mk
     ```
-3. Update FPGA Board files:
+3. Define `SIM` for simulation:
+    1. Add `SIM` variable in `hardware/simulation/simulation.mk` before
+       including `hardware/hardware.mk`:
+    ```Make
+    SIM=1
+    DEFINE+=$(defmacro)SIM=$(SIM)
+    ```
+    2. Add `SIM` to firmware in case of simulation in
+       `software/firmware/Makefile`:
+    ```Make
+    ifeq ($(SIM),1)
+    DEFINE+=$(defmacro)SIM=$(SIM)
+    endif
+    ```
+    3. Set `SIM` variable in `hardware/hardware.mk` when making embedded sw:
+    ```Make
+    # Original make call
+        make -C $(FIRM_DIR) firmware.elf FREQ=$(FREQ) BAUD=$(BAUD)
+    # Make call with SIM variable
+        make -C $(FIRM_DIR) firmware.elf FREQ=$(FREQ) BAUD=$(BAUD) SIM=$(SIM)
+    ```
+4. Update FPGA Board files:
     1. Check 
     `ETHERNET/hardware/fpga/vivado/AES-KU040-DG-B/top_system_eth_template.vh`
     for details on the ports and logic to add to the top level module.
@@ -56,13 +77,13 @@ The main steps to integrate iob-eth core into an iob-soc system:
     example of constraints required for the ethernet core.
     Note: these files are for the `AES-KU040-DB-G` board. For other devices you
     need to adapt the examples.
-4. Create python scripts to communicate with the FPGA Board.
+5. Create python scripts to communicate with the FPGA Board.
     1. Check `ETHERNET/software/python` for examples.
     2. Check `ETHERNET/Makefile` for usage targets.
-5. Update embedded firmware to use the iob-eth core
+6. Update embedded firmware to use the iob-eth core
     1. Check `ETHERNET/software/example_firmware.c` for an example program with
     ethernet communication.
-6. Add target to run FPGA firmware and python scripts in parallel
+7. Add target to run FPGA firmware and python scripts in parallel
     1. Override the console targets by copying the
        `ETHERNET/software/console/makefile` file:
     ```
@@ -75,7 +96,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     cp submodules/ETHERNET/software/pc-emul/makefile software/pc-emul/
     ```
     This runs the firmware and python script in parallel during pc emulation.
-7. Run in FPGA
+8. Run in FPGA
     1. Target to run FPGA Console and Ethernet scripts:
     ```
     make fpga-run
@@ -107,5 +128,5 @@ raw socket capabilities.
     - check the `speed`, `duplex` and `Auto-negotiation` fields
 - you can setup the interface with:
   ```
-  sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg on
+  sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg off
   ```
