@@ -128,5 +128,5 @@ raw socket capabilities.
     - check the `speed`, `duplex` and `Auto-negotiation` fields
 - you can setup the interface with:
   ```
-  sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg on
+  sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg off
   ```
