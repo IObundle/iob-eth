@@ -25,7 +25,14 @@ FPGA_FAMILY_LIST ?=CYCLONEV-GT XCKU
 DOC ?=pb
 DOC_LIST ?=pb ug
 
+#MAKE SW ACCESSIBLE REGISTER
+MKREGS:=$(shell find $(LIB_DIR) -name mkregs.py)
+
 # VERSION
 VERSION ?=V0.1
 iob_eth_version.txt:
 	echo $(VERSION) > version.txt
+
+#cpu accessible registers
+iob_eth_swreg_def.vh iob_eth_swreg_gen.vh: $(ETHERNET_INC_DIR)/iob_eth_swreg.vh
+	$(MKREGS) $< HW
