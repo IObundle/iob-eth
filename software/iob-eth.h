@@ -31,21 +31,9 @@
 // driver functions
 void eth_init(int base);
 
-int eth_get_status(void);
-
 int eth_get_status_field(char field);
 
-void eth_set_send(char value);
-
-void eth_set_rcvack(char value);
-
-void eth_set_soft_rst(char value);
-
 void eth_set_tx_payload_size(unsigned int size);
-
-int eth_get_crc(void);
-
-int eth_get_rcv_size(void);
 
 void eth_set_data(int i, char data);
 
@@ -93,12 +81,12 @@ void eth_print_status(void);
 
 #define eth_tx_clk_pll_locked() eth_get_status_field(ETH_TX_CLK_PLL_LOCKED)
 
-#define eth_send() eth_set_send(1)
+#define eth_send() ETH_SET_SEND(1)
 
-#define eth_ack() eth_set_rcvack(1)
+#define eth_ack() ETH_SET_RCVACK(1)
 
 #define eth_soft_rst() ({\
-      eth_set_soft_rst(1);\
-      eth_set_soft_rst(0);\
+      ETH_SET_SOFTRST(1);\
+      ETH_SET_SOFTRST(0);\
     })
 

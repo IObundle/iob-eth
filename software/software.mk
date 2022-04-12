@@ -5,10 +5,7 @@ INCLUDE+=-I$(ETHERNET_SW_DIR)
 
 #headers
 HDR+=$(ETHERNET_SW_DIR)/*.h
-
-#headers
-HDR+=iob_eth_swreg.h \
-eth_frame_struct.h
+HDR+=iob_eth_swreg.h eth_frame_struct.h
 
 #sources
 SRC+=$(ETHERNET_SW_DIR)/iob-eth.c
@@ -24,8 +21,6 @@ endif
 ifeq ($(ETH_DEBUG_PRINT),1)
 DEFINE+=$(defmacro)ETH_DEBUG_PRINT
 endif
-
-DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)
 
 iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg.vh
 	./$(LIB_DIR)/software/python/mkregs.py $< SW ETH

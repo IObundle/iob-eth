@@ -6,8 +6,9 @@ SW_MODULES+=ETHERNET
 #ethernet common parameters
 include $(ETHERNET_DIR)/software/software.mk
 
-#embedded headers
-HDR+=$(ETHERNET_SW_DIR)/embedded/iob-eth-platform.h
-INCLUDE+=$(incdir)$(ETHERNET_SW_DIR)/embedded
+# add embedded sources
+SRC+=iob_eth_swreg_emb.c
 
+iob_eth_swreg_emb.c: iob_eth_swreg.h
+	
 endif
