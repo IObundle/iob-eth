@@ -1,11 +1,7 @@
-#include "iob-eth.h"
-#include "printf.h"
-
-/* Embedded includes */
 #include "stdint.h"
+#include "printf.h"
 #include "iob-eth.h"
 #include "iob_eth_swreg.h"
-#include "printf.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
