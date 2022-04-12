@@ -18,8 +18,6 @@ module iob_eth
     (
     // CPU interface
     `include "iob_s_if.vh"
-    input                   clk,
-    input                   rst,
 
     //START_IO_TABLE eth_phy
     // PHY side
@@ -51,16 +49,17 @@ module iob_eth
     `IOB_WIRE(rst_int, 1)
 
     // ETH CLOCK DOMAIN
+    `IOB_VAR(phy_clk_detected, 1)
     `IOB_VAR(phy_dv_detected, 1)
     `IOB_WIRE(crc_value, `ETH_CRC_W)
     `IOB_WIRE(tx_ready_int, 1)
     `IOB_WIRE(rx_data_rcvd_int, 1)
 
     `IOB_WIRE(tx_rd_addr, 9)
-    `IOB_WIRE(tx_rd_data, 9)
+    `IOB_WIRE(tx_rd_data, 32)
 
-    `IOB_WIRE(rx_wr_addr, 9)
-    `IOB_WIRE(rx_wr_data, 32)
+    `IOB_WIRE(rx_wr_addr, 11)
+    `IOB_WIRE(rx_wr_data, 8)
     `IOB_WIRE(rx_wr, 1)
 
     // Ethernet Status
@@ -70,10 +69,10 @@ module iob_eth
     `IOB_WIRE(rx_data_rcvd_sync, 1)
     `IOB_WIRE(tx_ready_sync, 1)
 
-    `IOB_COMB ETH_STATUS = {16'b0, pll_locked_sync, ETH_RCV_SIZE, phy_clk_detected_sync, phy_dv_detected_sync, rx_data_rcvd_sync, tx_ready_sync};
+    assign ETH_STATUS = {16'b0, pll_locked_sync, ETH_RCV_SIZE, phy_clk_detected_sync, phy_dv_detected_sync, rx_data_rcvd_sync, tx_ready_sync};
 
     // Ethernet Dummy R - copy value from ETH_DUMMY_W
-    `IOB_COMB ETH_DUMMY_R = ETH_DUMMY_W;
+    assign ETH_DUMMY_R = ETH_DUMMY_W;
 
     // Ethernet CRC
     //TODO: check CDC for multibit words
@@ -133,7 +132,7 @@ module iob_eth
 
    iob_ram_t2p #(
                        .DATA_W(32),
-                       .ADDR_W((`iob_eth_swreg_ADDR_W-1)-2)
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
                        )
    tx_buffer
    (
@@ -168,7 +167,7 @@ module iob_eth
 
    iob_ram_t2p #(
                        .DATA_W(32),
-                       .ADDR_W((`iob_eth_swreg_ADDR_W-1)-2)
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
                        )
    rx_buffer
    (
