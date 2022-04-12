@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 
 `include "iob_eth.vh"
+`include "iob_eth_swreg_def.vh"
 
 // FRAME_SIZE (bytes) = PREAMBLE + SFD + HDR + DATA + CRC -> Ethernet Frame
 `define FRAME_SIZE (`PREAMBLE_LEN + 1 + `HDR_LEN + `ETH_NBYTES + 4)
@@ -25,7 +26,7 @@ module iob_eth_tb;
    reg         rst;
    reg         clk;
 
-   reg [`ETH_ADDR_W-1:0] addr;
+   reg [`iob_eth_swreg_ADDR_W-1:0] addr;
    reg          valid;
    reg [3:0]             wstrb;
    reg [31:0]            data_in;
@@ -239,7 +240,7 @@ module iob_eth_tb;
 
    // 1-cycle write
    task cpu_write;
-      input [`ETH_ADDR_W-1:0]  cpu_address;
+      input [`iob_eth_swreg_ADDR_W-1:0]  cpu_address;
       input [31:0]  cpu_data;
 
       #1 addr = cpu_address;
@@ -252,7 +253,7 @@ module iob_eth_tb;
 
    // 2-cycle read
    task cpu_read;
-      input [`ETH_ADDR_W-1:0]   cpu_address;
+      input [`iob_eth_swreg_ADDR_W-1:0]   cpu_address;
       output [31:0] read_reg;
 
       #1 addr = cpu_address;

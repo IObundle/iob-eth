@@ -27,8 +27,8 @@ endif
 
 DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)
 
-iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg_def.vh
-	@sed -n 's/`ETH_ADDR_W//p' $< | sed 's/`/#/g' | sed "s/'d//g" > ./$@
+iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg.vh
+	./$(LIB_DIR)/software/python/mkregs.py $< SW ETH
 
 eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/iob_eth.vh
 	@sed -n '/ ETH_PREAMBLE /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' > ./$@
