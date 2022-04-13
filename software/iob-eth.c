@@ -17,9 +17,6 @@
 
 #define ETH_DEBUG_PRINT 1
 
-// Base address
-static int base;
-
 // Frame template
 static char TEMPLATE[TEMPLATE_LEN];
 
@@ -77,7 +74,7 @@ void eth_init(int base_address) {
   uint64_t mac_addr;
 
   // set base address
-  base = base_address;
+  ETH_INIT_BASEADDR(base_address);
   
   // Preamble
   for(i=0; i < PREAMBLE_LEN; i++)

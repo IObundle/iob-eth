@@ -28,6 +28,11 @@ static int rcv_size_reg = 0;
 static uint16_t tx_nbytes_reg = 0;
 static uint32_t dummy_reg = 0;
 
+void ETH_INIT_BASEADDR(uint32_t addr) {
+    base = addr;
+    return;
+}
+
 /* pc emulation functions 
  * this AF_UNIX socket is used to emulate the ethernet communication
  * a Raw Ethernet Frame has the following fields:

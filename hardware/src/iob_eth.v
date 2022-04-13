@@ -81,14 +81,8 @@ module iob_eth
     //TODO: check CDC for multibit words
 
     // Ethernet Send
-    `IOB_VAR(send_en, 1)
-    // Self clearing register
-    `IOB_REG_RE(clk, (rst_int | send_en), 1'b0, ETH_SEND, send_en, ETH_SEND) 
 
     // Ethernet Rcv Ack
-    `IOB_VAR(rcv_ack_en, 1)
-    // Self clearing register
-    `IOB_REG_RE(clk, (rst_int | rcv_ack_en), 1'b0, ETH_RCVACK, rcv_ack_en, ETH_RCVACK) 
 
    //
    // REGISTERS
@@ -122,9 +116,9 @@ module iob_eth
 
    // clk to RX_CLK
    `IOB_VAR(send, 1)
-   `IOB_F2S_SYNC(TX_CLK, send_en, send_sync, send)
+   `IOB_F2S_SYNC(TX_CLK, ETH_SEND, send_sync, send)
    `IOB_VAR(rcv_ack, 1)
-   `IOB_F2S_SYNC(RX_CLK, rcv_ack_en, rck_ack_sync, rcv_ack)
+   `IOB_F2S_SYNC(RX_CLK, ETH_RCVACK, rck_ack_sync, rcv_ack)
 
    //
    // TX and RX BUFFERS
