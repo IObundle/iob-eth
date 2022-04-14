@@ -1,6 +1,5 @@
-#ifdef PC
+/* PC Emulation of ETHERNET peripheral */
 
-#include "iob-eth.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,15 +9,11 @@
 #include <stdint.h>
 #include <fcntl.h>
 
+#include "iob-eth.h"
 #include "iob_eth_swreg.h"
 
 #define BUFFER_SIZE 2048
 #define SOCKET_NAME "/tmp/tmpLocalSocket"
-
-typedef enum IO_Type_t {
-    io_get = 0,
-    io_set = 1
-} IO_Type;
 
 static int data_socket = -1;
 static int connection_socket = -1;
@@ -30,8 +25,13 @@ static char send_buffer[BUFFER_SIZE];
 static char rcv_buffer[BUFFER_SIZE];
 static char rcv_buffer_int[BUFFER_SIZE];
 static int rcv_size_reg = 0;
-static int tx_nbytes_reg = 0, rx_nbytes_reg = 0;
-static int dummy_reg = 0;
+static uint16_t tx_nbytes_reg = 0;
+static uint32_t dummy_reg = 0;
+
+void ETH_INIT_BASEADDR(uint32_t addr) {
+    base = addr;
+    return;
+}
 
 /* pc emulation functions 
  * this AF_UNIX socket is used to emulate the ethernet communication
@@ -41,11 +41,9 @@ static int dummy_reg = 0;
  * [ DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implicit) ]
  * (the preamble and SDF bytes are not transfered)
  */
-static void pc_eth_send(int value){
-    // use correct bit width
-    int send_int = value & 0x01;
+void ETH_SET_SEND(uint8_t value){
     // write data to socket
-    if(send_int){
+    if(value){
         int wret = -1;
         // by default try to write data
         wret = send(data_socket, (send_buffer+MAC_DEST_PTR), tx_nbytes_reg, MSG_NOSIGNAL);
@@ -53,19 +51,16 @@ static void pc_eth_send(int value){
     return;
 }
 
-static void pc_eth_rcvack(int value){
-    // use correct bit width
-    int rcvack_int = value & 0x01;
+void ETH_SET_RCVACK(uint8_t value){
     // no action needed for ack in pc emul
     return;
 }
 
 /* Reset AF_UNIX Socket
  */
-static void pc_eth_softrst(int value){
+void ETH_SET_SOFTRST(uint8_t value){
     // use correct bit width
-    int softrst_int = value & 0x01;
-    if(softrst_int) {
+    if(value) {
         struct sockaddr_un name;
         int ret = 0;
 
@@ -115,31 +110,18 @@ static void pc_eth_softrst(int value){
 
 /* dummy is a read / write register to validate correct
  * access to SWREGs of the ethernet core */
-static int pc_eth_dummy(int value, IO_Type type){
-    // use correct bit width
-    int dummy_int = value & 0xFFFFFFFF;
-    if(type == io_set)
-        dummy_reg = dummy_int;
-    else if(type == io_get)
-        return dummy_reg;
-    else
-        return -1;
-    return 0;
+void ETH_SET_DUMMY_W(uint32_t value) {
+    dummy_reg = value;
+}
+
+uint32_t ETH_GET_DUMMY_R() {
+    return dummy_reg;
 }
 
 /* set TX_NBYTES */
-static void pc_eth_tx_nbytes(int value){
+void ETH_SET_TX_NBYTES(uint16_t value) {
     // use correct bit width
-    int tx_nbytes_int = value & ((1<<11)-1);
-    tx_nbytes_reg = tx_nbytes_int - MAC_DEST_PTR; // discount PREAMBLE and SDF bytes
-    return;
-}
-
-/* set RX_NBYTES */
-static void pc_eth_rx_nbytes(int value){
-    // use correct bit width
-    int rx_nbytes_int = value & ((1<<11)-1);
-    rx_nbytes_reg = rx_nbytes_int;
+    tx_nbytes_reg = value - MAC_DEST_PTR; // discount PREAMBLE and SDF bytes
     return;
 }
 
@@ -147,23 +129,20 @@ static void pc_eth_rx_nbytes(int value){
  * or
  * read data from received frame
  */
-static int pc_eth_data(int location, int value, IO_Type type){
-    // use correct bit width
-    int data_int = value & 0xFFFFFFFF;
-    int location_int = location & ((1<<9)-1);
-    if(type == io_set) {
-        // write data to send buffer
-        int *send_buffer_int = (int*) (send_buffer);
-        send_buffer_int[location_int] = data_int;
-    } else if(type == io_get) {
-        // read data from rcv buffer
-        return *( ((int*)rcv_buffer) + location_int);
-    } else
-        return -1;
-    return 0;
+void ETH_SET_DATA_WR(uint16_t addr, uint32_t value) {
+    // write data to send buffer
+    int *send_buffer_int = (int*) (send_buffer);
+    send_buffer_int[addr] = value;
+    return;
 }
 
-static int pc_eth_status(){
+uint32_t ETH_GET_DATA_RD(uint16_t addr) {
+    // read data from rcv buffer
+    return *( ((int*)rcv_buffer) + addr);
+}
+
+
+uint32_t ETH_GET_STATUS() {
     // Emulate rx_ready() behaviour to receive data
     int ret = -1;
     ret = recv(data_socket, rcv_buffer_int, BUFFER_SIZE, MSG_DONTWAIT);
@@ -172,8 +151,6 @@ static int pc_eth_status(){
         /* nothing read -> rx_status == 0 */
         rx_status_mask = ~(1 << ETH_RX_READY);
     } else {
-        /* received data -> rx_status == 0 */
-        rx_nbytes_reg = ret;
         /* save data received size */
         memcpy(rcv_buffer, rcv_buffer_int, ret);
     }
@@ -182,72 +159,12 @@ static int pc_eth_status(){
 }
 
 /* always return correct CRC value */
-static int pc_eth_crc(){
+uint32_t ETH_GET_CRC() {
     return 0xc704dd7b;
 }
 
 /* return size of last received frame */
-static int pc_eth_rcv_size(){
+uint16_t ETH_GET_RCV_SIZE() {
     return rcv_size_reg;
 }
-
-/* Ethernet Core access simulation */
-
-static void MEM_SET(int type, int location, int value){
-    return;
-}
-
-static int MEM_GET(int type, int location){
-    return 0;
-}
-
-static void IO_SET(int base, int location, int value){
-    switch(location){
-        case ETH_SEND:
-            pc_eth_send(value);
-            break;
-        case ETH_RCVACK:
-            pc_eth_rcvack(value);
-            break;
-        case ETH_SOFTRST:
-            pc_eth_softrst(value);
-            break;
-        case ETH_DUMMY:
-            pc_eth_dummy(value, io_set);
-            break;
-        case ETH_TX_NBYTES:
-            pc_eth_tx_nbytes(value);
-            break;
-        case ETH_RX_NBYTES:
-            pc_eth_rx_nbytes(value);
-            break;
-        default:
-            pc_eth_data(location, value, io_set);
-            break;
-    }
-    return;
-}
-
-static int IO_GET(int base, int location){
-    int ret_val = 0;
-    switch(location){
-        case ETH_STATUS:
-            ret_val = pc_eth_status();
-            break;
-        case ETH_DUMMY:
-            ret_val = pc_eth_dummy(0, io_get);
-            break;
-        case ETH_CRC:
-            ret_val = pc_eth_crc();
-            break;
-        case ETH_RCV_SIZE:
-            ret_val = pc_eth_rcv_size();
-            break;
-        default:
-            ret_val = pc_eth_data(location, 0, io_get);
-            break;
-    }
-    return ret_val;
-}
-#endif // ifdef PC
 

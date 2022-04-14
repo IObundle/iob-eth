@@ -9,202 +9,116 @@
  Ethernet Core
 */
 
-module iob_eth #(
-                 parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
-                 )
-   (
-    // CPU side
-    input                   clk,
-    input                   rst,
+module iob_eth 
+    # (
+    parameter DATA_W = 32, //PARAM CPU data width
+    parameter ADDR_W = `iob_eth_swreg_ADDR_W, //MACRO CPU address section width
+    parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
+    )
+    (
+    // CPU interface
+    `include "iob_s_if.vh"
 
-    input                   valid,
-    output reg              ready,
-    input [3:0]             wstrb,
-    input [`ETH_ADDR_W-1:0] addr,
-    output reg [31:0]       data_out,
-    input [31:0]            data_in,
-
+    //START_IO_TABLE eth_phy
     // PHY side
-    output reg              ETH_PHY_RESETN,
+    `IOB_OUTPUT_VAR(ETH_PHY_RESETN, 1), //PHY reset
 
     // PLL
-    input                   PLL_LOCKED,
+    `IOB_INPUT(PLL_LOCKED, 1), //PLL locked
 
     // RX
-    input                   RX_CLK,
-    input [3:0]             RX_DATA,
-    input                   RX_DV,
+    `IOB_INPUT(RX_CLK, 1), //RX clock
+    `IOB_INPUT(RX_DATA, 4), //RX data nibble
+    `IOB_INPUT(RX_DV, 1), //RX DV signal
 
     // TX
-    input                   TX_CLK,
-    output                  TX_EN,
-    output [3:0]            TX_DATA
+    `IOB_INPUT(TX_CLK, 1), //TX clock
+    `IOB_OUTPUT(TX_EN, 1), //TX enable
+    `IOB_OUTPUT(TX_DATA, 4), //TX data nibble
+
+    `include "gen_if.vh"
     );
 
-   // registers
-   // dummy
-   reg [31:0]               dummy_reg;
-   reg                      dummy_reg_en;
-   // tx_nbytes
-   reg [10:0]               tx_nbytes_reg;
-   reg                      tx_nbytes_reg_en;
-   // rx_nbytes
-   reg [10:0]               rx_nbytes_reg;
-   reg                      rx_nbytes_reg_en;
-   
-   // control
-   reg                      send_en;
-   reg                      send;
+    //BLOCK Register File & Configuration control and status register file.
+    `include "iob_eth_swreg.vh"
+    `include "iob_eth_swreg_gen.vh"
 
-   reg                      rcv_ack_en;
-   reg                      rcv_ack;
+    //
+    // WIRES and REGISTERS
+    //
+    `IOB_WIRE(rst_int, 1)
 
-   // tx signals
-   reg                      tx_wr;
-   reg [1:0]                tx_ready;
-   reg [1:0]                tx_clk_pll_locked;
-   wire                     tx_ready_int;
+    // ETH CLOCK DOMAIN
+    `IOB_VAR(phy_clk_detected, 1)
+    `IOB_VAR(phy_dv_detected, 1)
+    `IOB_WIRE(crc_value, `ETH_CRC_W)
+    `IOB_WIRE(tx_ready_int, 1)
+    `IOB_WIRE(rx_data_rcvd_int, 1)
 
-   // rx signals
-   reg [1:0]                rx_data_rcvd;
-   wire                     rx_data_rcvd_int;
-   wire[31:0]               rx_rd_data;
-   reg [10:0]               rx_wr_addr_cpu[1:0];
-   reg [31:0]               crc_value_cpu[1:0];
-   
-   // phy reset timer
-   reg [19:0]               phy_rst_cnt;
-   reg                      phy_clk_detected;
-   reg                      phy_dv_detected;
-   reg [1:0]                phy_clk_detected_sync;
-   reg [1:0]                phy_dv_detected_sync;
+    `IOB_WIRE(tx_rd_addr, 9)
+    `IOB_WIRE(tx_rd_data, 32)
 
-   reg                      rst_soft_en;
-   reg                      rst_soft;
-   wire                     rst_int;
+    `IOB_WIRE(rx_wr_addr, 11)
+    `IOB_WIRE(rx_wr_data, 8)
+    `IOB_WIRE(rx_wr, 1)
 
-   // ETH CLOCK DOMAIN
-   wire [8:0]               tx_rd_addr;
-   wire [31:0]              tx_rd_data;
+    // Ethernet Status
+    `IOB_WIRE(pll_locked_sync, 1)
+    `IOB_WIRE(phy_clk_detected_sync, 1)
+    `IOB_WIRE(phy_dv_detected_sync, 1)
+    `IOB_WIRE(rx_data_rcvd_sync, 1)
+    `IOB_WIRE(tx_ready_sync, 1)
 
-   wire [10:0]              rx_wr_addr;
-   wire [7:0]               rx_wr_data;
-   wire                     rx_wr;
-   wire [31:0]              crc_value;
+    assign ETH_STATUS = {16'b0, pll_locked_sync, ETH_RCV_SIZE, phy_clk_detected_sync, phy_dv_detected_sync, rx_data_rcvd_sync, tx_ready_sync};
 
-   wire [8:0]               rx_address;
-   wire [8:0]               tx_address;
-   wire [31:0]              tx_wr_data;
-   wire                     do_tx_wr;
+    // Ethernet Dummy R - copy value from ETH_DUMMY_W
+    assign ETH_DUMMY_R = ETH_DUMMY_W;
 
+    // Ethernet CRC
+    //TODO: check CDC for multibit words
 
-   assign  rx_address = addr[8:0];
-   assign  tx_address = addr[8:0];
-   assign  tx_wr_data = data_in;
-   assign  do_tx_wr   = tx_wr;
+    // Ethernet RCV_SIZE
+    //TODO: check CDC for multibit words
 
+    // Ethernet Send
 
-   assign rst_int = rst_soft | rst;
-   
-   // SYNCHRONIZERS
-   always @ (posedge clk, posedge rst_int)
-     if (rst_int) begin
-        tx_ready <= 0;
-        tx_clk_pll_locked <= 0;
-        rx_data_rcvd <= 0;
-        rx_wr_addr_cpu[0] <= 0;
-        rx_wr_addr_cpu[1] <= 0;
-        crc_value_cpu[0] <= 0;
-        crc_value_cpu[1] <= 0;
-        phy_clk_detected_sync <= 0;
-        phy_dv_detected_sync <= 0;
-     end else begin
-        tx_clk_pll_locked <= {tx_clk_pll_locked[0], PLL_LOCKED};
-        tx_ready <= {tx_ready[0], tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED};
-        rx_data_rcvd <= {rx_data_rcvd[0], rx_data_rcvd_int & ETH_PHY_RESETN};
-        rx_wr_addr_cpu[0] <= rx_wr_addr;
-        rx_wr_addr_cpu[1] <= rx_wr_addr_cpu[0];
-        crc_value_cpu[0] <= crc_value;
-        crc_value_cpu[1] <= crc_value_cpu[0];
-        phy_clk_detected_sync <= {phy_clk_detected_sync[0], phy_clk_detected};
-        phy_dv_detected_sync <= {phy_dv_detected_sync[0], phy_dv_detected};
-     end
-
-   // cpu interface ready signal
-   always @(posedge clk, posedge rst)
-     if (rst)
-       ready <= 1'b0;
-     else
-       ready <= valid;
-
-   //
-   // ADDRESS DECODER
-   //
-
-   // write
-   always @* begin
-      // defaults
-      rst_soft_en = 0;
-      send_en = 0;
-      rcv_ack_en = 0;
-      dummy_reg_en = 0;
-      tx_nbytes_reg_en = 0;
-      rx_nbytes_reg_en = 0;
-      tx_wr = 1'b0;
-
-      if(valid & (|wstrb))
-        case (addr)
-          `ETH_SEND: send_en = 1'b1;
-          `ETH_RCVACK: rcv_ack_en = 1'b1;
-          `ETH_DUMMY: dummy_reg_en = 1'b1;
-          `ETH_TX_NBYTES: tx_nbytes_reg_en = 1'b1;
-          `ETH_RX_NBYTES: rx_nbytes_reg_en = 1'b1;
-          `ETH_SOFTRST: rst_soft_en  = 1'b1;
-          default: tx_wr = addr[11] & 1'b1; // ETH_DATA
-        endcase
-   end
-
-
-   // read
-   always @* begin
-      case (addr)
-        `ETH_STATUS: data_out = {16'b0, tx_clk_pll_locked[1], rx_wr_addr_cpu[1], phy_clk_detected_sync[1], phy_dv_detected_sync[1], rx_data_rcvd[1], tx_ready[1]};
-        `ETH_DUMMY: data_out = dummy_reg;
-        `ETH_CRC: data_out = crc_value_cpu[1];
-        `ETH_RCV_SIZE: data_out = rx_wr_addr;
-        default: data_out = rx_rd_data; // ETH_DATA
-      endcase
-   end
+    // Ethernet Rcv Ack
 
    //
    // REGISTERS
    //
 
    // soft reset self-clearing register
+   `IOB_VAR(rst_soft, 1)
    always @ (posedge clk, posedge rst)
      if (rst)
        rst_soft <= 1'b1;
-     else if (rst_soft_en && !rst_soft)
+     else if (ETH_SOFTRST && !rst_soft)
        rst_soft <= 1'b1;
      else
        rst_soft <= 1'b0;
 
-   always @ (posedge clk, posedge rst_int)
-     if (rst_int) begin
-        tx_nbytes_reg <= 11'd46;
-        rx_nbytes_reg <= 11'd46;
-        dummy_reg <= 0;
-     end else if (dummy_reg_en)
-       dummy_reg <= data_in;
-     else if (tx_nbytes_reg_en)
-       tx_nbytes_reg <= data_in[10:0];
-     else if (rx_nbytes_reg_en)
-       rx_nbytes_reg <= data_in[10:0];
-   
-   // SYNCHRONIZERS
+   assign rst_int = rst_soft | rst;
 
-  `IOB_F2S_SYNC(TX_CLK, send_en, send_sync, send)
-  `IOB_F2S_SYNC(RX_CLK, rcv_ack_en, rck_ack_sync, rcv_ack)
+   //
+   // SYNCHRONIZERS
+   //
+
+   // RX_CLK to clk
+
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, PLL_LOCKED, pll_locked_sync_reg0, pll_locked_sync_reg1, pll_locked_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 11, rx_wr_addr, rx_wr_addr_sync_reg0, rx_wr_addr_sync_reg1, ETH_RCV_SIZE)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_clk_detected, phy_clk_detected_sync_reg0, phy_clk_detected_sync_reg1, phy_clk_detected_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_dv_detected, phy_dv_detected_sync_reg0, phy_dv_detected_sync_reg1, phy_dv_detected_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, (rx_data_rcvd_int & ETH_PHY_RESETN), rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, (tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED), tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC)
+
+   // clk to RX_CLK
+   `IOB_VAR(send, 1)
+   `IOB_F2S_SYNC(TX_CLK, ETH_SEND, send_sync, send)
+   `IOB_VAR(rcv_ack, 1)
+   `IOB_F2S_SYNC(RX_CLK, ETH_RCVACK, rck_ack_sync, rcv_ack)
 
    //
    // TX and RX BUFFERS
@@ -212,15 +126,15 @@ module iob_eth #(
 
    iob_ram_t2p #(
                        .DATA_W(32),
-                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
                        )
    tx_buffer
    (
     // Front-End (written by host)
       .w_clk(clk),
-      .w_addr(tx_address),
-      .w_en(do_tx_wr),
-      .w_data(tx_wr_data),
+      .w_addr(ETH_DATA_WR_addr_int),
+      .w_en(|ETH_DATA_WR_wstrb_int),
+      .w_data(ETH_DATA_WR_wdata_int),
 
     // Back-End (read by core)
       .r_clk(TX_CLK),
@@ -247,7 +161,7 @@ module iob_eth #(
 
    iob_ram_t2p #(
                        .DATA_W(32),
-                       .ADDR_W((`ETH_ADDR_W-1)-2)
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
                        )
    rx_buffer
    (
@@ -259,9 +173,9 @@ module iob_eth #(
 
      // Back-End (read by host)
      .r_clk(clk),
-     .r_addr(rx_address),
+     .r_addr(ETH_DATA_RD_addr_int),
      .r_en(1'b1),
-     .r_data(rx_rd_data)
+     .r_data(ETH_DATA_RD_rdata_int)
    );
 
    //
@@ -286,7 +200,7 @@ module iob_eth #(
      tx (
          // cpu side
          .rst     (rst_int),
-         .nbytes  (tx_nbytes_reg),
+         .nbytes  (ETH_TX_NBYTES),
          .ready   (tx_ready_int),
 
          // mii side
@@ -326,6 +240,7 @@ module iob_eth #(
    //
    //  PHY RESET
    //
+   `IOB_VAR(phy_rst_cnt, 20)
    
    always @ (posedge clk, posedge rst_int)
      if(rst_int) begin

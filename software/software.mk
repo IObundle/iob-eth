@@ -5,10 +5,7 @@ INCLUDE+=-I$(ETHERNET_SW_DIR)
 
 #headers
 HDR+=$(ETHERNET_SW_DIR)/*.h
-
-#headers
-HDR+=iob_eth_swreg.h \
-eth_frame_struct.h
+HDR+=iob_eth_swreg.h eth_frame_struct.h
 
 #sources
 SRC+=$(ETHERNET_SW_DIR)/iob-eth.c
@@ -25,10 +22,8 @@ ifeq ($(ETH_DEBUG_PRINT),1)
 DEFINE+=$(defmacro)ETH_DEBUG_PRINT
 endif
 
-DEFINE+=$(defmacro)DDR_MEM=$(DDR_MEM)
-
-iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg_def.vh
-	@sed -n 's/`ETH_ADDR_W//p' $< | sed 's/`/#/g' | sed "s/'d//g" > ./$@
+iob_eth_swreg.h: $(ETHERNET_DIR)/hardware/include/iob_eth_swreg.vh
+	$(MKREGS) $< SW ETH
 
 eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/iob_eth.vh
 	@sed -n '/ ETH_PREAMBLE /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' > ./$@
