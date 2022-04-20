@@ -173,13 +173,8 @@ char eth_get_data(int i) {
 }
 
 void eth_set_tx_buffer(char* buffer,int size){
-  int i = 0, j = 0;
-  int i_val = 0;
-  int eth_data_payload_addr = TEMPLATE_LEN/4;
-
-  for( i=0, j=0; i<size; j++){
-      i += get_int(buffer + i, &i_val);
-      ETH_SET_DATA_WR(eth_data_payload_addr + j, i_val);
+  for(int i=0; i<size; i++){
+      ETH_SET_DATA_WR(TEMPLATE_LEN + i, buffer[i]);
   }
 }
 
@@ -194,12 +189,8 @@ void eth_get_rx_buffer(char* buffer,int size){
 }
 
 void eth_init_frame(void) {
-  int i = 0, j = 0;
-  int i_val = 0;
-  
-  for (i = 0, j = 0; i < TEMPLATE_LEN; j++) {
-    i += get_int(TEMPLATE + i, &i_val);
-    ETH_SET_DATA_WR(j, i_val);
+  for (int i = 0; i < TEMPLATE_LEN; i++) {
+    ETH_SET_DATA_WR(i, TEMPLATE[i]);
   }
 }
 

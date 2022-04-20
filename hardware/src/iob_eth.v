@@ -55,8 +55,8 @@ module iob_eth
     `IOB_WIRE(tx_ready_int, 1)
     `IOB_WIRE(rx_data_rcvd_int, 1)
 
-    `IOB_WIRE(tx_rd_addr, 9)
-    `IOB_WIRE(tx_rd_data, 32)
+    `IOB_WIRE(tx_rd_addr, 11)
+    `IOB_WIRE(tx_rd_data, 8)
 
     `IOB_WIRE(rx_wr_addr, 11)
     `IOB_WIRE(rx_wr_data, 8)
@@ -125,7 +125,7 @@ module iob_eth
    //
 
    iob_ram_t2p #(
-                       .DATA_W(32),
+                       .DATA_W(8),
                        .ADDR_W(`ETH_DATA_WR_ADDR_W)
                        )
    tx_buffer
@@ -182,20 +182,6 @@ module iob_eth
    // TRANSMITTER
    //
 
-   // Transform 32 bit data from tx_buffer to 8 bit data for tx input
-   reg [1:0] delayed_tx_sel;
-   wire [10:0] tx_out_addr;
-   
-   always @(posedge TX_CLK,posedge rst_int)
-     if(rst_int)
-       delayed_tx_sel <= 0;
-     else
-       delayed_tx_sel <= tx_out_addr[1:0];
-
-   assign tx_rd_addr = tx_out_addr[10:2];
-   wire [7:0] tx_in_data = delayed_tx_sel[1] ? (delayed_tx_sel[0] ? tx_rd_data[8*3 +: 8] : tx_rd_data[8*2 +: 8]):
-                                               (delayed_tx_sel[0] ? tx_rd_data[8*1 +: 8] : tx_rd_data[8*0 +: 8]);
-
    iob_eth_tx
      tx (
          // cpu side
@@ -205,8 +191,8 @@ module iob_eth
 
          // mii side
          .send    (send),
-         .addr    (tx_out_addr),
-         .data    (tx_in_data),
+         .addr    (tx_rd_addr),
+         .data    (tx_rd_data),
          .TX_CLK  (TX_CLK),
          .TX_EN   (TX_EN),
          .TX_DATA (TX_DATA)
