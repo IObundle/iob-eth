@@ -143,33 +143,17 @@ module iob_eth
       .r_data(tx_rd_data)
    );
 
-   // Transform 8 bit rx data to 32 bit data to be stored in rx_buffer
-   reg [8:0] stored_rx_addr;
-   reg [31:0] stored_rx_data; 
-   reg stored_rx_wr;
-
-   always @(posedge RX_CLK,posedge rst)
-   if(rst) begin
-     stored_rx_addr <= 0;
-     stored_rx_data <= 0;
-     stored_rx_wr <= 1'b0;
-   end else if(rx_wr) begin
-     stored_rx_addr <= rx_wr_addr[10:2];
-     stored_rx_data[8 * rx_wr_addr[1:0] +: 8] <= rx_wr_data;
-     stored_rx_wr <= 1'b1;
-   end
-
    iob_ram_t2p #(
-                       .DATA_W(32),
+                       .DATA_W(8),
                        .ADDR_W(`ETH_DATA_RD_ADDR_W)
                        )
    rx_buffer
    (
      // Front-End (written by core)
      .w_clk(RX_CLK),
-     .w_addr(stored_rx_addr),
-     .w_en(stored_rx_wr),
-     .w_data(stored_rx_data),
+     .w_addr(rx_wr_addr),
+     .w_en(rx_wr),
+     .w_data(rx_wr_data),
 
      // Back-End (read by host)
      .r_clk(clk),

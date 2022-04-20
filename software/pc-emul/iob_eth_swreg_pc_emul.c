@@ -135,9 +135,9 @@ void ETH_SET_DATA_WR(uint16_t addr, uint8_t value) {
     return;
 }
 
-uint32_t ETH_GET_DATA_RD(uint16_t addr) {
+uint8_t ETH_GET_DATA_RD(uint16_t addr) {
     // read data from rcv buffer
-    return *( ((int*)rcv_buffer) + addr);
+    return rcv_buffer[addr];
 }
 
 

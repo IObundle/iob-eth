@@ -9,4 +9,4 @@
 `IOB_SWREG_R(ETH_CRC, 32, 0) //CRC of last received frame.
 `IOB_SWREG_R(ETH_RCV_SIZE, 11, 0) //Number of bytes of last received frame.
 `IOB_SWMEM_W(ETH_DATA_WR, 8, 11) //TX Buffer.
-`IOB_SWMEM_R(ETH_DATA_RD, 32, 9) //RX Buffer.
+`IOB_SWMEM_R(ETH_DATA_RD, 8, 11) //RX Buffer.

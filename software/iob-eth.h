@@ -35,8 +35,6 @@ int eth_get_status_field(char field);
 
 void eth_set_tx_payload_size(unsigned int size);
 
-char eth_get_data(int i);
-
 void eth_set_tx_buffer(char* buffer,int size);
 
 void eth_get_rx_buffer(char* buffer,int size);

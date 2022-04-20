@@ -164,14 +164,6 @@ void eth_set_tx_payload_size(unsigned int size) {
     ETH_SET_TX_NBYTES(size + TEMPLATE_LEN);
 }
 
-char eth_get_data(int i) {
-  int data = ETH_GET_DATA_RD(i / 4);
-
-  data >>= (8 * (i % 4));
-
-  return ((char) data & 0xff);
-}
-
 void eth_set_tx_buffer(char* buffer,int size){
   for(int i=0; i<size; i++){
       ETH_SET_DATA_WR(TEMPLATE_LEN + i, buffer[i]);
@@ -184,7 +176,7 @@ void eth_get_rx_buffer(char* buffer,int size){
   int rx_data_offset = PAYLOAD_PTR - MAC_DEST_PTR;
 
   for(int i = 0; i < size; i++){
-    buffer[i] = eth_get_data(i+rx_data_offset);
+    buffer[i] = ETH_GET_DATA_RD(i+rx_data_offset);
   }
 }
 
