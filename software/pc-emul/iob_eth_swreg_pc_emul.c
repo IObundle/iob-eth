@@ -129,16 +129,15 @@ void ETH_SET_TX_NBYTES(uint16_t value) {
  * or
  * read data from received frame
  */
-void ETH_SET_DATA_WR(uint16_t addr, uint32_t value) {
+void ETH_SET_DATA_WR(uint16_t addr, uint8_t value) {
     // write data to send buffer
-    int *send_buffer_int = (int*) (send_buffer);
-    send_buffer_int[addr] = value;
+    send_buffer[addr] = value;
     return;
 }
 
-uint32_t ETH_GET_DATA_RD(uint16_t addr) {
+uint8_t ETH_GET_DATA_RD(uint16_t addr) {
     // read data from rcv buffer
-    return *( ((int*)rcv_buffer) + addr);
+    return rcv_buffer[addr];
 }
 
 
