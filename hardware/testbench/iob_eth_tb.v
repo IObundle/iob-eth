@@ -15,8 +15,6 @@
 `define ETH_TYPE_PTR     (`MAC_SRC_PTR + `MAC_ADDR_LEN)
 `define PAYLOAD_PTR      (`ETH_TYPE_PTR + 2)
 
-`define RX_BUFFER_OFFSET 2
-
 module iob_eth_tb;
 
    parameter clk_per = 10;
@@ -53,6 +51,7 @@ module iob_eth_tb;
 
    // data vector
    reg [7:0] data[`FRAME_SIZE-1:0];
+
    reg [3:0] dataNibbleView[`FRAME_NIBBLE_SIZE-1:0]; // View data as a array of nibbles
 
    assign RX_DATA = dataNibbleView[rx_index];
@@ -69,10 +68,11 @@ module iob_eth_tb;
 
       // CPU side
       .valid         (valid),
+      .address       (addr),
+      .wdata         (data_in),
       .wstrb         (wstrb),
-      .addr       (addr),
-      .data_in    (data_in),
-      .data_out      (data_out),
+      .rdata         (data_out),
+      .ready         (),
 
         //PLL
         .PLL_LOCKED(1'b1),
@@ -168,14 +168,13 @@ module iob_eth_tb;
       #100 @(posedge clk) rst = 0;
 
       // wait until tx ready
-      cpu_read(`ETH_STATUS, cpu_reg);
+      cpu_read(`ETH_STATUS_ADDR, cpu_reg);
       while(!cpu_reg[0])
-        cpu_read(`ETH_STATUS, cpu_reg);
+        cpu_read(`ETH_STATUS_ADDR, cpu_reg);
       $display("TX is ready");
       
       //setup number of bytes of transaction
-      cpu_write(`ETH_TX_NBYTES, `ETH_NBYTES);
-      cpu_write(`ETH_RX_NBYTES, `ETH_NBYTES);
+      cpu_write(`ETH_TX_NBYTES_ADDR, `ETH_NBYTES);
 
       // wait until rx ready
 
@@ -185,9 +184,9 @@ module iob_eth_tb;
 
       RX_DV = 0;
 
-      cpu_read (`ETH_STATUS, cpu_reg);
+      cpu_read (`ETH_STATUS_ADDR, cpu_reg);
       while(!cpu_reg[1])
-        cpu_read (`ETH_STATUS, cpu_reg);
+        cpu_read (`ETH_STATUS_ADDR, cpu_reg);
       $display("RX received data");
 
        // read and check received data
@@ -201,7 +200,7 @@ module iob_eth_tb;
       end
 
       // send receive command
-      cpu_write(`ETH_RCVACK, 1);
+      cpu_write(`ETH_RCVACK_ADDR, 1);
       
       #400;
 
@@ -266,18 +265,9 @@ module iob_eth_tb;
    task get_rx_byte;
       input [10:0] addr;
       output [7:0] val;
-      reg [31:0] temp;
 
-      addr = addr + `RX_BUFFER_OFFSET;
-
-      cpu_read(`ETH_DATA + (addr / 4),temp); 
+      cpu_read(`ETH_DATA_RD_ADDR + addr,val); 
    
-      case(addr % 4)
-         2'b00: val = temp[7:0];
-         2'b01: val = temp[15:8];
-         2'b10: val = temp[23:16];
-         2'b11: val = temp[31:24];
-      endcase
    endtask
 
 endmodule
