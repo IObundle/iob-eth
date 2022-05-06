@@ -62,12 +62,16 @@ The main steps to integrate iob-eth core into an iob-soc system:
     DEFINE+=$(defmacro)SIM=$(SIM)
     endif
     ```
-    3. Set `SIM` variable in `hardware/hardware.mk` when making embedded sw:
+    3. Set `SIM` variable in `Makefile` when making embedded sw for simulation:
     ```Make
     # Original make call
-        make -C $(FIRM_DIR) firmware.elf FREQ=$(FREQ) BAUD=$(BAUD)
+        sim-build:
+            make fw-build BAUD=5000000
+            make -C $(SIM_DIR) build
     # Make call with SIM variable
-        make -C $(FIRM_DIR) firmware.elf FREQ=$(FREQ) BAUD=$(BAUD) SIM=$(SIM)
+        sim-build:
+            make fw-build BAUD=5000000 SIM=1
+            make -C $(SIM_DIR) build
     ```
 4. Update FPGA Board files:
     1. Check 
@@ -78,30 +82,42 @@ The main steps to integrate iob-eth core into an iob-soc system:
     Note: these files are for the `AES-KU040-DB-G` board. For other devices you
     need to adapt the examples.
 5. Create python scripts to communicate with the FPGA Board.
-    1. Check `ETHERNET/software/python` for examples.
+    1. Check `ETHERNET/software/example_python.py` and
+       `ETHERNET/software/python/` for examples.
     2. Check `ETHERNET/Makefile` for usage targets.
 6. Update embedded firmware to use the iob-eth core
     1. Check `ETHERNET/software/example_firmware.c` for an example program with
     ethernet communication.
-7. Add target to run FPGA firmware and python scripts in parallel
-    1. Override the console targets by copying the
-       `ETHERNET/software/console/makefile` file:
+7. Use wrapper script to run console and python script in parallel
+    1. Copy the wrapper script to the console location:
     ```
-    cp submodules/ETHERNET/software/console/makefile software/console/
+    cp submodules/ETHERNET/software/console/eth_console software/console/
     ```
-    This runs the console and python script in parallel during fpga execution.
-    2. Override the pc-emul targets by copying the
-       `ETHERNET/software/pc-emul/makefile` file:
+    2. Replace the `CONSOLE_CMD` in `software/pc-emul/Makefile` to use
+       `eth_console` script:
+    ```Make
+    # Old variable
+    CONSOLE_CMD=$(ROOT_DIR)/software/console/console -L
+    # Using eth_console script
+    CONSOLE_CMD=$(ROOT_DIR)/software/console/eth_console -L
     ```
-    cp submodules/ETHERNET/software/pc-emul/makefile software/pc-emul/
+    3. Replace the `CONSOLE_CMD` in `hardware/fpga/fpga.mk` to use
+       `eth_console` script:
+    ```Make
+    # Old variable
+    CONSOLE_CMD=$(CONSOLE_DIR)/console -s /dev/usb-uart
+    # Using eth_console script
+    CONSOLE_CMD=$(CONSOLE_DIR)/eth_console -s /dev/usb-uart
     ```
-    This runs the firmware and python script in parallel during pc emulation.
-8. Run in FPGA
-    1. Target to run FPGA Console and Ethernet scripts:
+    4. For remote fpga executions, copy back the `ethernet.log`. Add this
+       command to the `fpga.mk` run target:
+    ```Make
+	scp $(BOARD_USER)@$(BOARD_SERVER):$(REMOTE_ROOT_DIR)/hardware/fpga/$(TOOL)/$(BOARD)/ethernet.log .
     ```
-    make fpga-run
-    ```
-    2. Check `soc.log` and `ethernet.log` for respective logs.
+8. Run in PC-Emul, Simulation or FPGA:
+    1. Use same targets as default `iob-soc`
+    2. Console output is printed to terminal, ethernet script output is printed
+       to `ethernet.log`.
 
 * * *
 ## Common Issues
