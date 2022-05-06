@@ -4,7 +4,7 @@ ETHERNET_DIR:=.
 include config.mk
 
 .PHONY: sim sim-test sim-clean \
-	pc-test-eth test-eth \
+	pc-eth run-eth-scripts\
 	fpga \
 	clean
 
@@ -24,14 +24,6 @@ sim-test:
 
 sim-clean:
 	make -C $(SIM_DIR) clean-all
-
-pc-test-eth:
-	PC=1 python ./software/python/ethRcvData.py enp1 112233445566 ./data.bin 2048;
-	PC=1 python ./software/python/ethRcvVariableData.py enp1 112233445566 ./data2.bin;
-	PC=1 python ./software/python/ethSendData.py enp1 112233445566 ./data.bin;
-	PC=1 python ./software/python/ethSendVariableData.py enp1 112233445566 ./data2.bin;
-	rm -f data.bin
-	rm -f data2.bin
 
 pc-eth:
 	$(eval RMAC := $(shell ethtool -P $(RMAC_INTERFACE) | awk '{print $$3}' | sed 's/://g'))
