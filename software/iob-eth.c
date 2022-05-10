@@ -74,7 +74,7 @@ void eth_init(int base_address) {
   uint64_t mac_addr;
 
   // set base address
-  ETH_INIT_BASEADDR(base_address);
+  IOB_ETH_INIT_BASEADDR(base_address);
   
   // Preamble
   for(i=0; i < PREAMBLE_LEN; i++)
@@ -118,34 +118,34 @@ void eth_init(int base_address) {
   TEMPLATE[ETH_TYPE_PTR+1] = ETH_TYPE_L;
 
   // reset core
-  ETH_SET_SOFTRST(1);
-  ETH_SET_SOFTRST(0);
+  IOB_ETH_SET_SOFTRST(1);
+  IOB_ETH_SET_SOFTRST(0);
 
   // wait for PHY to produce rx clock 
-  while (!((ETH_GET_STATUS() >> 3) & 1));
+  while (!((IOB_ETH_GET_STATUS() >> 3) & 1));
 
   #ifdef ETH_DEBUG_PRINT
   printf("Ethernet RX clock detected\n");
   #endif
 
   // wait for PLL to lock and produce tx clock 
-  while (!((ETH_GET_STATUS() >> 15) & 1));
+  while (!((IOB_ETH_GET_STATUS() >> 15) & 1));
 
   #ifdef ETH_DEBUG_PRINT
   printf("Ethernet TX PLL locked\n");
   #endif
 
   // set initial payload size to Ethernet minimum excluding FCS
-  ETH_SET_TX_NBYTES(46);
+  IOB_ETH_SET_TX_NBYTES(46);
 
   eth_init_frame();
 
   // check processor interface
   // write dummy register
-  ETH_SET_DUMMY_W(0xDEADBEEF);
+  IOB_ETH_SET_DUMMY_W(0xDEADBEEF);
 
   // read and check result
-  if (ETH_GET_DUMMY_R() != 0xDEADBEEF) {
+  if (IOB_ETH_GET_DUMMY_R() != 0xDEADBEEF) {
     printf("Ethernet Init failed\n");
   } else {
     printf("Ethernet Core Initialized\n");
@@ -154,19 +154,19 @@ void eth_init(int base_address) {
 
 int eth_get_status_field(char field) {
   if (field == ETH_RX_WR_ADDR) {
-    return ((ETH_GET_STATUS() >> field) & 0x7FFF);
+    return ((IOB_ETH_GET_STATUS() >> field) & 0x7FFF);
   } else {
-    return ((ETH_GET_STATUS() >> field) & 0x0001);
+    return ((IOB_ETH_GET_STATUS() >> field) & 0x0001);
   }
 }
 
 void eth_set_tx_payload_size(unsigned int size) {
-    ETH_SET_TX_NBYTES(size + TEMPLATE_LEN);
+    IOB_ETH_SET_TX_NBYTES(size + TEMPLATE_LEN);
 }
 
 void eth_set_tx_buffer(char* buffer,int size){
   for(int i=0; i<size; i++){
-      ETH_SET_DATA_WR(TEMPLATE_LEN + i, buffer[i]);
+      IOB_ETH_SET_DATA_WR(TEMPLATE_LEN + i, buffer[i]);
   }
 }
 
@@ -176,13 +176,13 @@ void eth_get_rx_buffer(char* buffer,int size){
   int rx_data_offset = PAYLOAD_PTR - MAC_DEST_PTR;
 
   for(int i = 0; i < size; i++){
-    buffer[i] = ETH_GET_DATA_RD(i+rx_data_offset);
+    buffer[i] = IOB_ETH_GET_DATA_RD(i+rx_data_offset);
   }
 }
 
 void eth_init_frame(void) {
   for (int i = 0; i < TEMPLATE_LEN; i++) {
-    ETH_SET_DATA_WR(i, TEMPLATE[i]);
+    IOB_ETH_SET_DATA_WR(i, TEMPLATE[i]);
   }
 }
 
@@ -216,7 +216,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
      }
   }
 
-  if(ETH_GET_CRC() != 0xc704dd7b) {
+  if(IOB_ETH_GET_CRC() != 0xc704dd7b) {
     eth_ack();
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
@@ -370,6 +370,6 @@ void eth_print_status(void) {
   printf("phy_dv_detected = %x\n", eth_phy_dv());
   printf("phy_clk_detected = %x\n", eth_phy_clk());
   printf("rx_wr_addr = %x\n", eth_rx_wr_addr());
-  printf("CRC = %x\n", ETH_GET_CRC());
+  printf("CRC = %x\n", IOB_ETH_GET_CRC());
 }
 

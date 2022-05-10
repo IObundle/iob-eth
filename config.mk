@@ -34,5 +34,5 @@ iob_eth_version.txt:
 	echo $(VERSION) > version.txt
 
 #cpu accessible registers
-iob_eth_swreg_def.vh iob_eth_swreg_gen.vh: $(ETHERNET_INC_DIR)/iob_eth_swreg.vh
-	$(MKREGS) $< HW
+iob_eth_swreg_def.vh iob_eth_swreg_gen.vh: $(ETHERNET_DIR)/mkregs.conf
+	$(MKREGS) iob_eth $(ETHERNET_DIR) HW
