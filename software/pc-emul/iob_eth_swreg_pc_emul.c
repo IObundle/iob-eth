@@ -28,7 +28,7 @@ static int rcv_size_reg = 0;
 static uint16_t tx_nbytes_reg = 0;
 static uint32_t dummy_reg = 0;
 
-void ETH_INIT_BASEADDR(uint32_t addr) {
+void IOB_ETH_INIT_BASEADDR(uint32_t addr) {
     base = addr;
     return;
 }
@@ -41,7 +41,7 @@ void ETH_INIT_BASEADDR(uint32_t addr) {
  * [ DST MAC | SRC MAC | ETH Type | Payload Data | CRC (implicit) ]
  * (the preamble and SDF bytes are not transfered)
  */
-void ETH_SET_SEND(uint8_t value){
+void IOB_ETH_SET_SEND(uint8_t value){
     // write data to socket
     if(value){
         int wret = -1;
@@ -51,14 +51,14 @@ void ETH_SET_SEND(uint8_t value){
     return;
 }
 
-void ETH_SET_RCVACK(uint8_t value){
+void IOB_ETH_SET_RCVACK(uint8_t value){
     // no action needed for ack in pc emul
     return;
 }
 
 /* Reset AF_UNIX Socket
  */
-void ETH_SET_SOFTRST(uint8_t value){
+void IOB_ETH_SET_SOFTRST(uint8_t value){
     // use correct bit width
     if(value) {
         struct sockaddr_un name;
@@ -110,16 +110,16 @@ void ETH_SET_SOFTRST(uint8_t value){
 
 /* dummy is a read / write register to validate correct
  * access to SWREGs of the ethernet core */
-void ETH_SET_DUMMY_W(uint32_t value) {
+void IOB_ETH_SET_DUMMY_W(uint32_t value) {
     dummy_reg = value;
 }
 
-uint32_t ETH_GET_DUMMY_R() {
+uint32_t IOB_ETH_GET_DUMMY_R() {
     return dummy_reg;
 }
 
 /* set TX_NBYTES */
-void ETH_SET_TX_NBYTES(uint16_t value) {
+void IOB_ETH_SET_TX_NBYTES(uint16_t value) {
     // use correct bit width
     tx_nbytes_reg = value - MAC_DEST_PTR; // discount PREAMBLE and SDF bytes
     return;
@@ -129,19 +129,19 @@ void ETH_SET_TX_NBYTES(uint16_t value) {
  * or
  * read data from received frame
  */
-void ETH_SET_DATA_WR(uint16_t addr, uint8_t value) {
+void IOB_ETH_SET_DATA_WR(uint16_t addr, uint8_t value) {
     // write data to send buffer
     send_buffer[addr] = value;
     return;
 }
 
-uint8_t ETH_GET_DATA_RD(uint16_t addr) {
+uint8_t IOB_ETH_GET_DATA_RD(uint16_t addr) {
     // read data from rcv buffer
     return rcv_buffer[addr];
 }
 
 
-uint32_t ETH_GET_STATUS() {
+uint32_t IOB_ETH_GET_STATUS() {
     // Emulate rx_ready() behaviour to receive data
     int ret = -1;
     ret = recv(data_socket, rcv_buffer_int, BUFFER_SIZE, MSG_DONTWAIT);
@@ -158,12 +158,12 @@ uint32_t ETH_GET_STATUS() {
 }
 
 /* always return correct CRC value */
-uint32_t ETH_GET_CRC() {
+uint32_t IOB_ETH_GET_CRC() {
     return 0xc704dd7b;
 }
 
 /* return size of last received frame */
-uint16_t ETH_GET_RCV_SIZE() {
+uint16_t IOB_ETH_GET_RCV_SIZE() {
     return rcv_size_reg;
 }
 

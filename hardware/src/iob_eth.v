@@ -40,7 +40,6 @@ module iob_eth
     );
 
     //BLOCK Register File & Configuration control and status register file.
-    `include "iob_eth_swreg.vh"
     `include "iob_eth_swreg_gen.vh"
 
     //

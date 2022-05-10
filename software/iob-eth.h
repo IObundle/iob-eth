@@ -78,17 +78,17 @@ void eth_print_status(void);
 #define eth_tx_clk_pll_locked() eth_get_status_field(ETH_TX_CLK_PLL_LOCKED)
 
 #define eth_send() ({\
-        ETH_SET_SEND(1);\
-        ETH_SET_SEND(0);\
+        IOB_ETH_SET_SEND(1);\
+        IOB_ETH_SET_SEND(0);\
         })
 
 #define eth_ack() ({\
-        ETH_SET_RCVACK(1);\
-        ETH_SET_RCVACK(0);\
+        IOB_ETH_SET_RCVACK(1);\
+        IOB_ETH_SET_RCVACK(0);\
         })
 
 #define eth_soft_rst() ({\
-      ETH_SET_SOFTRST(1);\
-      ETH_SET_SOFTRST(0);\
+      IOB_ETH_SET_SOFTRST(1);\
+      IOB_ETH_SET_SOFTRST(0);\
     })
 
