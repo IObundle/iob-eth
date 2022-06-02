@@ -22,7 +22,8 @@ VHDR+=iob_eth_swreg_def.vh iob_eth_swreg_gen.vh
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
 
 #selec mem modules to import
-include $(MEM_DIR)/hardware/ram/iob_ram_t2p/hardware.mk
+include $(LIB_DIR)/hardware/iob_reg/hardware.mk
+include $(MEM_DIR)/hardware/ram/iob_ram_t2p_asym/hardware.mk
 
 # Verilator simulation
 VERILATOR_FLAGS += --unroll-count 4096 # Allow for loop unrolling up to 4096
