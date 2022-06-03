@@ -243,7 +243,7 @@ module iob_eth_tb;
       input [31:0]  cpu_data;
       input [2:0] nbytes;
       reg [4:0] wstrb_int;
-      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W:2], 2'b0}; // use 32 bit address
+      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W-1:2], 2'b0}; // use 32 bit address
       valid = 1;
       case (nbytes)
           1: wstrb_int = 4'b0001;
@@ -261,7 +261,7 @@ module iob_eth_tb;
       input [`iob_eth_swreg_ADDR_W-1:0]   cpu_address;
       output [31:0] read_reg;
 
-      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W:2], 2'b0}; // use 32 bit address
+      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W-1:2], 2'b0}; // use 32 bit address
       valid = 1;
       @ (posedge clk) #1 
       read_reg = data_out >> (cpu_address[1:0]*8);

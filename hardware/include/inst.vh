@@ -11,7 +11,7 @@
 
       //cpu interface
       .valid(slaves_req[`valid(`ETHERNET)]),
-      .address(slaves_req[`address(`ETHERNET, `iob_eth_swreg_ADDR_W+2)-2]),
+      .address(slaves_req[`address(`ETHERNET, `iob_eth_swreg_ADDR_W)]),
       .wdata(slaves_req[`wdata(`ETHERNET)]),
       .wstrb(slaves_req[`wstrb(`ETHERNET)]),
       .rdata(slaves_resp[`rdata(`ETHERNET)]),

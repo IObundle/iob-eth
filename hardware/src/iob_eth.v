@@ -123,7 +123,7 @@ module iob_eth
     `IOB_WIRE(rx_data_rcvd_int, 1)
 
     `IOB_WIRE(tx_rd_addr, 11)
-    `IOB_WIRE(tx_rd_data, 8)
+    `IOB_VAR(tx_rd_data, 8)
 
     `IOB_WIRE(rx_wr_addr, 11)
     `IOB_WIRE(rx_wr_data, 8)
@@ -187,45 +187,67 @@ module iob_eth
    // TX and RX BUFFERS
    //
 
-   iob_ram_t2p_asym #(
-                       .W_DATA_W(32),
-                       .R_DATA_W(8),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
+   `IOB_WIRE(tx_rd_data_int, 32)
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W-2)
                        )
    tx_buffer
    (
     // Front-End (written by host)
-      .w_clk(clk),
-      .w_addr(ETH_DATA_WR_addr[10:2]),
-      .w_en(|ETH_DATA_WR_wstrb),
-      .w_data(ETH_DATA_WR_wdata),
+      .clkA(clk),
+      .enA(|ETH_DATA_WR_wstrb),
+      .weA(ETH_DATA_WR_wstrb),
+      .addrA(ETH_DATA_WR_addr[10:2]),
+      .dinA(ETH_DATA_WR_wdata),
+      .doutA(),
 
     // Back-End (read by core)
-      .r_clk(TX_CLK),
-      .r_addr(tx_rd_addr),
-      .r_en(1'b1),
-      .r_data(tx_rd_data)
+      .clkB(TX_CLK),
+      .enB(1'b1),
+      .weB(4'b0),
+      .addrB(tx_rd_addr[10:2]),
+      .dinB(32'b0),
+      .doutB(tx_rd_data_int)
    );
+   `IOB_WIRE(tx_rd_addr_reg, 2)
+    iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 2'b0, 1'b0, 2'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
+   // choose byte from 4 bytes word
+   always @* begin
+       case(tx_rd_addr_reg)
+           0: tx_rd_data = tx_rd_data_int[0+:8];
+           1: tx_rd_data = tx_rd_data_int[8+:8];
+           2: tx_rd_data = tx_rd_data_int[16+:8];
+           default: tx_rd_data = tx_rd_data_int[24+:8];
+       endcase
+   end
 
-   iob_ram_t2p_asym #(
-                       .W_DATA_W(8),
-                       .R_DATA_W(32),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
+   `IOB_WIRE(rx_wr_wstrb_int, 4)
+   `IOB_WIRE(rx_wr_data_int, 32)
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W-2)
                        )
    rx_buffer
    (
      // Front-End (written by core)
-     .w_clk(RX_CLK),
-     .w_addr(rx_wr_addr),
-     .w_en(rx_wr),
-     .w_data(rx_wr_data),
+     .clkA(RX_CLK),
+     .enA(rx_wr),
+     .weA(rx_wr_wstrb_int),
+     .addrA(rx_wr_addr[10:2]),
+     .dinA(rx_wr_data_int),
+     .doutA(),
 
      // Back-End (read by host)
-     .r_clk(clk),
-     .r_addr(ETH_DATA_RD_addr[10:2]),
-     .r_en(ETH_DATA_RD_ren),
-     .r_data(ETH_DATA_RD_rdata)
+     .clkB(clk),
+     .enB(ETH_DATA_RD_ren),
+     .weB(4'b0),
+     .addrB(ETH_DATA_RD_addr[10:2]),
+     .dinB(32'b0),
+     .doutB(ETH_DATA_RD_rdata)
    );
+   `IOB_WIRE2WIRE( rx_wr_data << (8*rx_wr_addr[1:0]), rx_wr_data_int)
+   `IOB_WIRE2WIRE( rx_wr << rx_wr_addr[1:0], rx_wr_wstrb_int)
 
    //
    // TRANSMITTER
