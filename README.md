@@ -66,11 +66,11 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```Make
     # Original make call
         sim-build:
-            make fw-build BAUD=5000000
+            make fw-build
             make -C $(SIM_DIR) build
     # Make call with SIM variable
         sim-build:
-            make fw-build BAUD=5000000 SIM=1
+            make fw-build SIM=1
             make -C $(SIM_DIR) build
     ```
 4. Update FPGA Board files:

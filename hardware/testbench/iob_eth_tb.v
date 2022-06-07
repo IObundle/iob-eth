@@ -174,7 +174,7 @@ module iob_eth_tb;
       $display("TX is ready");
       
       //setup number of bytes of transaction
-      cpu_write(`ETH_TX_NBYTES_ADDR, `ETH_NBYTES);
+      cpu_write(`ETH_TX_NBYTES_ADDR, `ETH_NBYTES, `ETH_TX_NBYTES_W/8);
 
       // wait until rx ready
 
@@ -200,7 +200,7 @@ module iob_eth_tb;
       end
 
       // send receive command
-      cpu_write(`ETH_RCVACK_ADDR, 1);
+      cpu_write(`ETH_RCVACK_ADDR, 1, `ETH_RCVACK_W/8);
       
       #400;
 
@@ -241,11 +241,17 @@ module iob_eth_tb;
    task cpu_write;
       input [`iob_eth_swreg_ADDR_W-1:0]  cpu_address;
       input [31:0]  cpu_data;
-
-      #1 addr = cpu_address;
+      input [2:0] nbytes;
+      reg [4:0] wstrb_int;
+      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W-1:2], 2'b0}; // use 32 bit address
       valid = 1;
-      wstrb = 1;
-      data_in = cpu_data;
+      case (nbytes)
+          1: wstrb_int = 4'b0001;
+          2: wstrb_int = 4'b0011;
+          default: wstrb_int = 4'b1111;
+      endcase
+      wstrb = wstrb_int << (cpu_address[1:0]);
+      data_in = cpu_data << (cpu_address[1:0]*8);
       @ (posedge clk) #1 wstrb = 0;
       valid = 0;
    endtask
@@ -255,9 +261,10 @@ module iob_eth_tb;
       input [`iob_eth_swreg_ADDR_W-1:0]   cpu_address;
       output [31:0] read_reg;
 
-      #1 addr = cpu_address;
+      #1 addr = {cpu_address[`iob_eth_swreg_ADDR_W-1:2], 2'b0}; // use 32 bit address
       valid = 1;
-      @ (posedge clk) #1 read_reg = data_out;
+      @ (posedge clk) #1 
+      read_reg = data_out >> (cpu_address[1:0]*8);
       @ (posedge clk) #1 valid = 0;
    endtask
 

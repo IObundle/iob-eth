@@ -36,11 +36,79 @@ module iob_eth
     `IOB_OUTPUT(TX_EN, 1), //TX enable
     `IOB_OUTPUT(TX_DATA, 4), //TX data nibble
 
-    `include "gen_if.vh"
+    `include "iob_gen_if.vh"
     );
 
     //BLOCK Register File & Configuration control and status register file.
     `include "iob_eth_swreg_gen.vh"
+
+    //
+    // SWRegs
+    //
+
+    `IOB_WIRE(ETH_SEND, 1)
+    iob_reg #(.DATA_W(1))
+    eth_send (
+        .clk        (clk),
+        .arst       (rst),
+        .arst_val   (1'b0),
+        .rst        (rst),
+        .rst_val    (1'b0),
+        .en         (ETH_SEND_en),
+        .data_in    (ETH_SEND_wdata[0]),
+        .data_out   (ETH_SEND)
+    );
+
+    `IOB_WIRE(ETH_RCVACK, 1)
+    iob_reg #(.DATA_W(1))
+    eth_rcvack (
+        .clk        (clk),
+        .arst       (rst),
+        .arst_val   (1'b0),
+        .rst        (rst),
+        .rst_val    (1'b0),
+        .en         (ETH_RCVACK_en),
+        .data_in    (ETH_RCVACK_wdata[0]),
+        .data_out   (ETH_RCVACK)
+    );
+
+    `IOB_WIRE(ETH_SOFTRST, 1)
+    iob_reg #(.DATA_W(1))
+    eth_softrst (
+        .clk        (clk),
+        .arst       (rst),
+        .arst_val   (1'b0),
+        .rst        (rst),
+        .rst_val    (1'b0),
+        .en         (ETH_SOFTRST_en),
+        .data_in    (ETH_SOFTRST_wdata[0]),
+        .data_out   (ETH_SOFTRST)
+    );
+
+    iob_reg #(.DATA_W(32))
+    eth_dummy_w (
+        .clk        (clk),
+        .arst       (rst),
+        .arst_val   (32'b0),
+        .rst        (rst),
+        .rst_val    (32'b0),
+        .en         (ETH_DUMMY_W_en),
+        .data_in    (ETH_DUMMY_W_wdata),
+        .data_out   (ETH_DUMMY_R_rdata)
+    );
+
+    `IOB_WIRE(ETH_TX_NBYTES, 11)
+    iob_reg #(.DATA_W(11))
+    eth_tx_nbytes (
+        .clk        (clk),
+        .arst       (rst),
+        .arst_val   (11'd46),
+        .rst        (rst),
+        .rst_val    (11'b0),
+        .en         (ETH_TX_NBYTES_en),
+        .data_in    (ETH_TX_NBYTES_wdata[10:0]),
+        .data_out   (ETH_TX_NBYTES)
+    );
 
     //
     // WIRES and REGISTERS
@@ -55,7 +123,7 @@ module iob_eth
     `IOB_WIRE(rx_data_rcvd_int, 1)
 
     `IOB_WIRE(tx_rd_addr, 11)
-    `IOB_WIRE(tx_rd_data, 8)
+    `IOB_VAR(tx_rd_data, 8)
 
     `IOB_WIRE(rx_wr_addr, 11)
     `IOB_WIRE(rx_wr_data, 8)
@@ -68,16 +136,12 @@ module iob_eth
     `IOB_WIRE(rx_data_rcvd_sync, 1)
     `IOB_WIRE(tx_ready_sync, 1)
 
-    assign ETH_STATUS = {16'b0, pll_locked_sync, ETH_RCV_SIZE, phy_clk_detected_sync, phy_dv_detected_sync, rx_data_rcvd_sync, tx_ready_sync};
-
-    // Ethernet Dummy R - copy value from ETH_DUMMY_W
-    assign ETH_DUMMY_R = ETH_DUMMY_W;
+    assign ETH_STATUS_rdata = {16'b0, pll_locked_sync, ETH_RCV_SIZE_rdata[10:0], phy_clk_detected_sync, phy_dv_detected_sync, rx_data_rcvd_sync, tx_ready_sync};
 
     // Ethernet CRC
-    //TODO: check CDC for multibit words
 
     // Ethernet RCV_SIZE
-    //TODO: check CDC for multibit words
+    assign ETH_RCV_SIZE_rdata[15:11] = 5'b0; // bit unused by core
 
     // Ethernet Send
 
@@ -106,12 +170,12 @@ module iob_eth
    // RX_CLK to clk
 
    `IOB_SYNC(clk, rst_int, 1'b0, 1, PLL_LOCKED, pll_locked_sync_reg0, pll_locked_sync_reg1, pll_locked_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, 11, rx_wr_addr, rx_wr_addr_sync_reg0, rx_wr_addr_sync_reg1, ETH_RCV_SIZE)
+   `IOB_SYNC(clk, rst_int, 1'b0, 11, rx_wr_addr, rx_wr_addr_sync_reg0, rx_wr_addr_sync_reg1, ETH_RCV_SIZE_rdata[10:0])
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_clk_detected, phy_clk_detected_sync_reg0, phy_clk_detected_sync_reg1, phy_clk_detected_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_dv_detected, phy_dv_detected_sync_reg0, phy_dv_detected_sync_reg1, phy_dv_detected_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, 1, (rx_data_rcvd_int & ETH_PHY_RESETN), rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, 1, (tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED), tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC)
+   `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC_rdata)
 
    // clk to RX_CLK
    `IOB_VAR(send, 1)
@@ -123,43 +187,67 @@ module iob_eth
    // TX and RX BUFFERS
    //
 
-   iob_ram_t2p #(
-                       .DATA_W(8),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
+   `IOB_WIRE(tx_rd_data_int, 32)
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W-2)
                        )
    tx_buffer
    (
     // Front-End (written by host)
-      .w_clk(clk),
-      .w_addr(ETH_DATA_WR_addr_int),
-      .w_en(|ETH_DATA_WR_wstrb_int),
-      .w_data(ETH_DATA_WR_wdata_int),
+      .clkA(clk),
+      .enA(|ETH_DATA_WR_wstrb),
+      .weA(ETH_DATA_WR_wstrb),
+      .addrA(ETH_DATA_WR_addr[10:2]),
+      .dinA(ETH_DATA_WR_wdata),
+      .doutA(),
 
     // Back-End (read by core)
-      .r_clk(TX_CLK),
-      .r_addr(tx_rd_addr),
-      .r_en(1'b1),
-      .r_data(tx_rd_data)
+      .clkB(TX_CLK),
+      .enB(1'b1),
+      .weB(4'b0),
+      .addrB(tx_rd_addr[10:2]),
+      .dinB(32'b0),
+      .doutB(tx_rd_data_int)
    );
+   `IOB_WIRE(tx_rd_addr_reg, 2)
+    iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 2'b0, 1'b0, 2'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
+   // choose byte from 4 bytes word
+   always @* begin
+       case(tx_rd_addr_reg)
+           0: tx_rd_data = tx_rd_data_int[0+:8];
+           1: tx_rd_data = tx_rd_data_int[8+:8];
+           2: tx_rd_data = tx_rd_data_int[16+:8];
+           default: tx_rd_data = tx_rd_data_int[24+:8];
+       endcase
+   end
 
-   iob_ram_t2p #(
-                       .DATA_W(8),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
+   `IOB_WIRE(rx_wr_wstrb_int, 4)
+   `IOB_WIRE(rx_wr_data_int, 32)
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W-2)
                        )
    rx_buffer
    (
      // Front-End (written by core)
-     .w_clk(RX_CLK),
-     .w_addr(rx_wr_addr),
-     .w_en(rx_wr),
-     .w_data(rx_wr_data),
+     .clkA(RX_CLK),
+     .enA(rx_wr),
+     .weA(rx_wr_wstrb_int),
+     .addrA(rx_wr_addr[10:2]),
+     .dinA(rx_wr_data_int),
+     .doutA(),
 
      // Back-End (read by host)
-     .r_clk(clk),
-     .r_addr(ETH_DATA_RD_addr_int),
-     .r_en(1'b1),
-     .r_data(ETH_DATA_RD_rdata_int)
+     .clkB(clk),
+     .enB(ETH_DATA_RD_ren),
+     .weB(4'b0),
+     .addrB(ETH_DATA_RD_addr[10:2]),
+     .dinB(32'b0),
+     .doutB(ETH_DATA_RD_rdata)
    );
+   `IOB_WIRE2WIRE( rx_wr_data << (8*rx_wr_addr[1:0]), rx_wr_data_int)
+   `IOB_WIRE2WIRE( rx_wr << rx_wr_addr[1:0], rx_wr_wstrb_int)
 
    //
    // TRANSMITTER

@@ -28,6 +28,7 @@ static int rcv_size_reg = 0;
 static uint16_t tx_nbytes_reg = 0;
 static uint32_t dummy_reg = 0;
 
+static int base;
 void IOB_ETH_INIT_BASEADDR(uint32_t addr) {
     base = addr;
     return;
@@ -129,13 +130,13 @@ void IOB_ETH_SET_TX_NBYTES(uint16_t value) {
  * or
  * read data from received frame
  */
-void IOB_ETH_SET_DATA_WR(uint16_t addr, uint8_t value) {
+void IOB_ETH_SET_DATA_WR(uint32_t addr, uint8_t value) {
     // write data to send buffer
     send_buffer[addr] = value;
     return;
 }
 
-uint8_t IOB_ETH_GET_DATA_RD(uint16_t addr) {
+uint8_t IOB_ETH_GET_DATA_RD(uint32_t addr) {
     // read data from rcv buffer
     return rcv_buffer[addr];
 }

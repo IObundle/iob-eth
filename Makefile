@@ -42,6 +42,5 @@ fpga:
 
 clean:
 	make -C $(SIM_DIR) clean
-	make -C $(FPGA_DIR) clean
 	$(RM) *~
 
