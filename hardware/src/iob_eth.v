@@ -190,7 +190,7 @@ module iob_eth
    `IOB_WIRE(tx_rd_data_int, 32)
    iob_ram_tdp_be #(
                        .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W-2)
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
                        )
    tx_buffer
    (
@@ -198,7 +198,7 @@ module iob_eth
       .clkA(clk),
       .enA(|ETH_DATA_WR_wstrb),
       .weA(ETH_DATA_WR_wstrb),
-      .addrA(ETH_DATA_WR_addr[10:2]),
+      .addrA(ETH_DATA_WR_addr),
       .dinA(ETH_DATA_WR_wdata),
       .doutA(),
 
@@ -226,7 +226,7 @@ module iob_eth
    `IOB_WIRE(rx_wr_data_int, 32)
    iob_ram_tdp_be #(
                        .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W-2)
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
                        )
    rx_buffer
    (
@@ -242,7 +242,7 @@ module iob_eth
      .clkB(clk),
      .enB(ETH_DATA_RD_ren),
      .weB(4'b0),
-     .addrB(ETH_DATA_RD_addr[10:2]),
+     .addrB(ETH_DATA_RD_addr),
      .dinB(32'b0),
      .doutB(ETH_DATA_RD_rdata)
    );
