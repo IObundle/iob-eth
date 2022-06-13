@@ -17,6 +17,7 @@ INCLUDE+=$(incdir)$(AXI_DIR)/hardware/include
 #headers
 VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
 VHDR+=iob_eth_swreg_def.vh iob_eth_swreg_gen.vh
+VHDR+=$(LIB_DIR)/hardware/include/iob_lib.vh $(LIB_DIR)/hardware/include/iob_s_if.vh $(LIB_DIR)/hardware/include/iob_gen_if.vh $(LIB_DIR)/hardware/include/axi.vh
 
 #sources
 VSRC+=$(wildcard $(ETHERNET_SRC_DIR)/*.v)
