@@ -146,3 +146,14 @@ raw socket capabilities.
   ```
   sudo ethtool -s $RMAC_INTERFACE speed 100 duplex full autoneg off
   ```
+### `Failed to bind socket` on PC-Emul
+- The pc-emul drivers create a local socket file in `/tmp/tmpLocalSocket`, but
+  this socket is never closed by the drivers. This behaviour mirrors the
+  embedded version, where there is no equivalent operation to close sockets.
+- To remove the local socket file add the following target to `pc-emul/Makefile` clean target:
+```Make
+# pc-emul/Makefile clean target
+clean:
+    (...)
+    make clean-eth-socket
+```
