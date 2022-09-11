@@ -1,5 +1,7 @@
 #include "eth_frame_struct.h"
 
+#include "iob_eth_swreg.h"
+
 // fields
 #define ETH_TX_READY          0
 #define ETH_RX_READY          1

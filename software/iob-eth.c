@@ -1,7 +1,6 @@
 #include "stdint.h"
 #include "printf.h"
 #include "iob-eth.h"
-#include "iob_eth_swreg.h"
 
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
