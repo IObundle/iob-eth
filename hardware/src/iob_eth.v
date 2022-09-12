@@ -1,6 +1,5 @@
 `timescale 1ns/1ps
 
-`include "axi.vh"
 `include "iob_lib.vh"
 `include "iob_eth.vh"
 `include "iob_eth_swreg_def.vh"
