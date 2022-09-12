@@ -13,8 +13,7 @@ SUBMODULES_DIR:=$(ETHERNET_DIR)/submodules
 
 # SUBMODULE PATHS
 LIB_DIR ?=$(ETHERNET_DIR)/submodules/LIB
-MEM_DIR ?=$(ETHERNET_DIR)/submodules/MEM
-AXI_DIR ?=$(ETHERNET_DIR)/submodules/AXI
+MEM_DIR ?=$(LIB_DIR)
 
 SIMULATOR ?=icarus
 

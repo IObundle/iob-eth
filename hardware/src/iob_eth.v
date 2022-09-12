@@ -1,6 +1,5 @@
 `timescale 1ns/1ps
 
-`include "axi.vh"
 `include "iob_lib.vh"
 `include "iob_eth.vh"
 `include "iob_eth_swreg_def.vh"
@@ -51,9 +50,7 @@ module iob_eth
     eth_send (
         .clk        (clk),
         .arst       (rst),
-        .arst_val   (1'b0),
         .rst        (rst),
-        .rst_val    (1'b0),
         .en         (ETH_SEND_en),
         .data_in    (ETH_SEND_wdata[0]),
         .data_out   (ETH_SEND)
@@ -64,9 +61,7 @@ module iob_eth
     eth_rcvack (
         .clk        (clk),
         .arst       (rst),
-        .arst_val   (1'b0),
         .rst        (rst),
-        .rst_val    (1'b0),
         .en         (ETH_RCVACK_en),
         .data_in    (ETH_RCVACK_wdata[0]),
         .data_out   (ETH_RCVACK)
@@ -77,9 +72,7 @@ module iob_eth
     eth_softrst (
         .clk        (clk),
         .arst       (rst),
-        .arst_val   (1'b0),
         .rst        (rst),
-        .rst_val    (1'b0),
         .en         (ETH_SOFTRST_en),
         .data_in    (ETH_SOFTRST_wdata[0]),
         .data_out   (ETH_SOFTRST)
@@ -89,22 +82,19 @@ module iob_eth
     eth_dummy_w (
         .clk        (clk),
         .arst       (rst),
-        .arst_val   (32'b0),
         .rst        (rst),
-        .rst_val    (32'b0),
         .en         (ETH_DUMMY_W_en),
         .data_in    (ETH_DUMMY_W_wdata),
         .data_out   (ETH_DUMMY_R_rdata)
     );
 
     `IOB_WIRE(ETH_TX_NBYTES, 11)
-    iob_reg #(.DATA_W(11))
+    iob_reg #(.DATA_W(11),
+              .RST_VAL(11'd46))
     eth_tx_nbytes (
         .clk        (clk),
         .arst       (rst),
-        .arst_val   (11'd46),
         .rst        (rst),
-        .rst_val    (11'b0),
         .en         (ETH_TX_NBYTES_en),
         .data_in    (ETH_TX_NBYTES_wdata[10:0]),
         .data_out   (ETH_TX_NBYTES)
@@ -211,7 +201,7 @@ module iob_eth
       .doutB(tx_rd_data_int)
    );
    `IOB_WIRE(tx_rd_addr_reg, 2)
-    iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 2'b0, 1'b0, 2'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
+    iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 1'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
    // choose byte from 4 bytes word
    always @* begin
        case(tx_rd_addr_reg)
