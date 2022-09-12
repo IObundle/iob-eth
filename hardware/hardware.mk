@@ -12,7 +12,6 @@ $(foreach p, $(SUBMODULES), $(if $(filter $p, $(MODULES)),,$(eval include $($p_D
 #include
 INCLUDE+=$(incdir)$(ETHERNET_INC_DIR)
 INCLUDE+=$(incdir)$(LIB_DIR)/hardware/include
-INCLUDE+=$(incdir)$(AXI_DIR)/hardware/include
 
 #headers
 VHDR+=$(wildcard $(ETHERNET_INC_DIR)/*.vh)
