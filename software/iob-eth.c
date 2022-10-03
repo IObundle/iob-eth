@@ -69,8 +69,15 @@ static void print_buffer(char *buffer, int size){
 /*******************************************/
 
 void eth_init(int base_address) {
+#ifdef LOOPBACK
+	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
+#else
+	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_RMAC_ADDR);
+#endif
+}
+
+void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   int i,ret;
-  uint64_t mac_addr;
 
   // set base address
   IOB_ETH_INIT_BASEADDR(base_address);
@@ -83,18 +90,12 @@ void eth_init(int base_address) {
   TEMPLATE[SDF_PTR] = ETH_SFD;
 
   // dest mac address
-#ifdef LOOPBACK
-  mac_addr = ETH_MAC_ADDR;
-#else
-  mac_addr = ETH_RMAC_ADDR;
-#endif
   for (i=0; i < MAC_ADDR_LEN; i++) {
-    TEMPLATE[MAC_DEST_PTR+i] = mac_addr >> 40;
-    mac_addr = mac_addr << 8;
+    TEMPLATE[MAC_DEST_PTR+i] = dest_mac_addr >> 40;
+    dest_mac_addr = dest_mac_addr << 8;
   }
 
   // source mac address
-  mac_addr = ETH_MAC_ADDR;
   for (i=0; i < MAC_ADDR_LEN; i++) {
     TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;

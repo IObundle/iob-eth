@@ -49,20 +49,15 @@ The main steps to integrate iob-eth core into an iob-soc system:
     include $(ETHERNET_DIR)/software/embedded/embedded.mk
     ```
 3. Define `SIM` for simulation:
-    1. Add `SIM` variable in `hardware/simulation/simulation.mk` before
-       including `hardware/hardware.mk`:
-    ```Make
-    SIM=1
-    DEFINE+=$(defmacro)SIM=$(SIM)
-    ```
-    2. Add `SIM` to firmware in case of simulation in
+    This allows using `#ifdef SIM` in the firmware.
+    1. Add `SIM` to firmware in case of simulation in
        `software/firmware/Makefile`:
     ```Make
     ifeq ($(SIM),1)
     DEFINE+=$(defmacro)SIM=$(SIM)
     endif
     ```
-    3. Set `SIM` variable in `Makefile` when making embedded sw for simulation:
+    2. Set `SIM` variable in `Makefile` when making embedded sw for simulation:
     ```Make
     # Original make call
         sim-build:
@@ -132,8 +127,8 @@ The main steps to integrate iob-eth core into an iob-soc system:
     - this should be the one connected to the FPGA BOARD
 - set `RMAC_INTERFACE=enBBBB` in your `~/.bashrc`
 ### System simulation takes a long time to initialize ethernet:
-- ethernet simulation requires `DEFINE+=$(defmacro)SIM` so that internal reset takes less time 
-  - check for `SIM` in `ETHERNET/hardware/src/iob_eth.v` for more details
+- ethernet simulation has an internal reset counter, configurable by a verilog parameter
+  - check for `PHY_RST_CNT` in `ETHERNET/hardware/src/iob_eth.v` for more details
 ### No permissions to open raw sockets
 - Running raw sockets requires elevated privileges. This is solved by 
 configuring a dedicated python3 virtual environment where the interpreter has 

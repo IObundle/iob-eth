@@ -12,7 +12,8 @@ module iob_eth
     # (
     parameter DATA_W = 32, //PARAM CPU data width
     parameter ADDR_W = `iob_eth_swreg_ADDR_W, //MACRO CPU address section width
-    parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
+    parameter ETH_MAC_ADDR = `ETH_MAC_ADDR, //Instance MAC address
+    parameter PHY_RST_CNT = 20'hFFFFF //Set reset counter value
     )
     (
     // CPU interface
@@ -294,11 +295,7 @@ module iob_eth
         phy_rst_cnt <= 0;
         ETH_PHY_RESETN <= 0;
      end else 
-`ifdef SIM // Faster for simulation
-       if (phy_rst_cnt != 20'h000FF)
-`else
-       if (phy_rst_cnt != 20'hFFFFF)
-`endif
+       if (phy_rst_cnt != PHY_RST_CNT)
          phy_rst_cnt <= phy_rst_cnt+1'b1;
        else
          ETH_PHY_RESETN <= 1;

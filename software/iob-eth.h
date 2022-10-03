@@ -31,7 +31,9 @@
 #define ETH_DEBUG_PRINT 1
 
 // driver functions
-void eth_init(int base);
+void eth_init(int base_address);
+
+void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr);
 
 int eth_get_status_field(char field);
 
