@@ -23,6 +23,11 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```
     PERIPHERALS ?= UART <...> ETHERNET
     ```
+        1. MAC address and simulation mode can be configured via instance parameters.
+        ```
+        PERIPHERALS ?= UART <...> ETHERNET[32,\`iob_eth_swreg_ADDR_W,\`ETH_MAC_ADDR,$(if $(SIM),1,0)]
+        ```
+        In this example, arguments 1 and 2 are the default values, argument 3 sets the MAC address using a macro included in ETHERNET, argument 4 sets this instance into simulation mode if it evaluates to '1' (whenever the SIM variable is defined).
     3. Add path to iob-eth submodule in `config.mk` file:
     ```
     ETHERNET_DIR=$(ROOT_DIR)/submodules/ETHERNET
