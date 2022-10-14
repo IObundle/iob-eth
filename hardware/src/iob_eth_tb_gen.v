@@ -27,13 +27,13 @@ generate
     genvar eth_tb_i;
 
     for(eth_tb_i = 0; eth_tb_i < 12; eth_tb_i = eth_tb_i + 1)
-    begin
+    begin: swap_mac_addr
       assign loopbackTX[eth_tb_i] = savedRX[12+eth_tb_i]; // Swap the MAC addresses (12 nibbles == 6 bytes)
       assign loopbackTX[12+eth_tb_i] = savedRX[eth_tb_i];
     end
 
     for(eth_tb_i = 24; eth_tb_i < 4000; eth_tb_i = eth_tb_i + 1)
-    begin
+    begin: keep_payload
       assign loopbackTX[eth_tb_i] = savedRX[eth_tb_i]; // The remaining message + payload remains the same
     end
 endgenerate
