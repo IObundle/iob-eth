@@ -169,9 +169,9 @@ module iob_eth
    `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC_rdata)
 
    // clk to RX_CLK
-   `IOB_VAR(send, 1)
+   `IOB_WIRE(send, 1)
    `IOB_F2S_SYNC(TX_CLK, ETH_SEND, send_sync, send)
-   `IOB_VAR(rcv_ack, 1)
+   `IOB_WIRE(rcv_ack, 1)
    `IOB_F2S_SYNC(RX_CLK, ETH_RCVACK, rck_ack_sync, rcv_ack)
 
    //
