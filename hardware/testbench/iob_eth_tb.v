@@ -59,12 +59,16 @@ module iob_eth_tb;
    // mac_addr
    reg [47:0] mac_addr = `ETH_MAC_ADDR;
    
+   // External Memory Macros
+   `include "iob_eth_buffer_inst.vh"
    
    // Instantiate the Unit Under Test (UUT)
 
    iob_eth uut (
       .clk        (clk),
       .rst        (rst),
+    
+      `include "iob_eth_buffer_portmap.vh"
 
       // CPU side
       .valid         (valid),

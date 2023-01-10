@@ -9,6 +9,9 @@
       .clk      (clk),
       .rst      (reset),
 
+      // external memory macros
+      `include "iob_eth_buffer_portmap.vh"
+
       //cpu interface
       .valid(slaves_req[`valid(`ETHERNET)]),
       .address(slaves_req[`address(`ETHERNET, `iob_eth_swreg_ADDR_W+2)-2]),

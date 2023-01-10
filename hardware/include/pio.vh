@@ -1,4 +1,7 @@
    //ETHERNET
+   // External Memory Macros
+   `include "iob_eth_buffer_port.vh"
+
    output 		     ETH_PHY_RESETN,
    input 		     PLL_LOCKED,
 

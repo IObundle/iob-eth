@@ -69,6 +69,9 @@ module top_system(
 
     assign locked = 1'b1; 
 
+    // Ethernet Buffer External Memories
+    `include "iob_eth_buffer_inst.vh"
+
     //
     // TOP SYSTEM LOGIC
     //
@@ -91,6 +94,7 @@ module top_system(
             //
 
             //ETHERNET
+            `include "iob_eth_buffer_portmap.vh"
             //PHY
             .ETH_PHY_RESETN(ENET_RESETN),
 
