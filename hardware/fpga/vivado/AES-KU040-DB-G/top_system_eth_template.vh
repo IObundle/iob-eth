@@ -10,13 +10,18 @@
 // 3. System instance ports for ethernet interface
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+//
+// 1. Include SWREG Defines (used by iob_eth_buffer_inst.vh)
+//
+`include "iob_eth_swreg_def.vh"
 module top_system(
 
         // other top_system ports
         // ....
 
         //
-        // 1. top_system module ports for ethernet interface
+        // 2. top_system module ports for ethernet interface
         //
         output ENET_RESETN,
         input  ENET_RX_CLK,
@@ -38,7 +43,7 @@ module top_system(
     );
 
     // 
-    // 2. Logic to contatenate data pins and ethernet clock
+    // 3. Logic to contatenate data pins and ethernet clock
     //
 
     //buffered eth clock
@@ -68,8 +73,13 @@ module top_system(
              );
 
     assign locked = 1'b1; 
+    
 
     // Ethernet Buffer External Memories
+    wire RX_CLK;
+    wire TX_CLK;
+    assign RX_CLK = ETH_CLK;
+    assign TX_CLK = ETH_CLK;
     `include "iob_eth_buffer_inst.vh"
 
     //
@@ -90,7 +100,7 @@ module top_system(
             // ...
             
             //
-            // 3. System instance ports for ethernet interface
+            // 4. System instance ports for ethernet interface
             //
 
             //ETHERNET
