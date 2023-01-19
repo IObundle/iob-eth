@@ -60,6 +60,27 @@ module iob_eth_tb;
    reg [47:0] mac_addr = `ETH_MAC_ADDR;
    
    // External Memory Macros
+   // TX Front-End
+   wire                              iob_eth_tx_buffer_enA;
+   wire [32/8-1:0]                   iob_eth_tx_buffer_weA;
+   wire [`ETH_DATA_WR_ADDR_W-1:0]    iob_eth_tx_buffer_addrA;
+   wire [32-1:0]                     iob_eth_tx_buffer_dinA;
+
+   // TX Back-End
+   wire [`ETH_DATA_WR_ADDR_W-1:0]    iob_eth_tx_buffer_addrB;
+   wire [32-1:0]                      iob_eth_tx_buffer_doutB;
+
+   // RX Front-End
+   wire                              iob_eth_rx_buffer_enA;
+   wire [32/8-1:0]                   iob_eth_rx_buffer_weA;
+   wire [`ETH_DATA_RD_ADDR_W-1:0]    iob_eth_rx_buffer_addrA;
+   wire [32-1:0]                     iob_eth_rx_buffer_dinA;
+
+    // RX Back-End
+   wire                              iob_eth_rx_buffer_enB;
+   wire [`ETH_DATA_RD_ADDR_W-1:0]    iob_eth_rx_buffer_addrB;
+   wire [32-1:0]                      iob_eth_rx_buffer_doutB;
+
    `include "iob_eth_buffer_inst.vh"
    
    // Instantiate the Unit Under Test (UUT)
