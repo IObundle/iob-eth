@@ -1,44 +1,20 @@
 `timescale 1ns/1ps
 
 `include "iob_lib.vh"
-`include "iob_eth.vh"
-`include "iob_eth_swreg_def.vh"
+`include "iob_ethernet.vh"
+`include "iob_ethernet_swreg_def.vh"
 
 /*
  Ethernet Core
 */
 
-module iob_eth 
-    # (
-    parameter DATA_W = 32, //PARAM CPU data width
-    parameter ADDR_W = `iob_eth_swreg_ADDR_W, //MACRO CPU address section width
-    parameter ETH_MAC_ADDR = `ETH_MAC_ADDR, //Instance MAC address
-    parameter PHY_RST_CNT = 20'hFFFFF //Set reset counter value
-    )
-    (
-    // CPU interface
-    `include "iob_s_if.vh"
+module iob_eth # (
+     `include "iob_ethernet_params.vh"
+   ) (
+     `include "iob_ethernet_io.vh"
+   );
 
-    //START_IO_TABLE eth_phy
-    // PHY side
-    `IOB_OUTPUT_VAR(ETH_PHY_RESETN, 1), //PHY reset
-
-    // PLL
-    `IOB_INPUT(PLL_LOCKED, 1), //PLL locked
-
-    // RX
-    `IOB_INPUT(RX_CLK, 1), //RX clock
-    `IOB_INPUT(RX_DATA, 4), //RX data nibble
-    `IOB_INPUT(RX_DV, 1), //RX DV signal
-
-    // TX
-    `IOB_INPUT(TX_CLK, 1), //TX clock
-    `IOB_OUTPUT(TX_EN, 1), //TX enable
-    `IOB_OUTPUT(TX_DATA, 4), //TX data nibble
-
-    `include "iob_gen_if.vh"
-    );
-
+    //TODO: Update below
     //BLOCK Register File & Configuration control and status register file.
     `include "iob_eth_swreg_gen.vh"
 
