@@ -19,6 +19,8 @@ module iob_eth
     // CPU interface
     `include "iob_s_if.vh"
 
+    `include "iob_eth_buffer_port.vh"
+
     //START_IO_TABLE eth_phy
     // PHY side
     `IOB_OUTPUT_VAR(ETH_PHY_RESETN, 1), //PHY reset
@@ -177,30 +179,19 @@ module iob_eth
    //
    // TX and RX BUFFERS
    //
-
    `IOB_WIRE(tx_rd_data_int, 32)
-   iob_ram_tdp_be #(
-                       .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
-                       )
-   tx_buffer
-   (
-    // Front-End (written by host)
-      .clkA(clk),
-      .enA(|ETH_DATA_WR_wstrb),
-      .weA(ETH_DATA_WR_wstrb),
-      .addrA(ETH_DATA_WR_addr),
-      .dinA(ETH_DATA_WR_wdata),
-      .doutA(),
 
-    // Back-End (read by core)
-      .clkB(TX_CLK),
-      .enB(1'b1),
-      .weB(4'b0),
-      .addrB(tx_rd_addr[10:2]),
-      .dinB(32'b0),
-      .doutB(tx_rd_data_int)
-   );
+    // TX Buffer Logic
+    // TX Front-End
+    assign iob_eth_tx_buffer_enA = |ETH_DATA_WR_wstrb;
+    assign iob_eth_tx_buffer_weA = ETH_DATA_WR_wstrb;
+    assign iob_eth_tx_buffer_addrA = ETH_DATA_WR_addr;
+    assign iob_eth_tx_buffer_dinA = ETH_DATA_WR_wdata;
+
+    // TX Back-End
+    assign iob_eth_tx_buffer_addrB = tx_rd_addr[10:2];
+    assign tx_rd_data_int = iob_eth_tx_buffer_doutB;
+
    `IOB_WIRE(tx_rd_addr_reg, 2)
     iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 1'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
    // choose byte from 4 bytes word
@@ -215,28 +206,19 @@ module iob_eth
 
    `IOB_WIRE(rx_wr_wstrb_int, 4)
    `IOB_WIRE(rx_wr_data_int, 32)
-   iob_ram_tdp_be #(
-                       .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
-                       )
-   rx_buffer
-   (
-     // Front-End (written by core)
-     .clkA(RX_CLK),
-     .enA(rx_wr),
-     .weA(rx_wr_wstrb_int),
-     .addrA(rx_wr_addr[10:2]),
-     .dinA(rx_wr_data_int),
-     .doutA(),
 
-     // Back-End (read by host)
-     .clkB(clk),
-     .enB(ETH_DATA_RD_ren),
-     .weB(4'b0),
-     .addrB(ETH_DATA_RD_addr),
-     .dinB(32'b0),
-     .doutB(ETH_DATA_RD_rdata)
-   );
+    // RX Buffer Logic
+    // RX Front-End
+    assign iob_eth_rx_buffer_enA = rx_wr;
+    assign iob_eth_rx_buffer_weA = rx_wr_wstrb_int;
+    assign iob_eth_rx_buffer_addrA = rx_wr_addr[10:2];
+    assign iob_eth_rx_buffer_dinA = rx_wr_data_int;
+
+    // RX Back-End
+    assign iob_eth_rx_buffer_enB = ETH_DATA_RD_ren;
+    assign iob_eth_rx_buffer_addrB = ETH_DATA_RD_addr;
+    assign ETH_DATA_RD_rdata = iob_eth_rx_buffer_doutB;
+
    `IOB_WIRE2WIRE( rx_wr_data << (8*rx_wr_addr[1:0]), rx_wr_data_int)
    `IOB_WIRE2WIRE( rx_wr << rx_wr_addr[1:0], rx_wr_wstrb_int)
 

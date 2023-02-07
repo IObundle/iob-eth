@@ -17,7 +17,7 @@
 
 iob_eth_tb_gen eth_tb(
       .clk      (clk),
-      .reset    (reset),
+      .reset    (rst),
 
       // This module acts like a loopback
       .RX_CLK(TX_CLK),

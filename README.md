@@ -68,7 +68,12 @@ The main steps to integrate iob-eth core into an iob-soc system:
             make fw-build SIM=1
             make -C $(SIM_DIR) build
     ```
-4. Update FPGA Board files:
+4. Add external memories outside of system:
+    Alongside the system instantiation, include the verilog header:
+    `iob_eth_buffer_inst.vh`. Note that the verilog header also requires
+    `iob_eth.vh`.
+    For iob-soc type systems, include the headers in `system_top_core.vh`.
+5. Update FPGA Board files:
     1. Check 
     `ETHERNET/hardware/fpga/vivado/AES-KU040-DG-B/top_system_eth_template.vh`
     for details on the ports and logic to add to the top level module.
@@ -76,14 +81,14 @@ The main steps to integrate iob-eth core into an iob-soc system:
     example of constraints required for the ethernet core.
     Note: these files are for the `AES-KU040-DB-G` board. For other devices you
     need to adapt the examples.
-5. Create python scripts to communicate with the FPGA Board.
+6. Create python scripts to communicate with the FPGA Board.
     1. Check `ETHERNET/software/example_python.py` and
        `ETHERNET/software/python/` for examples.
     2. Check `ETHERNET/Makefile` for usage targets.
-6. Update embedded firmware to use the iob-eth core
+7. Update embedded firmware to use the iob-eth core
     1. Check `ETHERNET/software/example_firmware.c` for an example program with
     ethernet communication.
-7. Use wrapper script to run console and python script in parallel
+8. Use wrapper script to run console and python script in parallel
     1. Copy the wrapper script to the console location:
     ```
     cp submodules/ETHERNET/software/console/eth_console software/console/
@@ -109,7 +114,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     ```Make
 	scp $(BOARD_USER)@$(BOARD_SERVER):$(REMOTE_ROOT_DIR)/hardware/fpga/$(TOOL)/$(BOARD)/ethernet.log .
     ```
-8. Run in PC-Emul, Simulation or FPGA:
+9. Run in PC-Emul, Simulation or FPGA:
     1. Use same targets as default `iob-soc`
     2. Console output is printed to terminal, ethernet script output is printed
        to `ethernet.log`.
