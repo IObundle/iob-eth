@@ -113,7 +113,11 @@ module iob_eth
     `IOB_VAR(phy_dv_detected, 1)
     `IOB_WIRE(crc_value, `ETH_CRC_W)
     `IOB_WIRE(tx_ready_int, 1)
+    `IOB_WIRE(tx_ready_int_pll, 1)
+    `IOB_WIRE(tx_ready_int_reg, 1)
     `IOB_WIRE(rx_data_rcvd_int, 1)
+    `IOB_WIRE(rx_data_rcvd_int_phy, 1)
+    `IOB_WIRE(rx_data_rcvd_int_reg, 1)
 
     `IOB_WIRE(tx_rd_addr, 11)
     `IOB_VAR(tx_rd_data, 8)
@@ -156,6 +160,28 @@ module iob_eth
 
    assign rst_int = rst_soft | rst;
 
+    assign rx_data_rcvd_int_phy = rx_data_rcvd_int & ETH_PHY_RESETN;
+    iob_reg #(.DATA_W(1))
+    rx_data_rcvd_int_register (
+        .clk        (RX_CLK),
+        .arst       (rst),
+        .rst        (rst),
+        .en         (1'b1),
+        .data_in    (rx_data_rcvd_int_phy),
+        .data_out   (rx_data_rcvd_int_reg)
+    );
+
+    assign tx_ready_int_pll = tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED;
+    iob_reg #(.DATA_W(1))
+    tx_ready_int_register (
+        .clk        (RX_CLK),
+        .arst       (rst),
+        .rst        (rst),
+        .en         (1'b1),
+        .data_in    (tx_ready_int_pll),
+        .data_out   (tx_ready_int_reg)
+    );
+
    //
    // SYNCHRONIZERS
    //
@@ -166,8 +192,8 @@ module iob_eth
    `IOB_SYNC(clk, rst_int, 1'b0, 11, rx_wr_addr, rx_wr_addr_sync_reg0, rx_wr_addr_sync_reg1, ETH_RCV_SIZE_rdata[10:0])
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_clk_detected, phy_clk_detected_sync_reg0, phy_clk_detected_sync_reg1, phy_clk_detected_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_dv_detected, phy_dv_detected_sync_reg0, phy_dv_detected_sync_reg1, phy_dv_detected_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, 1, (rx_data_rcvd_int & ETH_PHY_RESETN), rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, 1, (tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED), tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, rx_data_rcvd_int_reg, rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, tx_ready_int_reg, tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC_rdata)
 
    // clk to RX_CLK
