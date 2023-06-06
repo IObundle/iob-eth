@@ -8,7 +8,7 @@ import setup
 name = "iob_eth"
 version = "V0.20"
 
-flows = "sim lint fpga"
+flows = "doc sim lint fpga"
 if setup.is_top_module(sys.modules[__name__]):
     setup_dir = os.path.dirname(__file__)
     build_dir = f"../{name}_{version}"
@@ -95,9 +95,5 @@ regs = [
 blocks = []
 
 # Main function to setup this core and its components
-def main():
-    setup.setup(sys.modules[__name__])
-
-
 if __name__ == "__main__":
-    main()
+    setup.setup(sys.modules[__name__], no_overlap=True)
