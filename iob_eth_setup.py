@@ -8,7 +8,7 @@ import setup
 name = "iob_eth"
 version = "V0.20"
 
-flows = "sim lint fpga"
+flows = "doc sim lint fpga"
 if setup.is_top_module(sys.modules[__name__]):
     setup_dir = os.path.dirname(__file__)
     build_dir = f"../{name}_{version}"
@@ -38,10 +38,26 @@ confs = [
     {
         "name": "ADDR_W",
         "type": "P",
-        "val": "`IOB_UART_SWREG_ADDR_W",
+        "val": "`IOB_ETH_SWREG_ADDR_W",
         "min": "NA",
         "max": "NA",
         "descr": "Address bus width",
+    },
+    {
+        "name": "ETH_MAC_ADDR",
+        "type": "P",
+        "val": "`ETH_MAC_ADDR",
+        "min": "NA",
+        "max": "NA",
+        "descr": "Instance MAC address",
+    },
+    {
+        "name": "PHY_RST_CNT",
+        "type": "P",
+        "val": "20'hFFFFF",
+        "min": "NA",
+        "max": "NA",
+        "descr": "Reset counter value",
     },
 ]
 
@@ -95,9 +111,5 @@ regs = [
 blocks = []
 
 # Main function to setup this core and its components
-def main():
-    setup.setup(sys.modules[__name__])
-
-
 if __name__ == "__main__":
-    main()
+    setup.setup(sys.modules[__name__], no_overlap=True)
