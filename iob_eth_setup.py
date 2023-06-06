@@ -102,26 +102,7 @@ regs = [
                 "addr": 0,
                 "log2n_items": 0,
                 "autologic": True,
-                "descr": """Mode Register\n
-                            Bit Description\n
-                            31-17: Reserved\n
-                            16: RECSMALL - Receive Small Packets. 0 = Packets smaller than MINFL are ignored; 1 = Packets smaller than MINFL are accepted.\n
-                            15: PAD - Padding enabled. 0 = do not add pads to short frames; 1 = add pads to short frames (until the minimum frame length is equal to MINFL).\n
-                            14: HUGEN = Huge Packets Enable. 0 = the maximum frame length is MAXFL. All Additional bytes are discarded; 1 = Frames up 64KB are transmitted.\n
-                            13: CRCEN - CRC Enable. 0 = Tx MAC does not append the CRC (passed frames already contain the CRC; 1 = Tx MAC appends the CRC to every frame.\n
-                            12: DLYCRCEN - Delayed CRC Enabled. 0 = Normal operation (CRC calculation starts immediately after the SFD); 1 = CRC calculation starts 4 bytes after the SFD.\n
-                            11: Reserved\n
-                            10: FULLD - Full Duplex. 0 = Half duplex mode; 1 = Full duplex mode.\n
-                            9: EXDFREN - Excess Defer Enabled. 0 = When the excessive deferral limit is reached, a packet is aborted; 1 = MAC waits for the carrier indefinitely.\n
-                            8: NOBCKOF - No Backoff. 0 = Normal operation (a binary exponential backoff algorithm is used); 1 = Tx MAC starts retransmitting immediately after the collision.\n
-                            7: LOOPBCK - Loop Back. 0 = Normal operation; 1 = Tx is looped back to the RX.\n
-                            6: IFG - Interframe Gap for Incoming frames. 0 = Normal operation (minimum IFG is required for a frame to be accepted; 1 = All frames are accepted regardless to the IFG.\n
-                            5: PRO - Promiscuous. 0 = Check the destination address of the incoming frames; 1 = Receive the frame regardless of its address.\n
-                            4: IAM - Individual Address Mode. 0 = Normal operation (physical address is checked when the frame is received); 1 = The individual hash table is used to check all individual addresses received.\n
-                            3: BRO - Broadcast Address. 0 = Receive all frames containing the breadcast address; 1 = Reject all frames containing the broadcast address unless the PRO bit=1.\n
-                            2: NOPRE - No Preamble. 0 = Normal operation (7-byte preamble); 1 = No preamble is sent.\n
-                            1: TXEN - Transmit Enable. 0 = Transmit is disabled; 1 = Transmit is enabled. If the value, written to the TX_BD_NUM register, is equal to 0x0 (zero buffer descriptors are used), then the transmitter is automatically disabled regardless of the TXEN bit.\n
-                            0: RXEN - Receive Enable. 0 = Transmit is disabled; 1 = Transmit is enabled. If the value, written to the TX_BD_NUM register, is equal to 0x80 (all buffer descriptors are used for transmit buffer descriptors, so there is no receive BD), then the receiver is automatically disabled regardless of the RXEN bit.\n""",
+                "descr": "Mode Register",
             },
             {
                 "name": "INT_SOURCE",
