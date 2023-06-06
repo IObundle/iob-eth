@@ -38,10 +38,26 @@ confs = [
     {
         "name": "ADDR_W",
         "type": "P",
-        "val": "`IOB_UART_SWREG_ADDR_W",
+        "val": "`IOB_ETH_SWREG_ADDR_W",
         "min": "NA",
         "max": "NA",
         "descr": "Address bus width",
+    },
+    {
+        "name": "ETH_MAC_ADDR",
+        "type": "P",
+        "val": "`ETH_MAC_ADDR",
+        "min": "NA",
+        "max": "NA",
+        "descr": "Instance MAC address",
+    },
+    {
+        "name": "PHY_RST_CNT",
+        "type": "P",
+        "val": "20'hFFFFF",
+        "min": "NA",
+        "max": "NA",
+        "descr": "Reset counter value",
     },
 ]
 
