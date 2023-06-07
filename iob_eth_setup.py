@@ -65,7 +65,7 @@ ios = [
     {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
     {
         "name": "general",
-        "descr": "GENERAL INTERFACE SIGNALS",
+        "descr": "General Interface Signals",
         "ports": [
             {
                 "name": "clk_i",
@@ -83,7 +83,85 @@ ios = [
                 "name": "cke_i",
                 "type": "I",
                 "n_bits": "1",
-                "descr": "System reset, asynchronous and active high",
+                "descr": "System clock enable signal",
+            },
+        ],
+    },
+    {
+        "name": "phy",
+        "descr": "PHY Interface Ports",
+        "ports": [
+            {
+                "name": "MTxClk",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Transmit Nibble or Symbol Clock. The PHY provides the MTxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the transfer of MTxD[3:0], MtxEn, and MTxErr.",
+            },
+            {
+                "name": "MTxD",
+                "type": "O",
+                "n_bits": "4",
+                "descr": "Transmit Data Nibble. Signals are the transmit data nibbles. They are synchronized to the rising edge of MTxClk. When MTxEn is asserted, PHY accepts the MTxD.",
+            },
+            {
+                "name": "MTxEn",
+                "type": "O",
+                "n_bits": "1",
+                "descr": "Transmit Enable. When asserted, this signal indicates to the PHY that the data MTxD[3:0] is valid and the transmission can start. The transmission starts with the first nibble of the preamble. The signal remains asserted until all nibbles to be transmitted are presented to the PHY. It is deasserted prior to the first MTxClk, following the final nibble of a frame.",
+            },
+            {
+                "name": "MTxErr",
+                "type": "O",
+                "n_bits": "1",
+                "descr": "Transmit Coding Error. When asserted for one MTxClk clock period while MTxEn is also asserted, this signal causes the PHY to transmit one or more symbols that are not part of the valid data or delimiter set somewhere in the frame being transmitted to indicate that there has been a transmit coding error.",
+            },
+            {
+                "name": "MRxClk",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Receive Nibble or Symbol Clock. The PHY provides the MRxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the reception of MRxD[3:0], MRxDV, and MRxErr.",
+            },
+            {
+                "name": "MRxDv",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Receive Data Valid. The PHY asserts this signal to indicate to the Rx MAC that it is presenting the valid nibbles on the MRxD[3:0] signals. The signal is asserted synchronously to the MRxClk. MRxDV is asserted from the first recovered nibble of the frame to the final recovered nibble. It is then deasserted prior to the first MRxClk that follows the final nibble.",
+            },
+            {
+                "name": "MRxD",
+                "type": "I",
+                "n_bits": "4",
+                "descr": "Receive Data Nibble. These signals are the receive data nibble. They are synchronized to the rising edge of MRxClk. When MRxDV is asserted, the PHY sends a data nibble to the Rx MAC. For a correctly interpreted frame, seven bytes of a preamble and a completely formed SFD must be passed across the interface.",
+            },
+            {
+                "name": "MRxErr",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Receive Error. The PHY asserts this signal to indicate to the Rx MAC that a media error was detected during the transmission of the current frame. MRxErr is synchronous to the MRxClk and is asserted for one or more MRxClk clock periods and then deasserted.",
+            },
+            {
+                "name": "MColl",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Collision Detected. The PHY asynchronously asserts the collision signal MColl after the collision has been detected on the media. When deasserted, no collision is detected on the media.",
+            },
+            {
+                "name": "MCrS",
+                "type": "I",
+                "n_bits": "1",
+                "descr": "Carrier Sense. The PHY asynchronously asserts the carrier sense MCrS signal after the medium is detected in a non-idle state. When deasserted, this signal indicates that the media is in an idle state (and the transmission can start).",
+            },
+            {
+                "name": "MDC",
+                "type": "O",
+                "n_bits": "1",
+                "descr": "Management Data Clock. This is a clock for the MDIO serial data channel.",
+            },
+            {
+                "name": "MDIO",
+                "type": "IO",
+                "n_bits": "1",
+                "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
             },
         ],
     },
