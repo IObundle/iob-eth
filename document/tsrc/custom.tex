@@ -383,19 +383,288 @@ This section presents each software register in detail.
     \rowcolor{iob-green}
     {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
 
+    31-3   & RW  & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    2  & RW  & TXFLOW - Transmit Flow Control
+
+                0 = PAUSE control frames are blocked. 
+
+                1 = PAUSE control frames are allowed to be sent. This bit
+                enables the TXC bit in the INT\_SOURCE register.\\ \hline
+    1  & RW  & RXFLOW - Receive Flow Control
+
+                0 = Received PAUSE control frames are ignored.
+
+                1 = The transmit function (Tx MAC) is blocked when a PAUSE
+                control frame is received. This bit enables the RXC bit in the
+                INT\_SOURCE register.\\ \hline
+    \rowcolor{iob-blue}
+    0  & RW  & PASSALL - Pass All Receive Frames
+
+                0 = Control frames are not passed to the host. RXFLOW must be
+                set to 1 in order to use PAUSE control frames.
+
+                1 = All received frames are passed to the host.\\ \hline
+  \end{tabularx}
+    \caption{CTRLMODER (Control Module Mode Register)}
+  \label{swreg_details:ctrlmoder}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf PASSALL \#} & {\bf RXFLOW} & {\bf Description} \\ \hline
+
+    0   & 0 &   When a PAUSE control frame is received, nothing happens. The
+                control frame is not stored to the memory.\\ \hline
+    \rowcolor{iob-blue}
+    0   & 1 &   When a PAUSE control frame is received, RXC interrupt is set
+                and pause timer is updated. The control frame is not stored to
+                the memory.\\ \hline
+    1   & 0 &   When a PAUSE control frame is received, it is stored to the
+                memory as a normal data frame. RXB interrupt is set (if the
+                related buffer descriptor has an IRQ bit set to 1). RXC
+                interrupt is not set and pause timer is not updated.\\ \hline
+    \rowcolor{iob-blue}
+    1   & 1 &   When a PAUSE control frame is received, RXC interrupt is set
+                and pause timer is updated. Besides that the control frame is
+                also stored to the memory as a normal data frame.\\ \hline
+  \end{tabularx}
+    \caption{PASSALL and RXFLOW Operation}
+  \label{swreg_details:passall_rxflow}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-9   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    8      & RW & MIINOPRE - No Preamble
+
+                0 = 32-bit premable sent
+
+                1 = No preamble sent\\ \hline
+    7-0      & RW &   CLKDIV - Clock Divider
+
+                The field is a host clock divider factor. The host clock can be
+                divided by an even number, greater then 1. The default value is
+                0x64 (100).\\ \hline
+  \end{tabularx}
+    \caption{MIIMODER (MII Mode Register)}
+  \label{swreg_details:miimoder}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-3   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    2      & RW & WCTRLDATA - Write Control Data \\ \hline
+    1      & RW & RSTAT - Read Status \\ \hline
+    \rowcolor{iob-blue}
+    0      & RW & SCANSTAT - Scan Status \\ \hline
+  \end{tabularx}
+    \caption{MIICOMMAND (MII Command Register)}
+  \label{swreg_details:miicommand}
+\end{table}
+
+\textbf{Note: While one operation is in progress, BUSY signal (MIISTATUS
+register is set. Next operation can be started after the previous one is
+finished (and BUSY signal cleared to zero).}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-13   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    12-8    & RW & RGAD - Register Address (within the PHY selected by the
+                        FIAD[4:0]) \\ \hline
+    7-5     & RW & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    4-0     & RW & FIAD - PHY Address \\ \hline
+  \end{tabularx}
+    \caption{MIIADDRESS (MII Address Register)}
+  \label{swreg_details:miiaddress}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-16   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+      15-0    & RW &  CTRLDATA - Control Data (data to be written to the PHY)
+                    \\ \hline
+  \end{tabularx}
+    \caption{MIITX\_DATA (MII Transmit Data)}
+  \label{swreg_details:miitx_data}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-16   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    15-0    & R &  PRSD - Received Data (data to be read from PHY) \\ \hline
+  \end{tabularx}
+    \caption{MIIRX\_DATA (MII Receive Data)}
+  \label{swreg_details:miirx_data}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-3   &   & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    2      & R & NVALID - Invalid
+
+                0 = The data in the MSTATUS register is valid.
+
+                1 = The data in the MSTATUS register is invalid. 
+
+                This bit is only valid when the scan status operation is
+                active.\\ \hline
+    1      & R & BUSY
+
+                0 = The MII is ready.
+
+                1 = The MII is bysy (operation in progress). \\ \hline
+    \rowcolor{iob-blue}
+    0      & R & LINKFAIL
+
+                0 = The link is OK.
+
+                1 = The link failed. 
+
+                The link fail condition occurred (now the link might be OK).
+                Another status read gets a new status.\\ \hline
+  \end{tabularx}
+    \caption{MIISTATUS (MII Status Register)}
+  \label{swreg_details:miistatus}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-24   & RW  & Byte 2 of the Ethernet MAC address (individual address) \\
+                    \hline
+    \rowcolor{iob-blue}
+    23-16   & RW  & Byte 3 of the Ethernet MAC address (individual address) \\
+                    \hline
+    15-8    & RW  & Byte 4 of the Ethernet MAC address (individual address) \\
+                    \hline
+    \rowcolor{iob-blue}
+    7-0     & RW  & Byte 5 of the Ethernet MAC address (individual address) \\
+                    \hline
+  \end{tabularx}
+    \caption{MAC\_ADDR0 (MAC Address Register 0)}
+  \label{swreg_details:mac_addr0}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-16   & RW  & Reserved \\ \hline
+    \rowcolor{iob-blue}
+    15-8    & RW  & Byte 0 of the Ethernet MAC address (individual address) \\
+                    \hline
+    7-0     & RW  & Byte 1 of the Ethernet MAC address (individual address) \\
+                    \hline
+  \end{tabularx}
+    \caption{MAC\_ADDR1 (MAC Address Register 1)}
+  \label{swreg_details:mac_addr1}
+\end{table}
+
+Note: When an address is transmitted, byte 0 is sent first and byte 5 last.
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-0   & RW  & Hash0 value \\ \hline
+  \end{tabularx}
+    \caption{HASH0 (HASH Register 0)}
+  \label{swreg_details:hash0}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    31-0   & RW  & Hash1 value \\ \hline
+  \end{tabularx}
+    \caption{HASH1 (HASH Register 1)}
+  \label{swreg_details:hash1}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
     31-17   &   & Reserved \\ \hline
     \rowcolor{iob-blue}
-    16      & RW & RECSMALL - Receive Small Packets. 
+    16      & RW & TXPAUSERQ - Tx Pause Request
 
-                0 = Packets smaller than MINFL are ignored; 
+                Writing 1 to this bit starts sending control frame procedure.
+                Bit is automatically cleared to zero. \\ \hline
+    15-0    & RW & TXPAUSETV - Tx Pause Timer Value
 
-                1 = Packets smaller than MINFL are accepted. \\ \hline
-    15      & RW &   PAD - Padding enabled. 
-
-                0 = do not add pads to short frames; 
-
-                1 = add pads to short frames (until the minimum frame length is equal to MINFL). \\ \hline
+                 The value that is send in the pause control frame.\\ \hline
   \end{tabularx}
-    \caption{MODER (Mode Register)}
-  \label{swreg_details:moder}
+    \caption{TXCTRL (Tx Control Register)}
+  \label{swreg_details:txctrl}
 \end{table}
