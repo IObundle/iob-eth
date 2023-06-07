@@ -668,3 +668,215 @@ Note: When an address is transmitted, byte 0 is sent first and byte 5 last.
     \caption{TXCTRL (Tx Control Register)}
   \label{swreg_details:txctrl}
 \end{table}
+
+\section{Buffer Descriptors}
+\label{sec:buffer_descriptors}
+The buffer descriptors are 64 bits long. The first 32 bits are reserved for
+length and status while the last 32 bits contain the pointer to the associated
+buffer (where data is stored). The Ethernet MAC core has an internal RAM that
+can store up to 128 BDs (for both Rx and Tx). 
+
+The internal memory saves all descriptors at addresses from 0x400 to 0x7ff (128
+64bit descriptors). The transmit descriptors are located between the start
+address (0x400) and the address that equals the value written in the
+TX\_BD\_NUM register (page 14) multiplied by 8. This register holds the number
+of the used Tx buffer descriptors. The receive descriptors are located between
+the start address (0x400), plus the address number written in the TX\_BD\_NUM
+multiplied by 8, and the descriptor end address (0x7ff). The transmit and
+receive status of the packet is written to the associated buffer descriptor
+once its transmission/reception is finished.
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    63-32   & RW  & TXPNT - Transmit Pointer
+
+                This is the buffer pointer when the associated frame is
+                stored.\\ \hline
+    \rowcolor{iob-blue}
+    31-16   & RW & LEN - Length
+
+                 Number of bytes associated with the BD to be transmitted.\\
+                 \hline
+    15      & RW & RD - Tx BD Ready
+
+                0 = The buffer associated with this buffer descriptor is not
+                ready, and you are free to manipulate it. After the data from
+                the associated buffer has been transmitted or after an error
+                condition occurred, this bit is cleared to 0.
+
+                1 = The data buffer is ready for transmission or is currently
+                being transmitted. You are not allowed to manipulate this
+                descriptor once this bit is set. \\ \hline
+    \rowcolor{iob-blue}
+    14      & RW & IRQ - Interrupt Request Enable
+
+                0 = No interrupt is generated after the transmission.
+
+                1 = When data associated with this buffer descriptor is sent, a
+                TXB or TXE interrupt will be asserted (INT\_SOURCE (Interrupt
+                Source Register) for more details).\\ \hline
+    13      & RW & WR - Wrap
+
+                0 = This buffer descriptor is not the last descriptor in the
+                buffer descriptor table.
+
+                1 = This buffer descriptor is the last descriptor in the buffer
+                descriptor table. After this buffer descriptor was used, the
+                first buffer descriptor in the table will be used again. \\
+                \hline
+    \rowcolor{iob-blue}
+    12      & RW & PAD - Pad Enable
+
+                0 = No pads will be add at the end of short packets.
+
+                1 = Pads will be added to the end of short packets.\\ \hline
+    11      & RW & CRC - CRC Enable
+
+                0 = CRC won't be added at the end of the packet.
+
+                1 = CRC will be added at the end of the packet.\\ \hline
+    \rowcolor{iob-blue}
+    10-9    & RW & Reserved \\ \hline
+    8       & RW & UR - Underrun
+
+                Underrun occured while sending this buffer.\\ \hline
+    \rowcolor{iob-blue}
+    7-4     & RW & RTRY - Retry Count
+
+                This bit indicates the number of retries before the frame was
+                successfully sent.\\ \hline
+    3       & RW & RL - Retransmission Limit
+
+                This bit is set when the transmitter fails. (Retry Limit + 1)
+                attempts to successfully transmit a message due to repeated
+                collisions on the medium. The Retry Limit is set in the
+                COLLCONF register.\\ \hline
+    \rowcolor{iob-blue}
+    2       & RW & LC - Late Collision
+
+                Late collision occurred while sending this buffer. The
+                transmission is stopped and this bit is written. Late collision
+                is defined in the COLLCONF register.\\ \hline
+    1       & RW & DF - Defer Indication
+
+                The frame was deferred before being sent successfully, i.e. the
+                transmitter had to wait for Carrier Sense before sending
+                because the line was busy. This is not a collision indication.
+                Collisions are indicated in RTRY.\\ \hline
+    \rowcolor{iob-blue}
+    0       & RW & CS - Carrier Sense Lost
+
+                This bit is set when Carrier Sense is lost during a frame
+                transmission. The Ethernet controller writes CS after it
+                finishes sending the buffer.\\ \hline
+  \end{tabularx}
+    \caption{Tx Buffer Descriptor}
+  \label{buffer_descriptors:tx}
+\end{table}
+
+
+
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{|l|l|X|}
+    
+    \hline
+    \rowcolor{iob-green}
+    {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline
+
+    63-32   & RW  & RXPNT - Receive Pointer
+
+                This is the pointer to the buffer storing the associated
+                frame.\\ \hline
+    \rowcolor{iob-blue}
+    31-16   & RW & LEN - Length
+
+                 Number of bytes associated with the BD to be transmitted.\\
+                 \hline
+    15      & RW & E - Empty
+
+                0 = The data buffer associated with this buffer descriptor has
+                been filled with data or has stopped because an error occurred.
+                The core can read or write this BD. As long as this bit is
+                zero, this buffer descriptor won’t be used.
+
+                1 = The data buffer is empty (and ready for receiving data) or
+                currently receiving data.\\ \hline
+    \rowcolor{iob-blue}
+    14      & RW & IRQ - Interrupt Request Enable
+
+                0 = No interrupt is generated after the reception.
+
+                1 = When data is received (or error occurs), an RXF interrupt
+                will be asserted (See INT\_SOURCE (Interrupt Source Register)
+                for more details).\\ \hline
+    13      & RW & WR - Wrap
+
+                0 = This buffer descriptor is not the last descriptor in the
+                buffer descriptor table.
+
+                1 = This buffer descriptor is the last descriptor in the buffer
+                descriptor table. After this buffer descriptor was used, the
+                first buffer descriptor in the table will be used again. \\
+                \hline
+    \rowcolor{iob-blue}
+    12-9    & RW & Reserved \\ \hline
+    8       & RW & CF - Control Frame
+
+                0 = Normal data frame received.
+
+                1 = Control frame received. \\ \hline
+    \rowcolor{iob-blue}
+    7       & RW & M - Miss
+
+                0 = The frame is received because of an address recognition
+                hit.
+
+                1 = The frame is received because of promiscuous mode.
+
+                The Ethernet controller sets M for frames that are accepted in
+                promiscuous mode but are tagged as a miss by internal address
+                recognition. Thus, in promiscuous mode, M determines whether a
+                frame is destined for this station.\\ \hline
+    6       & RW & OR - Overrun
+
+                This bit is set when a receiver overrun occurs during frame
+                reception.\\ \hline
+    \rowcolor{iob-blue}
+    5       & RW & IS - Invalid Symbol
+
+                This bit is set when the reception of an invalid symbol is
+                detected by the PHY.\\ \hline
+    4       & RW & DN - Dribble Nibble
+
+                This bit is set when a received frame cannot de divided by 8
+                (one extra nibble has been received).\\ \hline
+    \rowcolor{iob-blue}
+    3       & RW & TL - Too Long
+
+                This bit is set when a received frame is too long (bigger than
+                the value set in the PACKETLEN register.\\ \hline
+    2       & RW & SF - Short Frame
+
+                This bit is set when a frame that is smaller than the minimum
+                length is received (minimum length is set in the PACKETLEN
+                register.\\ \hline
+    \rowcolor{iob-blue}
+    1       & RW & CRC - Rx CRC Error
+
+                This bit is set when a received frame contains a CRC error.\\
+                \hline
+    0       & RW & LC - Late Collision
+
+                This bit is set when a late collision occured while receiving a
+                frame.\\ \hline
+  \end{tabularx}
+    \caption{Rx Buffer Descriptor}
+  \label{buffer_descriptors:rx}
+\end{table}
