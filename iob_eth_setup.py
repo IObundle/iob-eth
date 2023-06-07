@@ -63,6 +63,7 @@ confs = [
 
 ios = [
     {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
+    {"name": "iob_m_port", "descr": "Native master memory interface", "ports": []},
     {
         "name": "general",
         "descr": "General Interface Signals",
@@ -84,6 +85,12 @@ ios = [
                 "type": "I",
                 "n_bits": "1",
                 "descr": "System clock enable signal",
+            },
+            {
+                "name": "inta_o",
+                "type": "O",
+                "n_bits": "1",
+                "descr": "Interrupt Output A",
             },
         ],
     },
