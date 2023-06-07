@@ -63,7 +63,7 @@ confs = [
 
 ios = [
     {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
-    {"name": "axi_m_port", "descr": "AXI4 Master memory interface", "ports": []},
+    {"name": "iob_m_port", "descr": "Native master memory interface", "ports": []},
     {
         "name": "general",
         "descr": "General Interface Signals",
