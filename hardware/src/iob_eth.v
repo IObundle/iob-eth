@@ -87,7 +87,11 @@ module iob_eth # (
     `IOB_VAR(phy_dv_detected, 1)
     `IOB_WIRE(crc_value, `ETH_CRC_W)
     `IOB_WIRE(tx_ready_int, 1)
+    `IOB_WIRE(tx_ready_int_pll, 1)
+    `IOB_WIRE(tx_ready_int_reg, 1)
     `IOB_WIRE(rx_data_rcvd_int, 1)
+    `IOB_WIRE(rx_data_rcvd_int_phy, 1)
+    `IOB_WIRE(rx_data_rcvd_int_reg, 1)
 
     `IOB_WIRE(tx_rd_addr, 11)
     `IOB_VAR(tx_rd_data, 8)
@@ -130,6 +134,28 @@ module iob_eth # (
 
    assign rst_int = rst_soft | rst;
 
+    assign rx_data_rcvd_int_phy = rx_data_rcvd_int & ETH_PHY_RESETN;
+    iob_reg #(.DATA_W(1))
+    rx_data_rcvd_int_register (
+        .clk        (RX_CLK),
+        .arst       (rst),
+        .rst        (rst),
+        .en         (1'b1),
+        .data_in    (rx_data_rcvd_int_phy),
+        .data_out   (rx_data_rcvd_int_reg)
+    );
+
+    assign tx_ready_int_pll = tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED;
+    iob_reg #(.DATA_W(1))
+    tx_ready_int_register (
+        .clk        (RX_CLK),
+        .arst       (rst),
+        .rst        (rst),
+        .en         (1'b1),
+        .data_in    (tx_ready_int_pll),
+        .data_out   (tx_ready_int_reg)
+    );
+
    //
    // SYNCHRONIZERS
    //
@@ -140,43 +166,32 @@ module iob_eth # (
    `IOB_SYNC(clk, rst_int, 1'b0, 11, rx_wr_addr, rx_wr_addr_sync_reg0, rx_wr_addr_sync_reg1, ETH_RCV_SIZE_rdata[10:0])
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_clk_detected, phy_clk_detected_sync_reg0, phy_clk_detected_sync_reg1, phy_clk_detected_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, 1, phy_dv_detected, phy_dv_detected_sync_reg0, phy_dv_detected_sync_reg1, phy_dv_detected_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, 1, (rx_data_rcvd_int & ETH_PHY_RESETN), rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
-   `IOB_SYNC(clk, rst_int, 1'b0, 1, (tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED), tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, rx_data_rcvd_int_reg, rx_data_rcvd_sync_reg0, rx_data_rcvd_sync_reg1, rx_data_rcvd_sync)
+   `IOB_SYNC(clk, rst_int, 1'b0, 1, tx_ready_int_reg, tx_ready_sync_reg0, tx_ready_sync_reg1, tx_ready_sync)
    `IOB_SYNC(clk, rst_int, 1'b0, `ETH_CRC_W, crc_value, crc_value_sync_reg0, crc_value_sync_reg1, ETH_CRC_rdata)
 
    // clk to RX_CLK
-   `IOB_VAR(send, 1)
+   `IOB_WIRE(send, 1)
    `IOB_F2S_SYNC(TX_CLK, ETH_SEND, send_sync, send)
-   `IOB_VAR(rcv_ack, 1)
+   `IOB_WIRE(rcv_ack, 1)
    `IOB_F2S_SYNC(RX_CLK, ETH_RCVACK, rck_ack_sync, rcv_ack)
 
    //
    // TX and RX BUFFERS
    //
-
    `IOB_WIRE(tx_rd_data_int, 32)
-   iob_ram_tdp_be #(
-                       .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
-                       )
-   tx_buffer
-   (
-    // Front-End (written by host)
-      .clkA(clk),
-      .enA(|ETH_DATA_WR_wstrb),
-      .weA(ETH_DATA_WR_wstrb),
-      .addrA(ETH_DATA_WR_addr),
-      .dinA(ETH_DATA_WR_wdata),
-      .doutA(),
 
-    // Back-End (read by core)
-      .clkB(TX_CLK),
-      .enB(1'b1),
-      .weB(4'b0),
-      .addrB(tx_rd_addr[10:2]),
-      .dinB(32'b0),
-      .doutB(tx_rd_data_int)
-   );
+    // TX Buffer Logic
+    // TX Front-End
+    assign iob_eth_tx_buffer_enA = |ETH_DATA_WR_wstrb;
+    assign iob_eth_tx_buffer_weA = ETH_DATA_WR_wstrb;
+    assign iob_eth_tx_buffer_addrA = ETH_DATA_WR_addr;
+    assign iob_eth_tx_buffer_dinA = ETH_DATA_WR_wdata;
+
+    // TX Back-End
+    assign iob_eth_tx_buffer_addrB = tx_rd_addr[10:2];
+    assign tx_rd_data_int = iob_eth_tx_buffer_doutB;
+
    `IOB_WIRE(tx_rd_addr_reg, 2)
     iob_reg #(2) tx_rd_addr_r (TX_CLK, 1'b0, 1'b0, 1'b1, tx_rd_addr[1:0], tx_rd_addr_reg);
    // choose byte from 4 bytes word
@@ -191,28 +206,19 @@ module iob_eth # (
 
    `IOB_WIRE(rx_wr_wstrb_int, 4)
    `IOB_WIRE(rx_wr_data_int, 32)
-   iob_ram_tdp_be #(
-                       .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
-                       )
-   rx_buffer
-   (
-     // Front-End (written by core)
-     .clkA(RX_CLK),
-     .enA(rx_wr),
-     .weA(rx_wr_wstrb_int),
-     .addrA(rx_wr_addr[10:2]),
-     .dinA(rx_wr_data_int),
-     .doutA(),
 
-     // Back-End (read by host)
-     .clkB(clk),
-     .enB(ETH_DATA_RD_ren),
-     .weB(4'b0),
-     .addrB(ETH_DATA_RD_addr),
-     .dinB(32'b0),
-     .doutB(ETH_DATA_RD_rdata)
-   );
+    // RX Buffer Logic
+    // RX Front-End
+    assign iob_eth_rx_buffer_enA = rx_wr;
+    assign iob_eth_rx_buffer_weA = rx_wr_wstrb_int;
+    assign iob_eth_rx_buffer_addrA = rx_wr_addr[10:2];
+    assign iob_eth_rx_buffer_dinA = rx_wr_data_int;
+
+    // RX Back-End
+    assign iob_eth_rx_buffer_enB = ETH_DATA_RD_ren;
+    assign iob_eth_rx_buffer_addrB = ETH_DATA_RD_addr;
+    assign ETH_DATA_RD_rdata = iob_eth_rx_buffer_doutB;
+
    `IOB_WIRE2WIRE( rx_wr_data << (8*rx_wr_addr[1:0]), rx_wr_data_int)
    `IOB_WIRE2WIRE( rx_wr << rx_wr_addr[1:0], rx_wr_wstrb_int)
 
