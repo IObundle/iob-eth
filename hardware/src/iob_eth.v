@@ -9,16 +9,16 @@
 */
 
 module iob_eth # (
-     `include "iob_eth_params.vh"
+     `include "iob_eth_params.vs"
    ) (
-     `include "iob_eth_io.vh"
+     `include "iob_eth_io.vs"
    );
 
     //BLOCK Register File & Configuration control and status register file.
-    `include "iob_eth_swreg_gen.vh"
+    `include "iob_eth_swreg_gen.vs"
 
    //BLOCK Register File & Configuration control and status register file.
-   `include "iob_eth_swreg_gen.vh"
+   `include "iob_eth_swreg_gen.vs"
 
    //
    // SWRegs
