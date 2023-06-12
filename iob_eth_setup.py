@@ -393,7 +393,104 @@ regs = [
     }
 ]
 
-blocks = []
+blocks = [
+    {
+        "name": "host_if",
+        "descr": "Host Interface",
+        "blocks": [
+            {
+                "name": "IFC+CSR",
+                "descr": "Interface Controller (IFC), and Control and Status Registers (CSR)",
+            },
+            {
+                "name": "Buffer Descriptors",
+                "descr": "Internal memory for Buffer Descriptors",
+            },
+            {
+                "name": "TX Buffer",
+                "descr": "Internal storage for immediate frame transfer",
+            },
+            {
+                "name": "RX Buffer",
+                "descr": "Internal storage for immediate frame reception",
+            },
+            {
+                "name": "DMA",
+                "descr": "Direct Memory Access module. Writes received frames to memory and reads frames for transfer.",
+            },
+        ],
+    },
+    {
+        "name": "mii_management",
+        "descr": "MII Management module",
+        "blocks": [
+            {
+                "name": "Clock generator",
+                "descr": "Divides system clock into slower clock for PHY interface",
+            },
+            {
+                "name": "Operation Controller",
+                "descr": "Control MII read and write operations",
+            },
+            {
+                "name": "Shift Registers",
+                "descr": "Enable serial (MII side) to parallel (host side) communication",
+            },
+            {
+                "name": "Output Control",
+                "descr": "Control MDIO signal. Can be either input or output",
+            },
+        ],
+    },
+    {
+        "name": "tx_module",
+        "descr": "Frame transfer module",
+        "blocks": [
+            {
+                "name": "Status signals",
+                "descr": "Read and write transfer related signals from CSR and Buffer Descriptors",
+            },
+            {
+                "name": "Frame Pad",
+                "descr": "Add padding to outgoing frames",
+            },
+            {
+                "name": "CRC",
+                "descr": "Calculate Cyclic Redundancy Check (CRC) for outgoing frame",
+            },
+            {
+                "name": "Data nibble",
+                "descr": "Convert data bytes to nibbles",
+            },
+            {
+                "name": "PHY Signals",
+                "descr": "Output PHY TX signals",
+            },
+        ],
+    },
+    {
+        "name": "rx_module",
+        "descr": "Frame reception module",
+        "blocks": [
+            {
+                "name": "Status signals",
+                "descr": "Read and write reception related signals from CSR and Buffer Descriptors",
+            },
+            {
+                "name": "CRC",
+                "descr": "Verify Cyclic Redundancy Check (CRC) for incoming frame",
+            },
+            {
+                "name": "Preamble removal",
+                "descr": "Detect and remove incoming frame preamble",
+            },
+            {
+                "name": "Data Assembly",
+                "descr": "Convert PHY RX signal into data bytes",
+            },
+        ],
+    },
+]
 
 # Main function to setup this core and its components
 if __name__ == "__main__":
