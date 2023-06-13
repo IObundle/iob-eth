@@ -424,4 +424,101 @@ class iob_eth(iob_module):
 
     @classmethod
     def _setup_block_groups(cls):
-        cls.block_groups += []
+        cls.block_groups += [
+            iob_block_group(
+                name = "host_if",
+                description = "Host Interface",
+                "blocks": [
+                    iob_verilog_instance(
+                        name = "IFC+CSR",
+                        description = "Interface Controller (IFC), and Control and Status Registers (CSR)",
+                    ),
+                    iob_verilog_instance(
+                        name = "Buffer Descriptors",
+                        description = "Internal memory for Buffer Descriptors",
+                    ),
+                    iob_verilog_instance(
+                        name = "TX Buffer",
+                        description = "Internal storage for immediate frame transfer",
+                    ),
+                    iob_verilog_instance(
+                        name = "RX Buffer",
+                        description = "Internal storage for immediate frame reception",
+                    ),
+                    iob_verilog_instance(
+                        name = "DMA",
+                        description = "Direct Memory Access module. Writes received frames to memory and reads frames for transfer.",
+                    ),
+                ],
+            ),
+            iob_block_group(
+                name = "mii_management",
+                description = "MII Management module",
+                "blocks": [
+                    iob_verilog_instance(
+                        name = "Clock generator",
+                        description = "Divides system clock into slower clock for PHY interface",
+                    ),
+                    iob_verilog_instance(
+                        name = "Operation Controller",
+                        description = "Control MII read and write operations",
+                    ),
+                    iob_verilog_instance(
+                        name = "Shift Registers",
+                        description = "Enable serial (MII side) to parallel (host side) communication",
+                    ),
+                    iob_verilog_instance(
+                        name = "Output Control",
+                        description = "Control MDIO signal. Can be either input or output",
+                    ),
+                ],
+            ),
+            iob_block_group(
+                name = "tx_module",
+                description = "Frame transfer module",
+                "blocks": [
+                    iob_verilog_instance(
+                        name = "Status signals",
+                        description = "Read and write transfer related signals from CSR and Buffer Descriptors",
+                    ),
+                    iob_verilog_instance(
+                        name = "Frame Pad",
+                        description = "Add padding to outgoing frames",
+                    ),
+                    iob_verilog_instance(
+                        name = "CRC",
+                        description = "Calculate Cyclic Redundancy Check (CRC) for outgoing frame",
+                    ),
+                    iob_verilog_instance(
+                        name = "Data nibble",
+                        description = "Convert data bytes to nibbles",
+                    ),
+                    iob_verilog_instance(
+                        name = "PHY Signals",
+                        description = "Output PHY TX signals",
+                    ),
+                ],
+            ),
+            iob_block_group(
+                name = "rx_module",
+                description = "Frame reception module",
+                "blocks": [
+                    iob_verilog_instance(
+                        name = "Status signals",
+                        description = "Read and write reception related signals from CSR and Buffer Descriptors",
+                    ),
+                    iob_verilog_instance(
+                        name = "CRC",
+                        description = "Verify Cyclic Redundancy Check (CRC) for incoming frame",
+                    ),
+                    iob_verilog_instance(
+                        name = "Preamble removal",
+                        description = "Detect and remove incoming frame preamble",
+                    ),
+                    iob_verilog_instance(
+                        name = "Data Assembly",
+                        description = "Convert PHY RX signal into data bytes",
+                    ),
+                ],
+            ),
+        ]
