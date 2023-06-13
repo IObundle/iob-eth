@@ -428,7 +428,7 @@ class iob_eth(iob_module):
             iob_block_group(
                 name = "host_if",
                 description = "Host Interface",
-                "blocks": [
+                blocks = [
                     iob_verilog_instance(
                         name = "IFC+CSR",
                         description = "Interface Controller (IFC), and Control and Status Registers (CSR)",
@@ -454,7 +454,7 @@ class iob_eth(iob_module):
             iob_block_group(
                 name = "mii_management",
                 description = "MII Management module",
-                "blocks": [
+                blocks = [
                     iob_verilog_instance(
                         name = "Clock generator",
                         description = "Divides system clock into slower clock for PHY interface",
@@ -476,7 +476,7 @@ class iob_eth(iob_module):
             iob_block_group(
                 name = "tx_module",
                 description = "Frame transfer module",
-                "blocks": [
+                blocks = [
                     iob_verilog_instance(
                         name = "Status signals",
                         description = "Read and write transfer related signals from CSR and Buffer Descriptors",
@@ -502,7 +502,7 @@ class iob_eth(iob_module):
             iob_block_group(
                 name = "rx_module",
                 description = "Frame reception module",
-                "blocks": [
+                blocks = [
                     iob_verilog_instance(
                         name = "Status signals",
                         description = "Read and write reception related signals from CSR and Buffer Descriptors",
