@@ -8,36 +8,17 @@
  Ethernet Core
 */
 
-module iob_eth #(
-   `include "iob_eth_params.vs"
-) (
-   // CPU interface
-   `include "iob_s_if.vh"
+module iob_eth # (
+     `include "iob_eth_params.vs"
+   ) (
+     `include "iob_eth_io.vs"
+   );
 
-   `include "iob_eth_buffer_port.vh"
-
-   //START_IO_TABLE eth_phy
-   // PHY side
-   // `IOB_OUTPUT_VAR(ETH_PHY_RESETN, 1), //PHY reset
-   //
-   // // PLL
-   // `IOB_INPUT(PLL_LOCKED, 1), //PLL locked
-   //
-   // // RX
-   // `IOB_INPUT(RX_CLK, 1), //RX clock
-   // `IOB_INPUT(RX_DATA, 4), //RX data nibble
-   // `IOB_INPUT(RX_DV, 1), //RX DV signal
-   //
-   // // TX
-   // `IOB_INPUT(TX_CLK, 1), //TX clock
-   // `IOB_OUTPUT(TX_EN, 1), //TX enable
-   // `IOB_OUTPUT(TX_DATA, 4), //TX data nibble
-
-   `include "iob_gen_if.vh"
-);
+    //BLOCK Register File & Configuration control and status register file.
+    `include "iob_eth_swreg_gen.vs"
 
    //BLOCK Register File & Configuration control and status register file.
-   `include "iob_eth_swreg_gen.vh"
+   `include "iob_eth_swreg_gen.vs"
 
    //
    // SWRegs

@@ -81,7 +81,7 @@ module iob_eth_tb;
    wire [`ETH_DATA_RD_ADDR_W-1:0] iob_eth_rx_buffer_addrB;
    wire [                 32-1:0] iob_eth_rx_buffer_doutB;
 
-   `include "iob_eth_buffer_inst.vh"
+   `include "iob_eth_buffer_inst.vs"
 
    // Instantiate the Unit Under Test (UUT)
 
@@ -89,7 +89,7 @@ module iob_eth_tb;
       .clk(clk),
       .rst(rst),
 
-      `include "iob_eth_buffer_portmap.vh"
+      `include "iob_eth_buffer_portmap.vs"
 
       // CPU side
       .valid  (valid),
