@@ -11,25 +11,23 @@ from iob_reg_e import iob_reg_e
 
 
 class iob_eth(iob_module):
-    name='iob_eth'
-    version="V0.20"
-    flows="sim emb lint fpga doc"
-    setup_dir=os.path.dirname(__file__)
+    name = 'iob_eth'
+    version = "V0.20"
+    flows = "sim emb lint fpga doc"
+    setup_dir = os.path.dirname(__file__)
 
     @classmethod
-    def _specific_setup(cls):
-        # Hardware headers & modules
-        iob_module.generate("iob_s_port")
-        iob_module.generate("clk_en_rst_portmap")
-        iob_module.generate("clk_en_rst_port")
-        iob_utils.setup()
-        iob_reg.setup()
-        iob_reg_e.setup()
-
-        # Verilog modules instances
-        # TODO
-
-
+    def _create_submodules_list(cls):
+        ''' Create submodules list with dependencies of this module
+        '''
+        super()._create_submodules_list([
+            "iob_s_port",
+            "clk_en_rst_portmap",
+            "clk_en_rst_port",
+            iob_utils,
+            iob_reg,
+            iob_reg_e,
+        ])
 
     @classmethod
     def _setup_confs(cls):
