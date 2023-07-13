@@ -14,6 +14,12 @@ module iob_eth # (
      `include "iob_eth_io.vs"
    );
 
+   //Dummy iob_ready_nxt_o and iob_rvalid_nxt_o to be used in swreg (unused ports)
+   wire iob_ready_nxt_o;
+   wire iob_rvalid_nxt_o;
+
+   //TODO: Update below
+
     //BLOCK Register File & Configuration control and status register file.
     `include "iob_eth_swreg_gen.vs"
 
