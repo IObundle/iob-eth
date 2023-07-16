@@ -21,9 +21,9 @@ class iob_eth(iob_module):
         ''' Create submodules list with dependencies of this module
         '''
         super()._create_submodules_list([
-            "iob_s_port",
-            "clk_en_rst_portmap",
-            "clk_en_rst_port",
+            {"interface": "iob_s_port"},
+            {"interface": "clk_en_rst_portmap"},
+            {"interface": "clk_en_rst_port"},
             iob_utils,
             iob_reg,
             iob_reg_e,
