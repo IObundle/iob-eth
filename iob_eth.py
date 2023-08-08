@@ -8,6 +8,8 @@ from iob_module import iob_module
 from iob_utils import iob_utils
 from iob_reg import iob_reg
 from iob_reg_e import iob_reg_e
+from iob_sync import iob_sync
+from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 
 
 class iob_eth(iob_module):
@@ -27,6 +29,8 @@ class iob_eth(iob_module):
             iob_utils,
             iob_reg,
             iob_reg_e,
+            iob_sync,
+            iob_f2s_1bit_sync,
         ])
 
     @classmethod
