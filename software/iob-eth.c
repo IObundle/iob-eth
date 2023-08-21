@@ -54,7 +54,7 @@ static void print_buffer(char *buffer, int size){
         return;
     }
     int i = 0, ch = 0;
-    char HexTable[16] = "0123456789abcdef";
+    char HexTable[17] = "0123456789abcdef";
     printf("\tDEBUG: Buffer:");
     for( i=0; i<size; i++){
         ch = (int) ((unsigned char) buffer[i]);
@@ -335,7 +335,7 @@ unsigned int eth_send_file(char *data, int size) {
 }
 
 unsigned int eth_rcv_variable_file(char *data) {
-  int size = 0;
+  unsigned int size = 0;
 
   SyncAckLast();
 
