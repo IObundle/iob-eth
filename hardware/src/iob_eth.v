@@ -18,77 +18,16 @@ module iob_eth # (
    wire iob_ready_nxt_o;
    wire iob_rvalid_nxt_o;
 
-   //TODO: Update below
-
-    //BLOCK Register File & Configuration control and status register file.
-    `include "iob_eth_swreg_gen.vs"
-
    //BLOCK Register File & Configuration control and status register file.
-   `include "iob_eth_swreg_gen.vs"
+   `include "iob_eth_swreg_inst.vs"
 
    //
    // SWRegs
    //
-
-   wire ETH_SEND;
-   iob_reg #(
-      .DATA_W(1)
-   ) eth_send (
-      .clk     (clk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (ETH_SEND_en),
-      .data_in (ETH_SEND_wdata[0]),
-      .data_out(ETH_SEND)
-   );
-
-   wire ETH_RCVACK;
-   iob_reg #(
-      .DATA_W(1)
-   ) eth_rcvack (
-      .clk     (clk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (ETH_RCVACK_en),
-      .data_in (ETH_RCVACK_wdata[0]),
-      .data_out(ETH_RCVACK)
-   );
-
-   wire ETH_SOFTRST;
-   iob_reg #(
-      .DATA_W(1)
-   ) eth_softrst (
-      .clk     (clk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (ETH_SOFTRST_en),
-      .data_in (ETH_SOFTRST_wdata[0]),
-      .data_out(ETH_SOFTRST)
-   );
-
-   iob_reg #(
-      .DATA_W(32)
-   ) eth_dummy_w (
-      .clk     (clk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (ETH_DUMMY_W_en),
-      .data_in (ETH_DUMMY_W_wdata),
-      .data_out(ETH_DUMMY_R_rdata)
-   );
-
-   wire [11-1:0] ETH_TX_NBYTES;
-   iob_reg #(
-      .DATA_W (11),
-      .RST_VAL(11'd46)
-   ) eth_tx_nbytes (
-      .clk     (clk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (ETH_TX_NBYTES_en),
-      .data_in (ETH_TX_NBYTES_wdata[10:0]),
-      .data_out(ETH_TX_NBYTES)
-   );
+   // wire ETH_SEND;
+   // wire ETH_RCVACK;
+   // wire ETH_SOFTRST;
+   // wire [11-1:0] ETH_TX_NBYTES;
 
    //
    // WIRES and REGISTERS
@@ -120,7 +59,7 @@ module iob_eth # (
    wire [1-1:0] rx_data_rcvd_sync;
    wire [1-1:0] tx_ready_sync;
 
-   assign ETH_STATUS_rdata = {
+   assign MIISTATUS = {
       16'b0,
       pll_locked_sync,
       ETH_RCV_SIZE_rdata[10:0],
@@ -156,7 +95,7 @@ module iob_eth # (
    iob_reg #(
       .DATA_W(1)
    ) rx_data_rcvd_int_register (
-      .clk     (RX_CLK),
+      .clk     (MRxClk),
       .arst    (rst),
       .rst     (rst),
       .en      (1'b1),
@@ -168,7 +107,7 @@ module iob_eth # (
    iob_reg #(
       .DATA_W(1)
    ) tx_ready_int_register (
-      .clk     (RX_CLK),
+      .clk     (MRxClk),
       .arst    (rst),
       .rst     (rst),
       .en      (1'b1),
@@ -180,7 +119,7 @@ module iob_eth # (
    // SYNCHRONIZERS
    //
 
-   // RX_CLK to clk
+   // MRxClk to clk
 
    iob_sync #(
       .DATA_W(1),
@@ -246,17 +185,17 @@ module iob_eth # (
       .signal_o(ETH_CRC_rdata)
    );
 
-   // clk to RX_CLK
+   // clk to MRxClk
    wire [1-1:0] send;
    iob_f2s_1bit_sync (
-      .clk_i   (TX_CLK),
+      .clk_i   (MTxClk),
       .cke_i   (cke),
       .value_i (ETH_SEND),
       .value_o (send)
    );)
    wire [1-1:0] rcv_ack;
    iob_f2s_1bit_sync (
-      .clk_i   (RX_CLK),
+      .clk_i   (MRxClk),
       .cke_i   (cke),
       .value_i (ETH_RCVACK),
       .value_o (rcv_ack)
@@ -282,7 +221,7 @@ module iob_eth # (
    iob_reg #(
       .DATA_W(2)
    ) tx_rd_addr_r (
-      .clk_i (TX_CLK),
+      .clk_i (MTxClk),
       .arst_i(1'b0),
       .cke_i (1'b1),
       .data_i(tx_rd_addr[1:0]),
@@ -330,9 +269,9 @@ module iob_eth # (
       .send   (send),
       .addr   (tx_rd_addr),
       .data   (tx_rd_data),
-      .TX_CLK (TX_CLK),
-      .TX_EN  (TX_EN),
-      .TX_DATA(TX_DATA)
+      .TX_CLK (MTxClk),
+      .TX_EN  (MTxEn),
+      .TX_DATA(MTxD)
    );
 
 
@@ -352,9 +291,9 @@ module iob_eth # (
       .wr       (rx_wr),
       .addr     (rx_wr_addr),
       .data     (rx_wr_data),
-      .RX_CLK   (RX_CLK),
-      .RX_DATA  (RX_DATA),
-      .RX_DV    (RX_DV),
+      .RX_CLK   (MRxClk),
+      .RX_DATA  (MRxD),
+      .RX_DV    (MRxDv),
       .crc_value(crc_value)
    );
 
@@ -372,17 +311,17 @@ module iob_eth # (
       else ETH_PHY_RESETN <= 1;
 
    reg [1:0] rx_rst;
-   always @(posedge RX_CLK, negedge ETH_PHY_RESETN)
+   always @(posedge MRxClk, negedge ETH_PHY_RESETN)
       if (!ETH_PHY_RESETN) rx_rst <= 2'b11;
       else rx_rst <= {rx_rst[0], 1'b0};
 
-   always @(posedge RX_CLK, posedge rx_rst[1])
+   always @(posedge MRxClk, posedge rx_rst[1])
       if (rx_rst[1]) begin
          phy_clk_detected <= 1'b0;
          phy_dv_detected  <= 1'b0;
       end else begin
          phy_clk_detected <= 1'b1;
-         if (RX_DV) phy_dv_detected <= 1'b1;
+         if (MRxDv) phy_dv_detected <= 1'b1;
       end
 
 endmodule
