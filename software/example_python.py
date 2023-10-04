@@ -13,8 +13,13 @@ test
 
 # Import Ethernet package
 import sys
-sys.path.append('../../')
-from submodules.ETHERNET.software.python.ethBase import CreateSocket, SyncAckFirst, SyncAckLast
+
+sys.path.append("../../")
+from submodules.ETHERNET.software.python.ethBase import (
+    CreateSocket,
+    SyncAckFirst,
+    SyncAckLast,
+)
 from submodules.ETHERNET.software.python.ethRcvData import RcvFile
 from submodules.ETHERNET.software.python.ethRcvVariableData import RcvVariableFile
 from submodules.ETHERNET.software.python.ethSendData import SendFile
@@ -25,25 +30,27 @@ if __name__ == "__main__":
 
     # Check input arguments
     if len(sys.argv) != 6:
-        print(f'Usage: ./{sys.argv[0]} [RMAC_INTERFACE] [RMAC] [output.bin] [output.bin_size] [variable_output.bin]')
+        print(
+            f"Usage: ./{sys.argv[0]} [RMAC_INTERFACE] [RMAC] [output.bin] [output.bin_size] [variable_output.bin]"
+        )
         quit()
     else:
         rcv_file = sys.argv[3]
         rcv_file_size = int(sys.argv[4])
         rcv_file_var = sys.argv[5]
-        
+
     socket = CreateSocket()
 
     # Receive Data File
     print("\nReceiving data...")
     SyncAckLast(socket)
-    RcvFile(socket,rcv_file,rcv_file_size)
+    RcvFile(socket, rcv_file, rcv_file_size)
     print("done!")
 
     # Receive Variable Data File
     print("\nReceiving variable data...")
     SyncAckLast(socket)
-    RcvVariableFile(socket,rcv_file_var)
+    RcvVariableFile(socket, rcv_file_var)
     print("done!")
 
     # Send Data File
@@ -51,7 +58,7 @@ if __name__ == "__main__":
     send_file = rcv_file
     print("\nSending data...")
     SyncAckFirst(socket)
-    SendFile(socket,send_file)
+    SendFile(socket, send_file)
     print("done!")
 
     # Send Variable Data File
@@ -59,7 +66,7 @@ if __name__ == "__main__":
     send_file_var = rcv_file_var
     print("\nSending variable data...")
     SyncAckFirst(socket)
-    SendVariableFile(socket,send_file_var)
+    SendVariableFile(socket, send_file_var)
     print("done!")
 
     # Close Socket

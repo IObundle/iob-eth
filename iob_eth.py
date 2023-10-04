@@ -14,72 +14,78 @@ from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 
 
 class iob_eth(iob_module):
-    name = 'iob_eth'
+    name = "iob_eth"
     version = "V0.20"
     flows = "sim emb lint fpga doc"
     setup_dir = os.path.dirname(__file__)
 
     @classmethod
     def _create_submodules_list(cls):
-        ''' Create submodules list with dependencies of this module
-        '''
-        super()._create_submodules_list([
-            {"interface": "iob_s_port"},
-            {"interface": "iob_s_portmap"},
-            {"interface": "clk_en_rst_s_s_portmap"},
-            {"interface": "clk_en_rst_s_port"},
-            iob_utils,
-            iob_reg,
-            iob_reg_e,
-            iob_sync,
-            iob_f2s_1bit_sync,
-        ])
+        """Create submodules list with dependencies of this module"""
+        super()._create_submodules_list(
+            [
+                {"interface": "iob_s_port"},
+                {"interface": "iob_s_portmap"},
+                {"interface": "clk_en_rst_s_s_portmap"},
+                {"interface": "clk_en_rst_s_port"},
+                iob_utils,
+                iob_reg,
+                iob_reg_e,
+                iob_sync,
+                iob_f2s_1bit_sync,
+            ]
+        )
 
     @classmethod
     def _setup_confs(cls):
-        super()._setup_confs([
-            # Macros
-
-            # Parameters
-            {
-                "name": "DATA_W",
-                "type": "P",
-                "val": "32",
-                "min": "NA",
-                "max": "128",
-                "descr": "Data bus width",
-            },
-            {
-                "name": "ADDR_W",
-                "type": "P",
-                "val": "`IOB_ETH_SWREG_ADDR_W",
-                "min": "NA",
-                "max": "128",
-                "descr": "Address bus width",
-            },
-            {
-                "name": "ETH_MAC_ADDR",
-                "type": "P",
-                "val": "`ETH_MAC_ADDR",
-                "min": "NA",
-                "max": "NA",
-                "descr": "Instance MAC address",
-            },
-            {
-                "name": "PHY_RST_CNT",
-                "type": "P",
-                "val": "20'hFFFFF",
-                "min": "NA",
-                "max": "NA",
-                "descr": "Reset counter value",
-            },
-        ])
+        super()._setup_confs(
+            [
+                # Macros
+                # Parameters
+                {
+                    "name": "DATA_W",
+                    "type": "P",
+                    "val": "32",
+                    "min": "NA",
+                    "max": "128",
+                    "descr": "Data bus width",
+                },
+                {
+                    "name": "ADDR_W",
+                    "type": "P",
+                    "val": "`IOB_ETH_SWREG_ADDR_W",
+                    "min": "NA",
+                    "max": "128",
+                    "descr": "Address bus width",
+                },
+                {
+                    "name": "ETH_MAC_ADDR",
+                    "type": "P",
+                    "val": "`ETH_MAC_ADDR",
+                    "min": "NA",
+                    "max": "NA",
+                    "descr": "Instance MAC address",
+                },
+                {
+                    "name": "PHY_RST_CNT",
+                    "type": "P",
+                    "val": "20'hFFFFF",
+                    "min": "NA",
+                    "max": "NA",
+                    "descr": "Reset counter value",
+                },
+            ]
+        )
 
     @classmethod
     def _setup_ios(cls):
         cls.ios += [
             {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
-            {"name": "iob_m_port", "descr": "Native master memory interface", "ports": []},
+            {
+                "name": "iob_m_port",
+                "descr": "Native master memory interface",
+                "ports": [],
+            },
             {
                 "name": "general",
                 "descr": "General Interface Signals",

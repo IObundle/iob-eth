@@ -7,34 +7,36 @@ import time
 import sys
 import os
 
+
 def PrintBaseUsage():
     print("<usage>: python eth_comm.py <interface> <RMAC> <file path>")
 
-#Check arguments common to all scripts
+
+# Check arguments common to all scripts
 if len(sys.argv) < 4:
     PrintBaseUsage()
     sys.exit()
 
 addr = "/tmp/tmpLocalSocket"
 
-#Ethernet parameters
+# Ethernet parameters
 interface = sys.argv[1]
 # use byte arrays by default
-src_addr = bytes.fromhex(sys.argv[2])       # sender MAC address
-dst_addr = bytes.fromhex("01606e11020f")    # receiver MAC address
-eth_type = bytes.fromhex("6000")            # ethernet frame type
-ETH_P_ALL = 0x6000  
+src_addr = bytes.fromhex(sys.argv[2])  # sender MAC address
+dst_addr = bytes.fromhex("01606e11020f")  # receiver MAC address
+eth_type = bytes.fromhex("6000")  # ethernet frame type
+ETH_P_ALL = 0x6000
 
-#Frame parameters
+# Frame parameters
 ETH_NBYTES = 1500
-ETH_MINIMUM_NBYTES = (64-18)
+ETH_MINIMUM_NBYTES = 64 - 18
 
-#Frame header
+# Frame header
 ETH_HEADER = dst_addr + src_addr + eth_type
 
 TIMEOUT = 0.1
 
-#Open socket and bind
+# Open socket and bind
 def CreateSocket():
     """
     Create raw socket. If "PC" is defined in the environment, creates an AF_UNIX
@@ -58,9 +60,10 @@ def CreateSocket():
 
     return s
 
+
 def FormPacket(payload):
-    """ 
-    Generate packet from payload. Add padding to ensure minimum ethernet 
+    """
+    Generate packet from payload. Add padding to ensure minimum ethernet
     packet size.
 
     payload: byte array with payload data
@@ -69,14 +72,14 @@ def FormPacket(payload):
     """
 
     length = len(payload)
-    if(length < ETH_MINIMUM_NBYTES):
-        payload = payload + (b'\x00' * (ETH_MINIMUM_NBYTES - length))
-
+    if length < ETH_MINIMUM_NBYTES:
+        payload = payload + (b"\x00" * (ETH_MINIMUM_NBYTES - length))
 
     return ETH_HEADER + payload
 
-def SendAndAck(socket,payload):
-    """ 
+
+def SendAndAck(socket, payload):
+    """
     Send payload and receive acknowledge with same data.
 
     socket: socket for communication
@@ -100,14 +103,15 @@ def SendAndAck(socket,payload):
     socket.settimeout(prev_timeout)
 
     errors = 0
-    for sent_byte, rcv_byte in zip(payload, rcv[len(ETH_HEADER):]):
+    for sent_byte, rcv_byte in zip(payload, rcv[len(ETH_HEADER) :]):
         if sent_byte != rcv_byte:
             errors += 1
 
     return errors
 
-def RcvAndAck(socket):   
-    """ 
+
+def RcvAndAck(socket):
+    """
     Receive payload and send acknowledge with same data.
 
     socket: socket for communication
@@ -115,14 +119,15 @@ def RcvAndAck(socket):
     """
     rcv = socket.recv(4096)
 
-    payload = rcv[len(ETH_HEADER):]
+    payload = rcv[len(ETH_HEADER) :]
 
     socket.send(FormPacket(payload))
 
     return payload
 
+
 def SyncAckFirst(socket):
-    """ 
+    """
     Ping destination and wait for response at TIMEOUT intervals.
 
     socket: socket connection
@@ -132,7 +137,7 @@ def SyncAckFirst(socket):
     socket.settimeout(TIMEOUT)
 
     while True:
-        socket.send(FormPacket(bytes('', encoding='ascii')))
+        socket.send(FormPacket(bytes("", encoding="ascii")))
 
         try:
             rcv = socket.recv(4096)
@@ -141,6 +146,7 @@ def SyncAckFirst(socket):
             pass
 
     socket.settimeout(previous)
+
 
 def SyncAckLast(socket):
     """
@@ -159,12 +165,13 @@ def SyncAckLast(socket):
         except timeout:
             pass
 
-    socket.send(FormPacket(bytes('', encoding='ascii')))
+    socket.send(FormPacket(bytes("", encoding="ascii")))
 
     socket.settimeout(previous)
 
-# Print progress every so often 
-def TimedPrintProgress(current,n_frames):
+
+# Print progress every so often
+def TimedPrintProgress(current, n_frames):
     """
     Print progress.
 
@@ -175,9 +182,14 @@ def TimedPrintProgress(current,n_frames):
     TimedPrintProgress.storedMilli
     milli = int(round(time.time() * 1000))
 
-    if(milli > (TimedPrintProgress.storedMilli + 100) or current == 0 or current == n_frames):
-        print("\rProgress: %d / %d" % (current + 1,n_frames + 1))
+    if (
+        milli > (TimedPrintProgress.storedMilli + 100)
+        or current == 0
+        or current == n_frames
+    ):
+        print("\rProgress: %d / %d" % (current + 1, n_frames + 1))
         sys.stdout.flush()
         TimedPrintProgress.storedMilli = milli
+
 
 TimedPrintProgress.storedMilli = 0
