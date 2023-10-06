@@ -21,6 +21,12 @@ module iob_eth # (
    //BLOCK Register File & Configuration control and status register file.
    `include "iob_eth_swreg_inst.vs"
 
+   wire [AXI_ADDR_W-1:0] internal_axi_awaddr_o;
+   wire [AXI_ADDR_W-1:0] internal_axi_araddr_o;
+
+   assign axi_awaddr_o = internal_axi_awaddr_o + MEM_ADDR_OFFSET;
+   assign axi_araddr_o = internal_axi_araddr_o + MEM_ADDR_OFFSET;
+
    //
    // SWRegs
    //
@@ -207,12 +213,6 @@ module iob_eth # (
    wire [32-1:0] tx_rd_data_int;
 
    // TX Buffer Logic
-   // TX Front-End
-   assign iob_eth_tx_buffer_enA   = |ETH_DATA_WR_wstrb;
-   assign iob_eth_tx_buffer_weA   = ETH_DATA_WR_wstrb;
-   assign iob_eth_tx_buffer_addrA = ETH_DATA_WR_addr;
-   assign iob_eth_tx_buffer_dinA  = ETH_DATA_WR_wdata;
-
    // TX Back-End
    assign iob_eth_tx_buffer_addrB = tx_rd_addr[10:2];
    assign tx_rd_data_int          = iob_eth_tx_buffer_doutB;
@@ -246,11 +246,6 @@ module iob_eth # (
    assign iob_eth_rx_buffer_weA   = rx_wr_wstrb_int;
    assign iob_eth_rx_buffer_addrA = rx_wr_addr[10:2];
    assign iob_eth_rx_buffer_dinA  = rx_wr_data_int;
-
-   // RX Back-End
-   assign iob_eth_rx_buffer_enB   = ETH_DATA_RD_ren;
-   assign iob_eth_rx_buffer_addrB = ETH_DATA_RD_addr;
-   assign ETH_DATA_RD_rdata       = iob_eth_rx_buffer_doutB;
 
    assign rx_wr_data_int = rx_wr_data << (8 * rx_wr_addr[1:0])
    assign rx_wr_wstrb_int = rx_wr << rx_wr_addr[1:0]
@@ -323,5 +318,123 @@ module iob_eth # (
          phy_clk_detected <= 1'b1;
          if (MRxDv) phy_dv_detected <= 1'b1;
       end
+
+   // BUFFER memories
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
+                       )
+   tx_buffer
+   (
+    // Front-End (written by host)
+      .clkA(clk),
+      .enA(iob_eth_tx_buffer_enA),
+      .weA(iob_eth_tx_buffer_weA),
+      .addrA(iob_eth_tx_buffer_addrA),
+      .dinA(iob_eth_tx_buffer_dinA),
+      .doutA(),
+
+    // Back-End (read by core)
+      .clkB(MTxClk),
+      .enB(1'b1),
+      .weB(4'b0),
+      .addrB(iob_eth_tx_buffer_addrB),
+      .dinB(32'b0),
+      .doutB(iob_eth_tx_buffer_doutB)
+   );
+
+   iob_ram_tdp_be #(
+                       .DATA_W(32),
+                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
+                       )
+   rx_buffer
+   (
+     // Front-End (written by core)
+     .clkA(MRxClk),
+
+     .enA(iob_eth_rx_buffer_enA),
+     .weA(iob_eth_rx_buffer_weA),
+     .addrA(iob_eth_rx_buffer_addrA),
+     .dinA(iob_eth_rx_buffer_dinA),
+     .doutA(),
+
+     // Back-End (read by host)
+     .clkB(clk),
+     .enB(iob_eth_rx_buffer_enB),
+     .weB(4'b0),
+     .addrB(iob_eth_rx_buffer_addrB),
+     .dinB(32'b0),
+     .doutB(iob_eth_rx_buffer_doutB)
+   );
+
+   // DMA module
+  iob_eth_dma #(
+    .AXI_ADDR_W(AXI_ADDR_W),
+    .AXI_DATA_W(AXI_DATA_W),
+    .AXI_LEN_W (AXI_LEN_W),
+    .AXI_ID_W  (AXI_ID_W)
+    //.BURST_W   (BURST_W),
+    //.BUFFER_W  (BUFFER_W)
+  ) dma_inst (
+   // Configuration interface
+   // TODO
+
+   // TX Front-End
+   .eth_data_wr_wen_o(iob_eth_tx_buffer_enA), // |ETH_DATA_WR_wstrb
+   .eth_data_wr_wstrb_o(iob_eth_tx_buffer_weA),
+   .eth_data_wr_addr_o(iob_eth_tx_buffer_addrA),
+   .eth_data_wr_wdata_o(iob_eth_tx_buffer_dinA),
+
+   // RX Back-End
+   .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
+   .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
+   .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
+
+    // AXI master interface
+    // Can't use generated include, because of `internal_axi_*addr_o` signals.
+    //include "axi_m_m_portmap.vs"
+    .axi_awid_o(axi_awid_o), //Address write channel ID.
+    .axi_awaddr_o(internal_axi_awaddr_o), //Address write channel address.
+    .axi_awlen_o(axi_awlen_o), //Address write channel burst length.
+    .axi_awsize_o(axi_awsize_o), //Address write channel burst size. This signal indicates the size of each transfer in the burst.
+    .axi_awburst_o(axi_awburst_o), //Address write channel burst type.
+    .axi_awlock_o(axi_awlock_o), //Address write channel lock type.
+    .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
+    .axi_awprot_o(axi_awprot_o), //Address write channel protection type. Set to 000 if master output; ignored if slave input.
+    .axi_awqos_o(axi_awqos_o), //Address write channel quality of service.
+    .axi_awvalid_o(axi_awvalid_o), //Address write channel valid.
+    .axi_awready_i(axi_awready_i), //Address write channel ready.
+    .axi_wdata_o(axi_wdata_o), //Write channel data.
+    .axi_wstrb_o(axi_wstrb_o), //Write channel write strobe.
+    .axi_wlast_o(axi_wlast_o), //Write channel last word flag.
+    .axi_wvalid_o(axi_wvalid_o), //Write channel valid.
+    .axi_wready_i(axi_wready_i), //Write channel ready.
+    .axi_bid_i(axi_bid_i), //Write response channel ID.
+    .axi_bresp_i(axi_bresp_i), //Write response channel response.
+    .axi_bvalid_i(axi_bvalid_i), //Write response channel valid.
+    .axi_bready_o(axi_bready_o), //Write response channel ready.
+    .axi_arid_o(axi_arid_o), //Address read channel ID.
+    .axi_araddr_o(internal_axi_araddr_o), //Address read channel address.
+    .axi_arlen_o(axi_arlen_o), //Address read channel burst length.
+    .axi_arsize_o(axi_arsize_o), //Address read channel burst size. This signal indicates the size of each transfer in the burst.
+    .axi_arburst_o(axi_arburst_o), //Address read channel burst type.
+    .axi_arlock_o(axi_arlock_o), //Address read channel lock type.
+    .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
+    .axi_arprot_o(axi_arprot_o), //Address read channel protection type. Set to 000 if master output; ignored if slave input.
+    .axi_arqos_o(axi_arqos_o), //Address read channel quality of service.
+    .axi_arvalid_o(axi_arvalid_o), //Address read channel valid.
+    .axi_arready_i(axi_arready_i), //Address read channel ready.
+    .axi_rid_i(axi_rid_i), //Read channel ID.
+    .axi_rdata_i(axi_rdata_i), //Read channel data.
+    .axi_rresp_i(axi_rresp_i), //Read channel response.
+    .axi_rlast_i(axi_rlast_i), //Read channel last word.
+    .axi_rvalid_i(axi_rvalid_i), //Read channel valid.
+    .axi_rready_o(axi_rready_o), //Read channel ready.
+
+    // General signals interface
+    .clk_i (clk),
+    .cke_i (cke),
+    .arst_i(rst)
+  );
 
 endmodule

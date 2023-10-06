@@ -11,6 +11,7 @@ from iob_reg import iob_reg
 from iob_reg_e import iob_reg_e
 from iob_sync import iob_sync
 from iob_f2s_1bit_sync import iob_f2s_1bit_sync
+from iob_ram_tdp_be import iob_ram_tdp_be
 
 
 class iob_eth(iob_module):
@@ -33,6 +34,7 @@ class iob_eth(iob_module):
                 iob_reg_e,
                 iob_sync,
                 iob_f2s_1bit_sync,
+                iob_ram_tdp_be,
             ]
         )
 
@@ -58,6 +60,64 @@ class iob_eth(iob_module):
                     "max": "128",
                     "descr": "Address bus width",
                 },
+                # External memory interface
+                {
+                    "name": "AXI_ID_W",
+                    "type": "P",
+                    "val": "0",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "AXI ID bus width",
+                },
+                {
+                    "name": "AXI_ADDR_W",
+                    "type": "P",
+                    "val": "24",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "AXI address bus width",
+                },
+                {
+                    "name": "AXI_DATA_W",
+                    "type": "P",
+                    "val": "DATA_W",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "AXI data bus width",
+                },
+                {
+                    "name": "AXI_LEN_W",
+                    "type": "P",
+                    "val": "4",
+                    "min": "1",
+                    "max": "4",
+                    "descr": "AXI burst length width",
+                },
+                #{
+                #    "name": "BURST_W",
+                #    "type": "P",
+                #    "val": "0",
+                #    "min": "0",
+                #    "max": "8",
+                #    "descr": "AXI burst width",
+                #},
+                #{
+                #    "name": "BUFFER_W",
+                #    "type": "P",
+                #    "val": "1",  # BURST_W+1
+                #    "min": "0",
+                #    "max": "32",
+                #    "descr": "Buffer size",
+                #},
+                {
+                    "name": "MEM_ADDR_OFFSET",
+                    "type": "P",
+                    "val": "0",
+                    "min": "0",
+                    "max": "NA",
+                    "descr": "Offset of memory address",
+                },
+                # Ethernet
                 {
                     "name": "ETH_MAC_ADDR",
                     "type": "P",
@@ -81,11 +141,7 @@ class iob_eth(iob_module):
     def _setup_ios(cls):
         cls.ios += [
             {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
-            {
-                "name": "iob_m_port",
-                "descr": "Native master memory interface",
-                "ports": [],
-            },
+            {'name': 'axi_m_port', 'descr':'AXI master interface for external memory.', 'ports': []},
             {
                 "name": "general",
                 "descr": "General Interface Signals",
