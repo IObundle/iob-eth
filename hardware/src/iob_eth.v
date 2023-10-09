@@ -367,17 +367,34 @@ module iob_eth # (
      .doutB(iob_eth_rx_buffer_doutB)
    );
 
+   // DMA buffer descriptor wires
+   wire dma_bd_en;
+   wire [7:0] dma_bd_addr;
+   wire dma_bd_wen;
+   wire [31:0] dma_bd_i;
+   wire [31:0] dma_bd_o;
+
    // DMA module
   iob_eth_dma #(
     .AXI_ADDR_W(AXI_ADDR_W),
     .AXI_DATA_W(AXI_DATA_W),
     .AXI_LEN_W (AXI_LEN_W),
-    .AXI_ID_W  (AXI_ID_W)
+    .AXI_ID_W  (AXI_ID_W),
     //.BURST_W   (BURST_W),
     //.BUFFER_W  (BUFFER_W)
+    .BD_ADDR_W (8)
   ) dma_inst (
-   // Configuration interface
-   // TODO
+   // Control interface
+   .rx_en_i(MODER[0]),
+   .tx_en_i(MODER[1]),
+   .tx_bd_num_i(TX_BD_NUM[7:0]),
+
+   // Buffer descriptors
+   .bd_en_o(dma_bd_en),
+   .bd_addr_o(dma_bd_addr),
+   .bd_wen_o(dma_bd_wen),
+   .bd_i(dma_bd_i),
+   .bd_o(dma_bd_o),
 
    // TX Front-End
    .eth_data_wr_wen_o(iob_eth_tx_buffer_enA), // |ETH_DATA_WR_wstrb
@@ -436,5 +453,28 @@ module iob_eth # (
     .cke_i (cke),
     .arst_i(rst)
   );
+
+  // Buffer descriptors RAM
+   iob_ram_dp #(
+      .DATA_W(32),
+      .ADDR_W(8), // Same as BD_ADDR_W
+      .MEM_NO_READ_ON_WRITE(1),
+   ) bd_ram (
+      .clk_i(clk),
+
+      // Port A - SWregs // FIXME
+      input      [DATA_W-1:0] dA_i,
+      input      [ADDR_W-1:0] addrA_i,
+      input                   enA_i,
+      input                   weA_i,
+      output reg [DATA_W-1:0] dA_o,
+
+      // Port B - DMA module
+      .addrB_i(dma_bd_addr),
+      .enB_i(dma_bd_en),
+      .weB_i(dma_bd_wen),
+      .dB_i(dma_bd_o),
+      .dB_o(dma_bd_i)
+   );
 
 endmodule

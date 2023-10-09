@@ -7,12 +7,22 @@ module iob_eth_dma #(
    parameter AXI_ADDR_W = 0,
    parameter AXI_DATA_W = 32,          // We currently only support 4 byte transfers
    parameter AXI_LEN_W  = 8,
-   parameter AXI_ID_W   = 1
+   parameter AXI_ID_W   = 1,
    //parameter BURST_W    = 0,
    //parameter BUFFER_W   = BURST_W + 1
+   parameter BD_ADDR_W  = 8
 ) (
-   // Configuration interface
-   // TODO
+   // Control interface
+   input         rx_en_i,
+   input         tx_en_i,
+   input [BD_ADDR_W-1:0] tx_bd_num_i,
+
+   // Buffer descriptors
+   output                 bd_en_o,
+   output [BD_ADDR_W-1:0] bd_addr_o,
+   output                 bd_wen_o,
+   input  [32-1:0]        bd_i,
+   output [32-1:0]        bd_o,
 
    // TX Front-End
    output                           eth_data_wr_wen_o,
@@ -32,4 +42,6 @@ module iob_eth_dma #(
    input cke_i,
    input arst_i
 );
+
+
 endmodule

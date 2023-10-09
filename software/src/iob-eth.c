@@ -104,8 +104,8 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   TEMPLATE[ETH_TYPE_PTR+1] = ETH_TYPE_L;
 
   // reset core
-  IOB_ETH_SET_SOFTRST(1);
-  IOB_ETH_SET_SOFTRST(0);
+  //IOB_ETH_SET_SOFTRST(1);
+  //IOB_ETH_SET_SOFTRST(0);
 
   // wait for PHY to produce rx clock 
   while (!((IOB_ETH_GET_STATUS() >> 3) & 1));

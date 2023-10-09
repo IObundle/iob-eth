@@ -176,24 +176,20 @@ unsigned int eth_send_variable_file(char *data, int size);
 
 void eth_print_status(void);
 
-#define eth_tx_ready() ((IOB_ETH_GET_TX_BD() & TX_BD_READY) || 0) //FIXME
+#define eth_tx_ready(idx) !((IOB_ETH_GET_BD(idx<<1) & TX_BD_READY) || 0)
 
-#define eth_rx_ready() (1) //FIXME: rx_data_rcvd_sync
+#define eth_rx_ready(idx) !((IOB_ETH_GET_BD(idx<<1) & RX_BD_EMPTY) || 0)
 
-#define eth_bad_crc() ((IOB_ETH_GET_RX_BD() & RX_BD_CRC) || 0) //FIXME
+#define eth_bad_crc(idx) ((IOB_ETH_GET_BD(idx<<1) & RX_BD_CRC) || 0)
 
 #define eth_send() ({\
-        IOB_ETH_SET_SEND(1);\
-        IOB_ETH_SET_SEND(0);\
+        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() | MODER_TXEN);\
+        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() & ~MODER_TXEN);\
         })
 
+// FIXME
 #define eth_ack() ({\
         IOB_ETH_SET_RCVACK(1);\
         IOB_ETH_SET_RCVACK(0);\
         })
-
-#define eth_soft_rst() ({\
-      IOB_ETH_SET_SOFTRST(1);\
-      IOB_ETH_SET_SOFTRST(0);\
-    })
 

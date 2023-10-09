@@ -12,6 +12,7 @@ from iob_reg_e import iob_reg_e
 from iob_sync import iob_sync
 from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 from iob_ram_tdp_be import iob_ram_tdp_be
+from iob_ram_dp import iob_ram_dp
 
 
 class iob_eth(iob_module):
@@ -35,6 +36,7 @@ class iob_eth(iob_module):
                 iob_sync,
                 iob_f2s_1bit_sync,
                 iob_ram_tdp_be,
+                iob_ram_dp,
             ]
         )
 
@@ -470,7 +472,23 @@ class iob_eth(iob_module):
                         "descr": "Transmit Control Register",
                     },
                 ],
-            }
+            },
+            {
+                "name": "iob_eth_bd",
+                "descr": "IOb-Eth Buffer Descriptors.",
+                "regs": [
+                    {
+                        "name": "BD",
+                        "type": "RW",
+                        "n_bits": 32,
+                        "rst_val": 0,
+                        "addr": 1024,
+                        "log2n_items": 8,
+                        "autologic": False,
+                        "descr": "Buffer descriptors.",
+                    },
+                ],
+            },
         ]
 
     @classmethod
