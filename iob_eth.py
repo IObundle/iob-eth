@@ -136,6 +136,14 @@ class iob_eth(iob_module):
                     "max": "NA",
                     "descr": "Reset counter value",
                 },
+                {
+                    "name": "BD_NUM_LOG2",
+                    "type": "P",
+                    "val": "7",
+                    "min": "NA",
+                    "max": "7",
+                    "descr": "Log2 amount of buffer descriptors",
+                },
             ]
         )
 
@@ -483,7 +491,7 @@ class iob_eth(iob_module):
                         "n_bits": 32,
                         "rst_val": 0,
                         "addr": 1024,
-                        "log2n_items": 8,
+                        "log2n_items": "BD_NUM_LOG2+1",
                         "autologic": False,
                         "descr": "Buffer descriptors.",
                     },

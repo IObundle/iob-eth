@@ -382,12 +382,12 @@ module iob_eth # (
     .AXI_ID_W  (AXI_ID_W),
     //.BURST_W   (BURST_W),
     //.BUFFER_W  (BUFFER_W)
-    .BD_ADDR_W (8)
+    .BD_ADDR_W (BD_NUM_LOG2+1)
   ) dma_inst (
    // Control interface
    .rx_en_i(MODER[0]),
    .tx_en_i(MODER[1]),
-   .tx_bd_num_i(TX_BD_NUM[7:0]),
+   .tx_bd_num_i(TX_BD_NUM[BD_NUM_LOG2:0]),
 
    // Buffer descriptors
    .bd_en_o(dma_bd_en),
@@ -454,20 +454,20 @@ module iob_eth # (
     .arst_i(rst)
   );
 
-  // Buffer descriptors RAM
+  // Buffer descriptors memory
    iob_ram_dp #(
       .DATA_W(32),
-      .ADDR_W(8), // Same as BD_ADDR_W
+      .ADDR_W(BD_NUM_LOG2+1),
       .MEM_NO_READ_ON_WRITE(1),
    ) bd_ram (
       .clk_i(clk),
 
-      // Port A - SWregs // FIXME
-      input      [DATA_W-1:0] dA_i,
-      input      [ADDR_W-1:0] addrA_i,
-      input                   enA_i,
-      input                   weA_i,
-      output reg [DATA_W-1:0] dA_o,
+      // Port A - SWregs
+      .addrA_i((iob_addr_i-IOB_ETH_BD_ADDR)>>2),
+      .enA_i(BD_addressed),
+      .weA_i(BD_wen_o),
+      .dA_i(iob_wdata_i),
+      .dA_o(BD_i),
 
       // Port B - DMA module
       .addrB_i(dma_bd_addr),
