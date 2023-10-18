@@ -193,8 +193,6 @@ module iob_eth_dma #(
    //axi_rid_i
    //axi_rresp_i
 
-   //TODO
-
    // ############# Receiver #############
 
    //rx program
@@ -224,7 +222,7 @@ module iob_eth_dma #(
                buffer_descriptor <= bd_i;
                rx_bd_addr_o <= rx_bd_num<<1 + 1;
 
-               // Wait for ready bit and
+               // Wait for empty bit and
                // wait for arbiter
                if (bd_i[15]==0) ||
                   (bd_mem_arbiter_ack[1]==0 || bd_mem_arbiter_grant[1]==0 || bd_mem_arbiter_grant_valid==0)
@@ -234,37 +232,59 @@ module iob_eth_dma #(
 
             2: begin  // Store buffer pointer; Write frame to external memeory.
                buffer_ptr <= bd_i;
-               buffer_word_counter <= 1;
-
-               //TODO: Write frame word to extmem; Get word from buffer
-               axi_addr <= bd_i;
+               buffer_word_counter <= 0;
             end
+            
+            3: begin  // Start frame transfer to external memory
+               axi_awaddr_o <= buffer_ptr + buffer_word_counter;
+               axi_awlen_o <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
+               axi_awvalid_o <= 1'b1;
+               // Wait for address ready
+               if (axi_awready_i==0)
+                  rx_pc <= rx_pc;
 
-            3: begin  // Write next word to buffer;
-               rx_pc <= rx_pc;
-               buffer_word_counter <= buffer_word_counter + 1'b1;
+               // Check if frame transfer is complete
+               if (buffer_descriptor[31:16]-buffer_word_counter == 0)
+                  axi_awvalid_o <= 1'b0;
 
-               //TODO: Write frame word to extmem; Send word to buffer
-               axi_addr <= buffer_ptr + buffer_word_counter;
-
-               // Finished transmission
-               if (buffer_word_counter == buffer_descriptor[31:16]) begin
                   // Reset buffer word counter and go to next buffer descriptor
                   buffer_word_counter <= 1'b0;
                   rx_pc <= 1'b0;
 
                   // Write receive status
-                  // - Disable empty bit
+                  // - Disable ready bit
 
                   // Generate interrupt
+                  assign rx_irq_o = 1'b1;
 
                   // Select BD address based on WR bit
                   if (buffer_descriptor[13] == 0)
                      rx_bd_num <= rx_bd_num + 1'b1;
                   else
-                     rx_bd_num <= 1'b0
+                     rx_bd_num <= 1'b0;
 
-               end
+               // Get word from buffer
+               eth_data_rd_ren_o <= 1'b1;
+               eth_data_rd_addr_o <= buffer_word_counter;
+
+            end
+
+            4: begin // receive frame word
+               rx_pc <= rx_pc;
+               axi_wvalid_o <= 1'b0;
+
+               // wait for write ready
+               // wait for arbiter
+               if (axi_wready_i==1) &&
+                  (bd_mem_arbiter_ack[1]==1 && bd_mem_arbiter_grant[1]==1 && bd_mem_arbiter_grant_valid==1)
+                  buffer_word_counter <= buffer_word_counter + 1'b1;
+                  axi_wdata_o <= eth_data_rd_rdata_i;
+                  axi_wvalid_o <= 1'b1;
+
+                  if (buffer_descriptor[31:16]-buffer_word_counter+1 == 0)
+                     axi_wlast_o <= 1'b1;
+                     rx_pc <= 3;
+
             end
 
             default: ;
@@ -291,6 +311,9 @@ module iob_eth_dma #(
    assign axi_awqos_o   = 0;
    assign axi_wstrb_o   = 4'b1111;
    assign axi_bready_o  = 1'b1;
+   // axi_bid_i
+   // axi_bresp_i,
+   // axi_bvalid_i
 
 
 
