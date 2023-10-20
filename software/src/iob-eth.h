@@ -120,11 +120,12 @@
 // fields
 #define ETH_MAC_ADDR 0x01606e11020f
 
+// Rx return codes
 #define ETH_INVALID_CRC -2
 #define ETH_NO_DATA -1
 #define ETH_DATA_RCV 0
 
-
+// Pointers for fields of frame template
 #define PREAMBLE_PTR     0
 #define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
 #define MAC_DEST_PTR     (SDF_PTR + 1)
@@ -139,18 +140,18 @@
 
 #define ETH_DEBUG_PRINT 1
 
+#ifndef ETH_RMAC_ADDR
+#define ETH_RMAC_ADDR ETH_MAC_ADDR
+#endif
+
 // driver functions
 void eth_init(int base_address);
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr);
 
-void eth_set_tx_payload_size(unsigned int size);
+unsigned short int eth_get_payload_size(unsigned int idx);
 
-void eth_set_tx_buffer(char* buffer,int size);
-
-void eth_get_rx_buffer(char* buffer,int size);
-
-void eth_init_frame(void);
+void eth_set_payload_size(unsigned int idx, unsigned int size);
 
 // Care when using this function directly, too small a size or too large might not work (frame does not get sent)
 void eth_send_frame(char *data_to_send, unsigned int size);
@@ -182,14 +183,34 @@ void eth_print_status(void);
 
 #define eth_bad_crc(idx) ((IOB_ETH_GET_BD(idx<<1) & RX_BD_CRC) || 0)
 
-#define eth_send() ({\
-        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() | MODER_TXEN);\
-        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() & ~MODER_TXEN);\
+#define eth_send(enable) ({\
+        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() & ~MODER_TXEN | (enable ? MODER_TXEN : 0));\
+        })
+
+#define eth_receive(enable) ({\
+        IOB_ETH_SET_MODER(IOB_ETH_GET_MODER() & ~MODER_RXEN | (enable ? MODER_RXEN : 0));\
+        })
+
+#define eth_set_ready(idx, enable) ({\
+        IOB_ETH_SET_BD(idx<<1, IOB_ETH_GET_BD(idx<<1) & ~TX_BD_READY | (enable ? TX_BD_READY : 0));\
+        })
+#define eth_set_empty(idx, enable) eth_set_ready(idx, enable)
+
+#define eth_set_wr(idx, enable) ({\
+        IOB_ETH_SET_BD(idx<<1, IOB_ETH_GET_BD(idx<<1) & ~TX_BD_WRAP | (enable ? TX_BD_WRAP : 0));\
+        })
+
+#define eth_set_crc(idx, enable) ({\
+        IOB_ETH_SET_BD(idx<<1, IOB_ETH_GET_BD(idx<<1) & ~TX_BD_CRC | (enable ? TX_BD_CRC : 0));\
+        })
+
+#define eth_set_pad(idx, enable) ({\
+        IOB_ETH_SET_BD(idx<<1, IOB_ETH_GET_BD(idx<<1) & ~TX_BD_PAD | (enable ? TX_BD_PAD : 0));\
         })
 
 // FIXME
-#define eth_ack() ({\
-        IOB_ETH_SET_RCVACK(1);\
-        IOB_ETH_SET_RCVACK(0);\
-        })
+#define eth_ack()
+//        IOB_ETH_SET_RCVACK(1);\
+//        IOB_ETH_SET_RCVACK(0);\
+//        })
 

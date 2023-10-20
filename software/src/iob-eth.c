@@ -1,8 +1,9 @@
 #include "stdint.h"
 #include "printf.h"
 #include "iob-eth.h"
+#include <stdlib.h>
 
-// Frame template
+// Frame template (includes every field of the frame before the payload)
 static char TEMPLATE[TEMPLATE_LEN];
 
 /*******************************************/
@@ -107,77 +108,82 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   //IOB_ETH_SET_SOFTRST(1);
   //IOB_ETH_SET_SOFTRST(0);
 
-  // wait for PHY to produce rx clock 
-  while (!((IOB_ETH_GET_STATUS() >> 3) & 1));
+  //// wait for PHY to produce rx clock 
+  //while (!((IOB_ETH_GET_STATUS() >> 3) & 1));
 
-  #ifdef ETH_DEBUG_PRINT
-  printf("Ethernet RX clock detected\n");
-  #endif
+  //#ifdef ETH_DEBUG_PRINT
+  //printf("Ethernet RX clock detected\n");
+  //#endif
 
-  // wait for PLL to lock and produce tx clock 
-  while (!((IOB_ETH_GET_STATUS() >> 15) & 1));
+  //// wait for PLL to lock and produce tx clock 
+  //while (!((IOB_ETH_GET_STATUS() >> 15) & 1));
 
-  #ifdef ETH_DEBUG_PRINT
-  printf("Ethernet TX PLL locked\n");
-  #endif
+  //#ifdef ETH_DEBUG_PRINT
+  //printf("Ethernet TX PLL locked\n");
+  //#endif
 
-  // set initial payload size to Ethernet minimum excluding FCS
-  IOB_ETH_SET_TX_NBYTES(46);
+  //// set initial payload size to Ethernet minimum excluding FCS
+  //IOB_ETH_SET_TX_NBYTES(46);
 
-  eth_init_frame();
+  //// check processor interface
+  //// write dummy register
+  //IOB_ETH_SET_DUMMY_W(0xDEADBEEF);
 
-  // check processor interface
-  // write dummy register
-  IOB_ETH_SET_DUMMY_W(0xDEADBEEF);
-
-  // read and check result
-  if (IOB_ETH_GET_DUMMY_R() != 0xDEADBEEF) {
-    printf("Ethernet Init failed\n");
-  } else {
-    printf("Ethernet Core Initialized\n");
-  }
+  //// read and check result
+  //if (IOB_ETH_GET_DUMMY_R() != 0xDEADBEEF) {
+  //  printf("Ethernet Init failed\n");
+  //} else {
+  //  printf("Ethernet Core Initialized\n");
+  //}
 }
 
-void eth_set_tx_payload_size(unsigned int size) {
-    IOB_ETH_SET_TX_NBYTES(size + TEMPLATE_LEN);
+// Get payload size from given buffer descriptor
+unsigned short int eth_get_payload_size(unsigned int idx) {
+  return IOB_ETH_GET_BD(idx<<1)>>16;
 }
 
-void eth_set_tx_buffer(char* buffer,int size){
-  for(int i=0; i<size; i++){
-      IOB_ETH_SET_DATA_WR(TEMPLATE_LEN + i, buffer[i]);
-  }
-}
-
-void eth_get_rx_buffer(char* buffer,int size){
-  /* skip MAC DST ADDR, MAC SRC ADDR and ETH TYPE from rx buffer */
-  /* the PREAMBLE and SDF are not stored into the rx buffer */
-  int rx_data_offset = PAYLOAD_PTR - MAC_DEST_PTR;
-
-  for(int i = 0; i < size; i++){
-    buffer[i] = IOB_ETH_GET_DATA_RD(i+rx_data_offset);
-  }
-}
-
-void eth_init_frame(void) {
-  for (int i = 0; i < TEMPLATE_LEN; i++) {
-    IOB_ETH_SET_DATA_WR(i, TEMPLATE[i]);
-  }
+// Set payload size in given buffer descriptor
+void eth_set_payload_size(unsigned int idx, unsigned int size) {
+    IOB_ETH_SET_BD(idx<<1, (IOB_ETH_GET_BD(idx<<1) & 0x0000ffff) | size<<16 );
 }
 
 void eth_send_frame(char *data, unsigned int size) {
   int i;
 
   // wait for ready
-  while(!eth_tx_ready());
+  while(!eth_tx_ready(0));
 
+  // Alloc memory for frame
+  char *frame_ptr = (char *) malloc(TEMPLATE_LEN+size);
+
+  // Copy template to frame
+  for (i=0; i < TEMPLATE_LEN; i++)
+    frame_ptr[i] = TEMPLATE[i];
+
+  // Copy payload to frame
+  for (i=0; i < size; i++)
+    frame_ptr[i+TEMPLATE_LEN] = data[i];
+
+  /* Buffer descriptor configuration */
+    
   // set frame size
-  eth_set_tx_payload_size(size);
+  eth_set_payload_size(0, TEMPLATE_LEN+size);
 
-  // payload
-  eth_set_tx_buffer(data,size);
+  // Set ready bit; Enable CRC and PAD; Set as last descriptor
+  eth_set_ready(0, 1);
+  eth_set_crc(0, 1);
+  eth_set_pad(0, 1);
+  eth_set_wr(0, 1);
 
   // start sending
-  eth_send();
+  eth_send(1);
+
+  // wait for ready
+  while(!eth_tx_ready(0));
+
+  // Disable transmission and free memory
+  eth_send(0);
+  free(frame_ptr);
 
   return;
 }
@@ -186,24 +192,48 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
 
+  // Alloc memory for frame
+  char *frame_ptr = (char *) malloc(TEMPLATE_LEN+ETH_NBYTES);
+
+  // Copy template to frame
+  for (i=0; i < TEMPLATE_LEN; i++)
+    frame_ptr[i] = TEMPLATE[i];
+
+  // Mark empty; Set as last descriptor.
+  eth_set_empty(0, 1);
+  eth_set_wr(0, 1);
+
+  // Enable reception
+  eth_receive(1);
+
   // wait until data received
-  while (!eth_rx_ready()) {
+  while (!eth_rx_ready(0)) {
      timeout--;
      if (!timeout) {
+       eth_receive(0);
        return ETH_NO_DATA;
      }
   }
 
-  if(eth_bad_crc()) {
+  if(eth_bad_crc(0)) {
     eth_ack();
+    eth_receive(0);
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
-  eth_get_rx_buffer(data_rcv,size);
+  // Copy payload to return array
+  for (i=0; i < size; i++) {
+    data_rcv[i] = frame_ptr[i+TEMPLATE_LEN];
+  }
+
+  free(frame_ptr);
   
   // send receive ack
   eth_ack();
+
+  // Disable reception
+  eth_receive(0);
   
   return ETH_DATA_RCV;
 }
@@ -343,8 +373,8 @@ unsigned int eth_send_variable_file(char *data, int size) {
 }
 
 void eth_print_status(void) {
-  printf("tx_ready = %x\n", eth_tx_ready());
-  printf("rx_ready = %x\n", eth_rx_ready());
-  printf("Bad CRC = %x\n", eth_bad_crc());
+  printf("tx_ready = %x\n", eth_tx_ready(0));
+  printf("rx_ready = %x\n", eth_rx_ready(0));
+  printf("Bad CRC = %x\n", eth_bad_crc(0));
 }
 
