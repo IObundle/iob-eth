@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 `include "iob_eth_swreg_def.vh"
 
 module iob_eth_dma #(
@@ -10,7 +10,7 @@ module iob_eth_dma #(
    parameter AXI_ID_W   = 1,
    //parameter BURST_W    = 0,
    //parameter BUFFER_W   = BURST_W + 1
-   parameter BD_ADDR_W  = 8
+   parameter BD_ADDR_W  = 8 // 128 buffers (2x 32-bit words each)
 ) (
    // Control interface
    input         rx_en_i,
@@ -25,15 +25,15 @@ module iob_eth_dma #(
    output [32-1:0]        bd_o,
 
    // TX Front-End
-   output                           eth_data_wr_wen_o,
-   output [2-1:0]                   eth_data_wr_wstrb_o,
-   output [`ETH_DATA_WR_ADDR_W-1:0] eth_data_wr_addr_o,
-   output [32-1:0]                  eth_data_wr_wdata_o,
+   output                         eth_data_wr_wen_o,
+   output [2-1:0]                 eth_data_wr_wstrb_o,
+   output [`IOB_ETH_BUFFER_W-1:0] eth_data_wr_addr_o,
+   output [32-1:0]                eth_data_wr_wdata_o,
 
    // RX Back-End
-   output                           eth_data_rd_ren_o,
-   output [`ETH_DATA_WR_ADDR_W-1:0] eth_data_rd_addr_o,
-   input  [32-1:0]                  eth_data_rd_rdata_i,
+   output                         eth_data_rd_ren_o,
+   output [`IOB_ETH_BUFFER_W-1:0] eth_data_rd_addr_o,
+   input  [32-1:0]                eth_data_rd_rdata_i,
 
    // AXI master interface
    `include "axi_m_port.vs"

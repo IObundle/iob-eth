@@ -1,9 +1,8 @@
 `timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 
 module iob_eth_rx #(
-   parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
 ) (
    // async reset
    input rst,
@@ -72,8 +71,6 @@ module iob_eth_rx #(
             3:
             if (addr != (`MAC_ADDR_LEN - 1 + `ETH_RX_BUFFER_START)) begin
                pc <= pc - 1'b1;
-            end else if (dest_mac_addr != ETH_MAC_ADDR) begin
-               pc <= 7;
             end
 
             4: wr <= 1;

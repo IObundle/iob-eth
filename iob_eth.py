@@ -103,14 +103,14 @@ class iob_eth(iob_module):
                 #    "max": "8",
                 #    "descr": "AXI burst width",
                 #},
-                #{
-                #    "name": "BUFFER_W",
-                #    "type": "P",
-                #    "val": "1",  # BURST_W+1
-                #    "min": "0",
-                #    "max": "32",
-                #    "descr": "Buffer size",
-                #},
+                {
+                    "name": "BUFFER_W",
+                    "type": "P",
+                    "val": "1",  # BURST_W+1
+                    "min": "0",
+                    "max": "32",
+                    "descr": "Buffer size",
+                },
                 {
                     "name": "MEM_ADDR_OFFSET",
                     "type": "P",

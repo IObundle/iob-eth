@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 
 module iob_eth_tx (
    // CPU clk domain

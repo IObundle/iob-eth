@@ -21,14 +21,14 @@ endif
 iob_eth_swreg.h: $(ETHERNET_DIR)/mkregs.conf
 	$(MKREGS) iob_eth $(ETHERNET_DIR) SW
 
-eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/iob_eth.vh
-	@sed -n '/ ETH_PREAMBLE /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' > ./$@
-	@sed -n '/ ETH_SFD /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
-	@sed -n '/ ETH_TYPE_H /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
-	@sed -n '/ ETH_TYPE_L /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
+eth_frame_struct.h: $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh
+	@sed -n '/ ETH_PREAMBLE /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' > ./$@
+	@sed -n '/ ETH_SFD /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
+	@sed -n '/ ETH_TYPE_H /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
+	@sed -n '/ ETH_TYPE_L /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed "s/8'h/0x/g" | sed 's/`//g' >> ./$@
 	@echo '' >> ./$@
-	@sed -n '/ ETH_NBYTES /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
+	@sed -n '/ ETH_NBYTES /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
 	@echo '' >> ./$@
-	@sed -n '/ PREAMBLE_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
-	@sed -n '/ MAC_ADDR_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
-	@sed -n '/ HDR_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
+	@sed -n '/ PREAMBLE_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
+	@sed -n '/ MAC_ADDR_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@
+	@sed -n '/ HDR_LEN /p' $(ETHERNET_DIR)/hardware/include/iob_eth_conf.vh | sed 's/`define/#define/g' | sed 's/`//g' >> ./$@

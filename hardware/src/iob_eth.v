@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 `include "iob_utils.vh"
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 `include "iob_eth_swreg_def.vh"
 
 /*
@@ -275,7 +275,6 @@ module iob_eth # (
    //
 
    iob_eth_rx #(
-      .ETH_MAC_ADDR(ETH_MAC_ADDR)
    ) rx (
       // cpu side
       .rst      (rst_int),
@@ -322,7 +321,7 @@ module iob_eth # (
    // BUFFER memories
    iob_ram_tdp_be #(
                        .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_WR_ADDR_W)
+                       .ADDR_W(`IOB_ETH_BUFFER_W)
                        )
    tx_buffer
    (
@@ -345,7 +344,7 @@ module iob_eth # (
 
    iob_ram_tdp_be #(
                        .DATA_W(32),
-                       .ADDR_W(`ETH_DATA_RD_ADDR_W)
+                       .ADDR_W(`IOB_ETH_BUFFER_W)
                        )
    rx_buffer
    (
@@ -381,7 +380,7 @@ module iob_eth # (
     .AXI_LEN_W (AXI_LEN_W),
     .AXI_ID_W  (AXI_ID_W),
     //.BURST_W   (BURST_W),
-    //.BUFFER_W  (BUFFER_W)
+    .BUFFER_W  (BUFFER_W),
     .BD_ADDR_W (BD_NUM_LOG2+1)
   ) dma_inst (
    // Control interface
