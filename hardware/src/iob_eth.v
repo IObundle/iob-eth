@@ -43,13 +43,14 @@ module iob_eth # (
    // ETH CLOCK DOMAIN
    reg [1-1:0] phy_clk_detected;
    reg [1-1:0] phy_dv_detected;
-   wire [`ETH_CRC_W-1:0] crc_value;
    wire [1-1:0] tx_ready_int;
    wire [1-1:0] tx_ready_int_pll;
    wire [1-1:0] tx_ready_int_reg;
    wire [1-1:0] rx_data_rcvd_int;
    wire [1-1:0] rx_data_rcvd_int_phy;
    wire [1-1:0] rx_data_rcvd_int_reg;
+   wire [1-1:0] crc_err;
+   wire [1-1:0] crc_en;
 
    wire [11-1:0] tx_rd_addr;
    reg [8-1:0] tx_rd_data;
@@ -181,15 +182,6 @@ module iob_eth # (
       .signal_i(tx_ready_int_reg),
       .signal_o(tx_ready_sync)
    );
-   iob_sync #(
-      .DATA_W(`ETH_CRC_W),
-      .RST_VAL(1'b0)
-   ) iob_sync_eth_crc (
-      .clk     (clk),
-      .rst     (rst_int),
-      .signal_i(crc_value),
-      .signal_o(ETH_CRC_rdata)
-   );
 
    // clk to MRxClk
    wire [1-1:0] send;
@@ -266,7 +258,8 @@ module iob_eth # (
       .data   (tx_rd_data),
       .TX_CLK (MTxClk),
       .TX_EN  (MTxEn),
-      .TX_DATA(MTxD)
+      .TX_DATA(MTxD),
+      .crc_en (crc_en)
    );
 
 
@@ -281,14 +274,14 @@ module iob_eth # (
       .data_rcvd(rx_data_rcvd_int),
 
       // mii side
-      .rcv_ack  (rcv_ack),
+      .rcv_ack  (rcv_ack), //FIXME
       .wr       (rx_wr),
       .addr     (rx_wr_addr),
       .data     (rx_wr_data),
       .RX_CLK   (MRxClk),
       .RX_DATA  (MRxD),
       .RX_DV    (MRxDv),
-      .crc_value(crc_value)
+      .crc_err  (crc_err)
    );
 
 
@@ -400,11 +393,13 @@ module iob_eth # (
    .eth_data_wr_wstrb_o(iob_eth_tx_buffer_weA),
    .eth_data_wr_addr_o(iob_eth_tx_buffer_addrA),
    .eth_data_wr_wdata_o(iob_eth_tx_buffer_dinA),
+   .crc_en_o(crc_en),
 
    // RX Back-End
    .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
    .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
    .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
+   .crc_err_i(crc_err),
 
     // AXI master interface
     // Can't use generated include, because of `internal_axi_*addr_o` signals.

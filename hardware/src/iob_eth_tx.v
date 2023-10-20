@@ -13,6 +13,7 @@ module iob_eth_tx (
    input              send,
    output reg  [10:0] addr,
    input       [ 7:0] data,
+   input              crc_en,
    input  wire        TX_CLK,
    output reg         TX_EN,
    output reg  [ 3:0] TX_DATA
@@ -34,7 +35,7 @@ module iob_eth_tx (
    reg  [ 3:0] pc;
 
    // crc
-   reg         crc_en;
+   reg         crc_en_int;
    wire [31:0] crc_value;
    wire [31:0] crc_out;
 
@@ -65,7 +66,7 @@ module iob_eth_tx (
    always @(posedge TX_CLK, posedge tx_rst[1])
       if (tx_rst[1]) begin
          pc      <= 0;
-         crc_en  <= 0;
+         crc_en_int  <= 0;
          addr    <= 0;
          ready   <= 1;
          TX_EN   <= 0;
@@ -74,7 +75,7 @@ module iob_eth_tx (
 
          pc     <= pc + 1'b1;
          addr   <= addr + pc[0];
-         crc_en <= 0;
+         crc_en_int <= 0;
 
          case (pc)
 
@@ -90,7 +91,7 @@ module iob_eth_tx (
             2: begin  // Addr is different here, but data only changes in the next cycle
                TX_DATA <= data[7:4];
                if (addr != (`PREAMBLE_LEN + 1)) pc <= pc - 1'b1;
-               else crc_en <= 1;
+               else crc_en_int <= 1;
             end
 
             3: TX_DATA <= data[3:0];
@@ -98,9 +99,11 @@ module iob_eth_tx (
             4: begin
                TX_DATA <= data[7:4];
                if (addr < nbytes_sync[1]) begin
-                  crc_en <= 1;
+                  crc_en_int <= 1;
                   pc     <= pc - 1'b1;
                end
+               else if (!crc_en)
+                  pc     <= 13;
             end
 
             5: TX_DATA <= crc_out[27:24];
@@ -128,7 +131,7 @@ module iob_eth_tx (
 
             default: begin
                pc      <= 0;
-               crc_en  <= 0;
+               crc_en_int  <= 0;
                addr    <= 0;
                ready   <= 1;
                TX_EN   <= 0;
@@ -149,7 +152,7 @@ module iob_eth_tx (
       .start(pc == 0),
 
       .data_in(data),
-      .data_en(crc_en),
+      .data_en(crc_en_int),
       .crc_out(crc_value)
    );
 

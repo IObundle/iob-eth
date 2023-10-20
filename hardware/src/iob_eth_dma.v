@@ -29,18 +29,20 @@ module iob_eth_dma #(
    output [2-1:0]                 eth_data_wr_wstrb_o,
    output [`IOB_ETH_BUFFER_W-1:0] eth_data_wr_addr_o,
    output [32-1:0]                eth_data_wr_wdata_o,
+   output reg                     crc_en_o,
 
    // RX Back-End
    output                         eth_data_rd_ren_o,
    output [`IOB_ETH_BUFFER_W-1:0] eth_data_rd_addr_o,
    input  [32-1:0]                eth_data_rd_rdata_i,
+   input                          crc_err_i,
 
    // AXI master interface
    `include "axi_m_port.vs"
 
    // Interrupts
-   output tx_irq_o,
-   output rx_irq_o,
+   output reg tx_irq_o,
+   output reg rx_irq_o,
 
    input clk_i,
    input cke_i,
@@ -139,11 +141,14 @@ module iob_eth_dma #(
                   buffer_word_counter <= 1'b0;
                   tx_pc <= 1'b0;
 
+                  // Set CRC enable
+                  crc_en_o <= buffer_descriptor[11];
+
                   // Write transmit status
                   // - Disable ready bit
 
                   // Generate interrupt
-                  assign tx_irq_o = 1'b1;
+                  tx_irq_o <= buffer_descriptor[14];
 
                   // Select BD address based on WR bit
                   if (buffer_descriptor[13] == 0)
@@ -257,9 +262,10 @@ module iob_eth_dma #(
 
                   // Write receive status
                   // - Disable ready bit
+                  // - Write crc_err
 
                   // Generate interrupt
-                  assign rx_irq_o = 1'b1;
+                  rx_irq_o <= buffer_descriptor[14];
 
                   // Select BD address based on WR bit
                   if (buffer_descriptor[13] == 0)
