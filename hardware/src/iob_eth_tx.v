@@ -90,7 +90,7 @@ module iob_eth_tx (
 
             2: begin  // Addr is different here, but data only changes in the next cycle
                TX_DATA <= data[7:4];
-               if (addr != (`PREAMBLE_LEN + 1)) pc <= pc - 1'b1;
+               if (addr != (`IOB_ETH_PREAMBLE_LEN + 1)) pc <= pc - 1'b1;
                else crc_en_int <= 1;
             end
 

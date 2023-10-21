@@ -1,5 +1,6 @@
 #include "eth_frame_struct.h"
 
+#include "iob_eth_conf.h"
 #include "iob_eth_swreg.h"
 
 /* mode register */

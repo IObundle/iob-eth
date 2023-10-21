@@ -71,10 +71,10 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   
   // Preamble
   for(i=0; i < PREAMBLE_LEN; i++)
-    TEMPLATE[PREAMBLE_PTR+i] = ETH_PREAMBLE;
+    TEMPLATE[PREAMBLE_PTR+i] = PREAMBLE;
 
   // SFD
-  TEMPLATE[SDF_PTR] = ETH_SFD;
+  TEMPLATE[SDF_PTR] = SFD;
 
   // dest mac address
   for (i=0; i < MAC_ADDR_LEN; i++) {

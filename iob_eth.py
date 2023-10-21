@@ -45,6 +45,38 @@ class iob_eth(iob_module):
         super()._setup_confs(
             [
                 # Macros
+                {
+                    "name": "PREAMBLE",
+                    "type": "M",
+                    "val": "8'h55",
+                    "min": "NA",
+                    "max": "NA",
+                    "descr": "",
+                },
+                {
+                    "name": "PREAMBLE_LEN",
+                    "type": "M",
+                    "val": "7", # Should it be 7 + 2 bytes to align data transfers?
+                    "max": "NA",
+                    "min": "NA",
+                    "descr": "",
+                },
+                {
+                    "name": "SFD",
+                    "type": "M",
+                    "val": "8'hD5",
+                    "min": "NA",
+                    "max": "NA",
+                    "descr": "Start Frame Delimiter",
+                },
+                {
+                    "name": "MAC_ADDR_LEN",
+                    "type": "M",
+                    "val": "6",
+                    "min": "NA",
+                    "max": "NA",
+                    "descr": "",
+                },
                 # Parameters
                 {
                     "name": "DATA_W",
@@ -120,14 +152,6 @@ class iob_eth(iob_module):
                     "descr": "Offset of memory address",
                 },
                 # Ethernet
-                {
-                    "name": "ETH_MAC_ADDR",
-                    "type": "P",
-                    "val": "`ETH_MAC_ADDR",
-                    "min": "NA",
-                    "max": "NA",
-                    "descr": "Instance MAC address",
-                },
                 {
                     "name": "PHY_RST_CNT",
                     "type": "P",

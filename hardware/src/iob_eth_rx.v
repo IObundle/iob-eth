@@ -61,7 +61,7 @@ module iob_eth_rx #(
 
          case (pc)
 
-            0: if (data_int != `ETH_SFD || !RX_DV) pc <= pc;
+            0: if (data_int != `IOB_ETH_SFD || !RX_DV) pc <= pc;
 
             1: addr <= `ETH_RX_BUFFER_START;
 
@@ -71,7 +71,7 @@ module iob_eth_rx #(
             end
 
             3:
-            if (addr != (`MAC_ADDR_LEN - 1 + `ETH_RX_BUFFER_START)) begin
+            if (addr != (`IOB_ETH_MAC_ADDR_LEN - 1 + `ETH_RX_BUFFER_START)) begin
                pc <= pc - 1'b1;
             end
 
