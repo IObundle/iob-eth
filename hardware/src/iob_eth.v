@@ -185,14 +185,14 @@ module iob_eth # (
 
    // clk to MRxClk
    wire [1-1:0] send;
-   iob_f2s_1bit_sync (
+   iob_f2s_1bit_sync send_sync (
       .clk_i   (MTxClk),
       .cke_i   (cke),
       .value_i (ETH_SEND),
       .value_o (send)
-   );)
+   );
    wire [1-1:0] rcv_ack;
-   iob_f2s_1bit_sync (
+   iob_f2s_1bit_sync rcv_sync (
       .clk_i   (MRxClk),
       .cke_i   (cke),
       .value_i (ETH_RCVACK),
@@ -239,8 +239,8 @@ module iob_eth # (
    assign iob_eth_rx_buffer_addrA = rx_wr_addr[10:2];
    assign iob_eth_rx_buffer_dinA  = rx_wr_data_int;
 
-   assign rx_wr_data_int = rx_wr_data << (8 * rx_wr_addr[1:0])
-   assign rx_wr_wstrb_int = rx_wr << rx_wr_addr[1:0]
+   assign rx_wr_data_int = rx_wr_data << (8 * rx_wr_addr[1:0]);
+   assign rx_wr_wstrb_int = rx_wr << rx_wr_addr[1:0];
 
    //
    // TRANSMITTER
@@ -267,8 +267,7 @@ module iob_eth # (
    // RECEIVER
    //
 
-   iob_eth_rx #(
-   ) rx (
+   iob_eth_rx rx (
       // cpu side
       .rst      (rst_int),
       .data_rcvd(rx_data_rcvd_int),
@@ -452,7 +451,7 @@ module iob_eth # (
    iob_ram_dp #(
       .DATA_W(32),
       .ADDR_W(BD_NUM_LOG2+1),
-      .MEM_NO_READ_ON_WRITE(1),
+      .MEM_NO_READ_ON_WRITE(1)
    ) bd_ram (
       .clk_i(clk),
 

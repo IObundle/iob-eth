@@ -2,8 +2,7 @@
 
 `include "iob_eth_conf.vh"
 
-module iob_eth_rx #(
-) (
+module iob_eth_rx (
    // async reset
    input rst,
 
@@ -63,7 +62,7 @@ module iob_eth_rx #(
 
             0: if (data_int != `IOB_ETH_SFD || !RX_DV) pc <= pc;
 
-            1: addr <= `ETH_RX_BUFFER_START;
+            1: addr <= 0;
 
             2: begin
                dest_mac_addr <= {dest_mac_addr[39:0], data_int};
@@ -71,7 +70,7 @@ module iob_eth_rx #(
             end
 
             3:
-            if (addr != (`IOB_ETH_MAC_ADDR_LEN - 1 + `ETH_RX_BUFFER_START)) begin
+            if (addr != (`IOB_ETH_MAC_ADDR_LEN - 1)) begin
                pc <= pc - 1'b1;
             end
 
