@@ -8,8 +8,7 @@ module iob_eth_dma #(
    parameter AXI_DATA_W = 32,          // We currently only support 4 byte transfers
    parameter AXI_LEN_W  = 8,
    parameter AXI_ID_W   = 1,
-   //parameter BURST_W    = 0,
-   //parameter BUFFER_W   = BURST_W + 1
+   parameter BUFFER_W   = 11,
    parameter BD_ADDR_W  = 8 // 128 buffers (2x 32-bit words each)
 ) (
    // Control interface
@@ -25,17 +24,21 @@ module iob_eth_dma #(
    output [32-1:0]        bd_o,
 
    // TX Front-End
-   output                         eth_data_wr_wen_o,
-   output [2-1:0]                 eth_data_wr_wstrb_o,
-   output [`IOB_ETH_BUFFER_W-1:0] eth_data_wr_addr_o,
-   output [32-1:0]                eth_data_wr_wdata_o,
+   output reg                     eth_data_wr_wen_o,
+   output reg [4-1:0]             eth_data_wr_wstrb_o,
+   output reg [BUFFER_W-1:0]      eth_data_wr_addr_o,
+   output reg [32-1:0]            eth_data_wr_wdata_o,
+   output reg                     tx_ready_i,
    output reg                     crc_en_o,
+   output reg [11-1:0]            tx_nbytes_o,
+   output reg                     send_o,
 
    // RX Back-End
-   output                         eth_data_rd_ren_o,
-   output [`IOB_ETH_BUFFER_W-1:0] eth_data_rd_addr_o,
+   output reg                     eth_data_rd_ren_o,
+   output reg [BUFFER_W-1:0]      eth_data_rd_addr_o,
    input  [32-1:0]                eth_data_rd_rdata_i,
    input                          crc_err_i,
+   input                          rx_data_rcvd_i,
 
    // AXI master interface
    `include "axi_m_port.vs"
@@ -53,7 +56,7 @@ module iob_eth_dma #(
    wire [1:0] bd_mem_arbiter_req;
    wire [1:0] bd_mem_arbiter_ack;
    wire [1:0] bd_mem_arbiter_grant;
-   wire [1:0] bd_mem_arbiter_grant_valid;
+   wire bd_mem_arbiter_grant_valid;
    wire [$clog2(2)-1:0] bd_mem_arbiter_grant_encoded;
    arbiter #(
       .PORTS(2),
@@ -74,6 +77,40 @@ module iob_eth_dma #(
       .grant_valid(bd_mem_arbiter_grant_valid),
       .grant_encoded(bd_mem_arbiter_grant_encoded)
    );
+
+
+   reg [BD_ADDR_W-1:0] tx_bd_addr_o;
+   reg [BD_ADDR_W-1:0] rx_bd_addr_o;
+   reg                 tx_bd_wen_o;
+   reg                 rx_bd_wen_o;
+   reg [32-1:0]        tx_bd_o;
+   reg [32-1:0]        rx_bd_o;
+   reg [32-1:0]        buffer_descriptor;
+   reg [32-1:0]        buffer_ptr;
+   reg [32-1:0]        buffer_word_counter;
+
+   reg [    AXI_ADDR_W-1:0] axi_araddr_o_reg;
+   reg [     AXI_LEN_W-1:0] axi_arlen_o_reg;
+   reg                      axi_arvalid_o_reg;
+   reg                      axi_rready_o_reg;
+   assign axi_araddr_o = axi_araddr_o_reg;
+   assign axi_arlen_o = axi_arlen_o_reg;
+   assign axi_arvalid_o = axi_arvalid_o_reg;
+   assign axi_rready_o = axi_rready_o_reg;
+
+   reg [    AXI_ADDR_W-1:0] axi_awaddr_o_reg;
+   reg [     AXI_LEN_W-1:0] axi_awlen_o_reg;
+   reg                      axi_awvalid_o_reg;
+   reg                      axi_wvalid_o_reg;
+   reg [    AXI_DATA_W-1:0] axi_wdata_o_reg;
+   reg                      axi_wlast_o_reg;
+   assign axi_awaddr_o = axi_awaddr_o_reg;
+   assign axi_awlen_o = axi_awlen_o_reg;
+   assign axi_awvalid_o = axi_awvalid_o_reg;
+   assign axi_wvalid_o = axi_wvalid_o_reg;
+   assign axi_wdata_o = axi_wdata_o_reg;
+   assign axi_wlast_o = axi_wlast_o_reg;
+
 
    // Connect BD memory bus based on arbiter selection
    assign bd_addr_o = bd_mem_arbiter_grant_encoded==0 ? tx_bd_addr_o : rx_bd_addr_o;
@@ -113,8 +150,8 @@ module iob_eth_dma #(
                // wait for arbiter and
                // wait for buffer ready for next frame
                if ((bd_i[15]==0) ||
-                  (bd_mem_arbiter_ack[0]==0 || bd_mem_arbiter_grant[0]==0 || bd_mem_arbiter_grant_valid==0)) begin
-                  // TODO: Check buffer ready for next frame
+                  (bd_mem_arbiter_ack[0]==0 || bd_mem_arbiter_grant[0]==0 || bd_mem_arbiter_grant_valid==0) ||
+                  (!tx_ready_i)) begin
                   tx_bd_addr_o <= tx_bd_num<<1;
                   tx_pc <= tx_pc;
                end
@@ -126,23 +163,25 @@ module iob_eth_dma #(
             end
 
             3: begin  // Start frame transfer from external memory
-               axi_araddr_o <= buffer_ptr + buffer_word_counter;
-               axi_arlen_o <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
-               axi_arvalid_o <= 1'b1;
+               axi_araddr_o_reg <= buffer_ptr + buffer_word_counter;
+               axi_arlen_o_reg <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
+               axi_arvalid_o_reg <= 1'b1;
                // Wait for address ready
                if (axi_arready_i==0)
                   tx_pc <= tx_pc;
 
                // Check if frame transfer is complete
                if (buffer_descriptor[31:16]-buffer_word_counter == 0) begin
-                  axi_arvalid_o <= 1'b0;
+                  axi_arvalid_o_reg <= 1'b0;
 
                   // Reset buffer word counter and go to next buffer descriptor
                   buffer_word_counter <= 1'b0;
                   tx_pc <= 1'b0;
 
-                  // Set CRC enable
                   crc_en_o <= buffer_descriptor[11];
+                  //tx_nbytes_o <= buffer_descriptor[31:16];
+                  tx_nbytes_o <= buffer_descriptor[26:16];
+                  send_o <= 1'b1;
 
                   // Write transmit status
                   // - Disable ready bit
@@ -163,7 +202,7 @@ module iob_eth_dma #(
 
                if (axi_rvalid_i==1) begin
                   buffer_word_counter <= buffer_word_counter + 1'b1;
-                  axi_rready_o <= 1'b1;
+                  axi_rready_o_reg <= 1'b1;
                   // Send word to buffer
                   eth_data_wr_wen_o <= 1'b1;
                   eth_data_wr_wstrb_o <= 4'hf;
@@ -232,8 +271,10 @@ module iob_eth_dma #(
 
                // Wait for empty bit and
                // wait for arbiter
+               // wait for received data
                if ((bd_i[15]==0) ||
-                  (bd_mem_arbiter_ack[1]==0 || bd_mem_arbiter_grant[1]==0 || bd_mem_arbiter_grant_valid==0)) begin
+                  (bd_mem_arbiter_ack[1]==0 || bd_mem_arbiter_grant[1]==0 || bd_mem_arbiter_grant_valid==0) ||
+                  (!rx_data_rcvd_i)) begin
                   rx_bd_addr_o <= rx_bd_num<<1;
                   rx_pc <= rx_pc;
                end
@@ -245,16 +286,16 @@ module iob_eth_dma #(
             end
             
             3: begin  // Start frame transfer to external memory
-               axi_awaddr_o <= buffer_ptr + buffer_word_counter;
-               axi_awlen_o <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
-               axi_awvalid_o <= 1'b1;
+               axi_awaddr_o_reg <= buffer_ptr + buffer_word_counter;
+               axi_awlen_o_reg <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
+               axi_awvalid_o_reg <= 1'b1;
                // Wait for address ready
                if (axi_awready_i==0)
                   rx_pc <= rx_pc;
 
                // Check if frame transfer is complete
                if (buffer_descriptor[31:16]-buffer_word_counter == 0) begin
-                  axi_awvalid_o <= 1'b0;
+                  axi_awvalid_o_reg <= 1'b0;
 
                   // Reset buffer word counter and go to next buffer descriptor
                   buffer_word_counter <= 1'b0;
@@ -282,18 +323,18 @@ module iob_eth_dma #(
 
             4: begin // receive frame word
                rx_pc <= rx_pc;
-               axi_wvalid_o <= 1'b0;
+               axi_wvalid_o_reg <= 1'b0;
 
                // wait for write ready
                // wait for arbiter
                if ((axi_wready_i==1) &&
                   (bd_mem_arbiter_ack[1]==1 && bd_mem_arbiter_grant[1]==1 && bd_mem_arbiter_grant_valid==1)) begin
                   buffer_word_counter <= buffer_word_counter + 1'b1;
-                  axi_wdata_o <= eth_data_rd_rdata_i;
-                  axi_wvalid_o <= 1'b1;
+                  axi_wdata_o_reg <= eth_data_rd_rdata_i;
+                  axi_wvalid_o_reg <= 1'b1;
 
                   if (buffer_descriptor[31:16]-buffer_word_counter+1 == 0) begin
-                     axi_wlast_o <= 1'b1;
+                     axi_wlast_o_reg <= 1'b1;
                      rx_pc <= 3;
                   end
                end

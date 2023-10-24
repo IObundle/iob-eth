@@ -31,8 +31,7 @@ module iob_eth_rx (
    // data
    wire [ 7:0] data_int;
 
-   reg [31:0] received_crc_value;
-   wire [31:0] calculated_crc_value;
+   wire [31:0] crc_sum;
 
    // SYNCHRONIZERS
 
@@ -107,11 +106,6 @@ module iob_eth_rx (
       if (rx_rst[1]) data <= 0;
       else if (RX_DV) data <= data_int;
 
-   // capture CRC
-   always @(posedge RX_CLK, posedge rx_rst[1])
-      if (rx_rst[1]) received_crc_value <= 0;
-      else if (wr) received_crc_value <= {received_crc_value[31:8], data};
-
    //
    // CRC MODULE
    //
@@ -123,9 +117,9 @@ module iob_eth_rx (
 
       .data_in(data),
       .data_en(wr),
-      .crc_out(calculated_crc_value)
+      .crc_out(crc_sum)
    );
 
-   assign crc_err = calculated_crc_value != received_crc_value;
+   assign crc_err = crc_sum != 32'hc704dd7b;
 
 endmodule

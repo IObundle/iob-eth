@@ -33,7 +33,6 @@ module iob_eth # (
    // wire ETH_SEND;
    // wire ETH_RCVACK;
    // wire ETH_SOFTRST;
-   // wire [11-1:0] ETH_TX_NBYTES;
 
    //
    // WIRES and REGISTERS
@@ -43,14 +42,11 @@ module iob_eth # (
    // ETH CLOCK DOMAIN
    reg [1-1:0] phy_clk_detected;
    reg [1-1:0] phy_dv_detected;
-   wire [1-1:0] tx_ready_int;
-   wire [1-1:0] tx_ready_int_pll;
-   wire [1-1:0] tx_ready_int_reg;
-   wire [1-1:0] rx_data_rcvd_int;
-   wire [1-1:0] rx_data_rcvd_int_phy;
-   wire [1-1:0] rx_data_rcvd_int_reg;
+   wire [1-1:0] tx_ready;
+   wire [1-1:0] rx_data_rcvd;
    wire [1-1:0] crc_err;
    wire [1-1:0] crc_en;
+   wire [11-1:0] tx_nbytes;
 
    wire [11-1:0] tx_rd_addr;
    reg [8-1:0] tx_rd_data;
@@ -59,31 +55,31 @@ module iob_eth # (
    wire [8-1:0] rx_wr_data;
    wire [1-1:0] rx_wr;
 
+   wire                         iob_eth_tx_buffer_enA;
+   wire [4-1:0]                 iob_eth_tx_buffer_weA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
+   wire [32-1:0]                iob_eth_tx_buffer_dinA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrB;
+   wire [32-1:0]                iob_eth_tx_buffer_doutB;
+
+   wire                         iob_eth_rx_buffer_enA;
+   wire [4-1:0]                 iob_eth_rx_buffer_weA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrA;
+   wire [32-1:0]                iob_eth_rx_buffer_dinA;
+   wire                         iob_eth_rx_buffer_enB;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
+   wire [32-1:0]                iob_eth_rx_buffer_doutB;
+
    // Ethernet Status
-   wire [1-1:0] pll_locked_sync;
    wire [1-1:0] phy_clk_detected_sync;
    wire [1-1:0] phy_dv_detected_sync;
-   wire [1-1:0] rx_data_rcvd_sync;
-   wire [1-1:0] tx_ready_sync;
 
-   assign MIISTATUS = {
-      16'b0,
-      pll_locked_sync,
-      ETH_RCV_SIZE_rdata[10:0],
-      phy_clk_detected_sync,
-      phy_dv_detected_sync,
-      rx_data_rcvd_sync,
-      tx_ready_sync
+   assign MIISTATUS_r = {
+      29'b0,
+      1'b0, // NVALID
+      1'b0, // BUSY
+      1'b0 // LINKFAIL
    };
-
-   // Ethernet CRC
-
-   // Ethernet RCV_SIZE
-   assign ETH_RCV_SIZE_rdata[15:11] = 5'b0;  // bit unused by core
-
-   // Ethernet Send
-
-   // Ethernet Rcv Ack
 
    //
    // REGISTERS
@@ -91,36 +87,13 @@ module iob_eth # (
 
    // soft reset self-clearing register
    reg [1-1:0] rst_soft;
-   always @(posedge clk, posedge rst)
-      if (rst) rst_soft <= 1'b1;
-      else if (ETH_SOFTRST && !rst_soft) rst_soft <= 1'b1;
+   always @(posedge clk_i, posedge arst_i)
+      if (arst_i) rst_soft <= 1'b1;
+      //else if (ETH_SOFTRST && !rst_soft) rst_soft <= 1'b1;
       else rst_soft <= 1'b0;
 
-   assign rst_int              = rst_soft | rst;
+   assign rst_int              = rst_soft | arst_i;
 
-   assign rx_data_rcvd_int_phy = rx_data_rcvd_int & ETH_PHY_RESETN;
-   iob_reg #(
-      .DATA_W(1)
-   ) rx_data_rcvd_int_register (
-      .clk     (MRxClk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (1'b1),
-      .data_in (rx_data_rcvd_int_phy),
-      .data_out(rx_data_rcvd_int_reg)
-   );
-
-   assign tx_ready_int_pll = tx_ready_int & ETH_PHY_RESETN & PLL_LOCKED;
-   iob_reg #(
-      .DATA_W(1)
-   ) tx_ready_int_register (
-      .clk     (MRxClk),
-      .arst    (rst),
-      .rst     (rst),
-      .en      (1'b1),
-      .data_in (tx_ready_int_pll),
-      .data_out(tx_ready_int_reg)
-   );
 
    //
    // SYNCHRONIZERS
@@ -131,71 +104,35 @@ module iob_eth # (
    iob_sync #(
       .DATA_W(1),
       .RST_VAL(1'b0)
-   ) iob_sync_pll (
-      .clk     (clk),
-      .rst     (rst_int),
-      .signal_i(PLL_LOCKED),
-      .signal_o(pll_locked_sync)
-   );
-   iob_sync #(
-      .DATA_W(11),
-      .RST_VAL(1'b0)
-   ) iob_sync_rx_wr_addr (
-      .clk     (clk),
-      .rst     (rst_int),
-      .signal_i(rx_wr_addr),
-      .signal_o(ETH_RCV_SIZE_rdata[10:0])
-   );
-   iob_sync #(
-      .DATA_W(1),
-      .RST_VAL(1'b0)
    ) iob_sync_phy_clk_detected (
-      .clk     (clk),
-      .rst     (rst_int),
+      .clk_i     (clk_i),
+      .arst_i    (rst_int),
       .signal_i(phy_clk_detected),
-      .signal_o(phy_clk_detected_sync)
+      .signal_o(phy_clk_detected_sync) // TODO
    );
    iob_sync #(
       .DATA_W(1),
       .RST_VAL(1'b0)
    ) iob_sync_phy_dv_detected (
-      .clk     (clk),
-      .rst     (rst_int),
+      .clk_i     (clk_i),
+      .arst_i    (rst_int),
       .signal_i(phy_dv_detected),
-      .signal_o(phy_dv_detected_sync)
+      .signal_o(phy_dv_detected_sync) // TODO
    );
-   iob_sync #(
-      .DATA_W(1),
-      .RST_VAL(1'b0)
-   ) iob_sync_rx_data_rcvd (
-      .clk     (clk),
-      .rst     (rst_int),
-      .signal_i(rx_data_rcvd_int_reg),
-      .signal_o(rx_data_rcvd_sync)
-   );
-   iob_sync #(
-      .DATA_W(1),
-      .RST_VAL(1'b0)
-   ) iob_sync_tx_ready (
-      .clk     (clk),
-      .rst     (rst_int),
-      .signal_i(tx_ready_int_reg),
-      .signal_o(tx_ready_sync)
-   );
-
    // clk to MRxClk
+   wire [1-1:0] send_sync;
    wire [1-1:0] send;
-   iob_f2s_1bit_sync send_sync (
+   iob_f2s_1bit_sync send_f2s_sync (
       .clk_i   (MTxClk),
-      .cke_i   (cke),
-      .value_i (ETH_SEND),
+      .cke_i   (cke_i),
+      .value_i (send_sync),
       .value_o (send)
    );
    wire [1-1:0] rcv_ack;
-   iob_f2s_1bit_sync rcv_sync (
+   iob_f2s_1bit_sync rcv_f2s_sync (
       .clk_i   (MRxClk),
-      .cke_i   (cke),
-      .value_i (ETH_RCVACK),
+      .cke_i   (cke_i),
+      .value_i (1'b0), //FIXME
       .value_o (rcv_ack)
    );
 
@@ -249,8 +186,8 @@ module iob_eth # (
    iob_eth_tx tx (
       // cpu side
       .rst   (rst_int),
-      .nbytes(ETH_TX_NBYTES),
-      .ready (tx_ready_int),
+      .nbytes(tx_nbytes),
+      .ready (tx_ready),
 
       // mii side
       .send   (send),
@@ -270,7 +207,7 @@ module iob_eth # (
    iob_eth_rx rx (
       // cpu side
       .rst      (rst_int),
-      .data_rcvd(rx_data_rcvd_int),
+      .data_rcvd(rx_data_rcvd),
 
       // mii side
       .rcv_ack  (rcv_ack), //FIXME
@@ -287,9 +224,10 @@ module iob_eth # (
    //
    //  PHY RESET
    //
-  wire [20-1:0] phy_rst_cnt;
+   reg [20-1:0] phy_rst_cnt;
+   reg ETH_PHY_RESETN;
 
-   always @(posedge clk, posedge rst_int)
+   always @(posedge clk_i, posedge rst_int)
       if (rst_int) begin
          phy_rst_cnt    <= 0;
          ETH_PHY_RESETN <= 0;
@@ -318,20 +256,20 @@ module iob_eth # (
    tx_buffer
    (
     // Front-End (written by host)
-      .clkA(clk),
-      .enA(iob_eth_tx_buffer_enA),
-      .weA(iob_eth_tx_buffer_weA),
-      .addrA(iob_eth_tx_buffer_addrA),
-      .dinA(iob_eth_tx_buffer_dinA),
-      .doutA(),
+      .clkA_i(clk_i),
+      .enA_i(iob_eth_tx_buffer_enA),
+      .weA_i(iob_eth_tx_buffer_weA),
+      .addrA_i(iob_eth_tx_buffer_addrA),
+      .dA_i(iob_eth_tx_buffer_dinA),
+      .dA_o(),
 
     // Back-End (read by core)
-      .clkB(MTxClk),
-      .enB(1'b1),
-      .weB(4'b0),
-      .addrB(iob_eth_tx_buffer_addrB),
-      .dinB(32'b0),
-      .doutB(iob_eth_tx_buffer_doutB)
+      .clkB_i(MTxClk),
+      .enB_i(1'b1),
+      .weB_i(4'b0),
+      .addrB_i(iob_eth_tx_buffer_addrB),
+      .dB_i(32'b0),
+      .dB_o(iob_eth_tx_buffer_doutB)
    );
 
    iob_ram_tdp_be #(
@@ -341,21 +279,20 @@ module iob_eth # (
    rx_buffer
    (
      // Front-End (written by core)
-     .clkA(MRxClk),
-
-     .enA(iob_eth_rx_buffer_enA),
-     .weA(iob_eth_rx_buffer_weA),
-     .addrA(iob_eth_rx_buffer_addrA),
-     .dinA(iob_eth_rx_buffer_dinA),
-     .doutA(),
+     .clkA_i(MRxClk),
+     .enA_i(iob_eth_rx_buffer_enA),
+     .weA_i(iob_eth_rx_buffer_weA),
+     .addrA_i(iob_eth_rx_buffer_addrA),
+     .dA_i(iob_eth_rx_buffer_dinA),
+     .dA_o(),
 
      // Back-End (read by host)
-     .clkB(clk),
-     .enB(iob_eth_rx_buffer_enB),
-     .weB(4'b0),
-     .addrB(iob_eth_rx_buffer_addrB),
-     .dinB(32'b0),
-     .doutB(iob_eth_rx_buffer_doutB)
+     .clkB_i(clk_i),
+     .enB_i(iob_eth_rx_buffer_enB),
+     .weB_i(4'b0),
+     .addrB_i(iob_eth_rx_buffer_addrB),
+     .dB_i(32'b0),
+     .dB_o(iob_eth_rx_buffer_doutB)
    );
 
    // DMA buffer descriptor wires
@@ -366,101 +303,107 @@ module iob_eth # (
    wire [31:0] dma_bd_o;
 
    // DMA module
-  iob_eth_dma #(
-    .AXI_ADDR_W(AXI_ADDR_W),
-    .AXI_DATA_W(AXI_DATA_W),
-    .AXI_LEN_W (AXI_LEN_W),
-    .AXI_ID_W  (AXI_ID_W),
-    //.BURST_W   (BURST_W),
-    .BUFFER_W  (BUFFER_W),
-    .BD_ADDR_W (BD_NUM_LOG2+1)
-  ) dma_inst (
-   // Control interface
-   .rx_en_i(MODER[0]),
-   .tx_en_i(MODER[1]),
-   .tx_bd_num_i(TX_BD_NUM[BD_NUM_LOG2:0]),
+   iob_eth_dma #(
+      .AXI_ADDR_W(AXI_ADDR_W),
+      .AXI_DATA_W(AXI_DATA_W),
+      .AXI_LEN_W (AXI_LEN_W),
+      .AXI_ID_W  (AXI_ID_W),
+      //.BURST_W   (BURST_W),
+      .BUFFER_W  (`IOB_ETH_BUFFER_W),
+      .BD_ADDR_W (BD_NUM_LOG2+1)
+   ) dma_inst (
+      // Control interface
+      .rx_en_i(MODER_w[0]),
+      .tx_en_i(MODER_w[1]),
+      .tx_bd_num_i(TX_BD_NUM_w[BD_NUM_LOG2:0]),
 
-   // Buffer descriptors
-   .bd_en_o(dma_bd_en),
-   .bd_addr_o(dma_bd_addr),
-   .bd_wen_o(dma_bd_wen),
-   .bd_i(dma_bd_i),
-   .bd_o(dma_bd_o),
+      // Buffer descriptors
+      .bd_en_o(dma_bd_en),
+      .bd_addr_o(dma_bd_addr),
+      .bd_wen_o(dma_bd_wen),
+      .bd_i(dma_bd_i),
+      .bd_o(dma_bd_o),
 
-   // TX Front-End
-   .eth_data_wr_wen_o(iob_eth_tx_buffer_enA), // |ETH_DATA_WR_wstrb
-   .eth_data_wr_wstrb_o(iob_eth_tx_buffer_weA),
-   .eth_data_wr_addr_o(iob_eth_tx_buffer_addrA),
-   .eth_data_wr_wdata_o(iob_eth_tx_buffer_dinA),
-   .crc_en_o(crc_en),
+      // TX Front-End
+      .eth_data_wr_wen_o(iob_eth_tx_buffer_enA), // |ETH_DATA_WR_wstrb
+      .eth_data_wr_wstrb_o(iob_eth_tx_buffer_weA),
+      .eth_data_wr_addr_o(iob_eth_tx_buffer_addrA),
+      .eth_data_wr_wdata_o(iob_eth_tx_buffer_dinA),
+      .tx_ready_i(tx_ready),
+      .crc_en_o(crc_en),
+      .tx_nbytes_o(tx_nbytes),
+      .send_o(send_sync),
 
-   // RX Back-End
-   .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
-   .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
-   .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
-   .crc_err_i(crc_err),
+      // RX Back-End
+      .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
+      .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
+      .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
+      .crc_err_i(crc_err),
+      .rx_data_rcvd_i(rx_data_rcvd),
 
-    // AXI master interface
-    // Can't use generated include, because of `internal_axi_*addr_o` signals.
-    //include "axi_m_m_portmap.vs"
-    .axi_awid_o(axi_awid_o), //Address write channel ID.
-    .axi_awaddr_o(internal_axi_awaddr_o), //Address write channel address.
-    .axi_awlen_o(axi_awlen_o), //Address write channel burst length.
-    .axi_awsize_o(axi_awsize_o), //Address write channel burst size. This signal indicates the size of each transfer in the burst.
-    .axi_awburst_o(axi_awburst_o), //Address write channel burst type.
-    .axi_awlock_o(axi_awlock_o), //Address write channel lock type.
-    .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
-    .axi_awprot_o(axi_awprot_o), //Address write channel protection type. Set to 000 if master output; ignored if slave input.
-    .axi_awqos_o(axi_awqos_o), //Address write channel quality of service.
-    .axi_awvalid_o(axi_awvalid_o), //Address write channel valid.
-    .axi_awready_i(axi_awready_i), //Address write channel ready.
-    .axi_wdata_o(axi_wdata_o), //Write channel data.
-    .axi_wstrb_o(axi_wstrb_o), //Write channel write strobe.
-    .axi_wlast_o(axi_wlast_o), //Write channel last word flag.
-    .axi_wvalid_o(axi_wvalid_o), //Write channel valid.
-    .axi_wready_i(axi_wready_i), //Write channel ready.
-    .axi_bid_i(axi_bid_i), //Write response channel ID.
-    .axi_bresp_i(axi_bresp_i), //Write response channel response.
-    .axi_bvalid_i(axi_bvalid_i), //Write response channel valid.
-    .axi_bready_o(axi_bready_o), //Write response channel ready.
-    .axi_arid_o(axi_arid_o), //Address read channel ID.
-    .axi_araddr_o(internal_axi_araddr_o), //Address read channel address.
-    .axi_arlen_o(axi_arlen_o), //Address read channel burst length.
-    .axi_arsize_o(axi_arsize_o), //Address read channel burst size. This signal indicates the size of each transfer in the burst.
-    .axi_arburst_o(axi_arburst_o), //Address read channel burst type.
-    .axi_arlock_o(axi_arlock_o), //Address read channel lock type.
-    .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
-    .axi_arprot_o(axi_arprot_o), //Address read channel protection type. Set to 000 if master output; ignored if slave input.
-    .axi_arqos_o(axi_arqos_o), //Address read channel quality of service.
-    .axi_arvalid_o(axi_arvalid_o), //Address read channel valid.
-    .axi_arready_i(axi_arready_i), //Address read channel ready.
-    .axi_rid_i(axi_rid_i), //Read channel ID.
-    .axi_rdata_i(axi_rdata_i), //Read channel data.
-    .axi_rresp_i(axi_rresp_i), //Read channel response.
-    .axi_rlast_i(axi_rlast_i), //Read channel last word.
-    .axi_rvalid_i(axi_rvalid_i), //Read channel valid.
-    .axi_rready_o(axi_rready_o), //Read channel ready.
+      // AXI master interface
+      // Can't use generated include, because of `internal_axi_*addr_o` signals.
+      //include "axi_m_m_portmap.vs"
+      .axi_awid_o(axi_awid_o), //Address write channel ID.
+      .axi_awaddr_o(internal_axi_awaddr_o), //Address write channel address.
+      .axi_awlen_o(axi_awlen_o), //Address write channel burst length.
+      .axi_awsize_o(axi_awsize_o), //Address write channel burst size. This signal indicates the size of each transfer in the burst.
+      .axi_awburst_o(axi_awburst_o), //Address write channel burst type.
+      .axi_awlock_o(axi_awlock_o), //Address write channel lock type.
+      .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
+      .axi_awprot_o(axi_awprot_o), //Address write channel protection type. Set to 000 if master output; ignored if slave input.
+      .axi_awqos_o(axi_awqos_o), //Address write channel quality of service.
+      .axi_awvalid_o(axi_awvalid_o), //Address write channel valid.
+      .axi_awready_i(axi_awready_i), //Address write channel ready.
+      .axi_wdata_o(axi_wdata_o), //Write channel data.
+      .axi_wstrb_o(axi_wstrb_o), //Write channel write strobe.
+      .axi_wlast_o(axi_wlast_o), //Write channel last word flag.
+      .axi_wvalid_o(axi_wvalid_o), //Write channel valid.
+      .axi_wready_i(axi_wready_i), //Write channel ready.
+      .axi_bid_i(axi_bid_i), //Write response channel ID.
+      .axi_bresp_i(axi_bresp_i), //Write response channel response.
+      .axi_bvalid_i(axi_bvalid_i), //Write response channel valid.
+      .axi_bready_o(axi_bready_o), //Write response channel ready.
+      .axi_arid_o(axi_arid_o), //Address read channel ID.
+      .axi_araddr_o(internal_axi_araddr_o), //Address read channel address.
+      .axi_arlen_o(axi_arlen_o), //Address read channel burst length.
+      .axi_arsize_o(axi_arsize_o), //Address read channel burst size. This signal indicates the size of each transfer in the burst.
+      .axi_arburst_o(axi_arburst_o), //Address read channel burst type.
+      .axi_arlock_o(axi_arlock_o), //Address read channel lock type.
+      .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
+      .axi_arprot_o(axi_arprot_o), //Address read channel protection type. Set to 000 if master output; ignored if slave input.
+      .axi_arqos_o(axi_arqos_o), //Address read channel quality of service.
+      .axi_arvalid_o(axi_arvalid_o), //Address read channel valid.
+      .axi_arready_i(axi_arready_i), //Address read channel ready.
+      .axi_rid_i(axi_rid_i), //Read channel ID.
+      .axi_rdata_i(axi_rdata_i), //Read channel data.
+      .axi_rresp_i(axi_rresp_i), //Read channel response.
+      .axi_rlast_i(axi_rlast_i), //Read channel last word.
+      .axi_rvalid_i(axi_rvalid_i), //Read channel valid.
+      .axi_rready_o(axi_rready_o), //Read channel ready.
 
-    // General signals interface
-    .clk_i (clk),
-    .cke_i (cke),
-    .arst_i(rst)
-  );
+      // General signals interface
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i)
+   );
 
-  // Buffer descriptors memory
+   wire BD_addressed = (`IOB_WORD_ADDR(iob_addr_i) >= `IOB_ETH_BD_ADDR) && (`IOB_WORD_ADDR(iob_addr_i) < (`IOB_ETH_BD_ADDR + (2 ** (BD_NUM_LOG2 + 1 + 2))));
+   wire [31:0] buffer_addr = (iob_addr_i-`IOB_ETH_BD_ADDR)>>2;
+   // Buffer descriptors memory
    iob_ram_dp #(
       .DATA_W(32),
       .ADDR_W(BD_NUM_LOG2+1),
       .MEM_NO_READ_ON_WRITE(1)
    ) bd_ram (
-      .clk_i(clk),
+      .clk_i(clk_i),
 
       // Port A - SWregs
-      .addrA_i((iob_addr_i-IOB_ETH_BD_ADDR)>>2),
+      .addrA_i(buffer_addr[BD_NUM_LOG2:0]),
       .enA_i(BD_addressed),
-      .weA_i(BD_wen_o),
+      .weA_i(BD_wen),
       .dA_i(iob_wdata_i),
-      .dA_o(BD_i),
+      .dA_o(BD_r),
 
       // Port B - DMA module
       .addrB_i(dma_bd_addr),

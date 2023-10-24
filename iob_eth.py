@@ -127,22 +127,6 @@ class iob_eth(iob_module):
                     "max": "4",
                     "descr": "AXI burst length width",
                 },
-                #{
-                #    "name": "BURST_W",
-                #    "type": "P",
-                #    "val": "0",
-                #    "min": "0",
-                #    "max": "8",
-                #    "descr": "AXI burst width",
-                #},
-                {
-                    "name": "BUFFER_W",
-                    "type": "P",
-                    "val": "1",  # BURST_W+1
-                    "min": "0",
-                    "max": "32",
-                    "descr": "Buffer size",
-                },
                 {
                     "name": "MEM_ADDR_OFFSET",
                     "type": "P",
@@ -167,6 +151,14 @@ class iob_eth(iob_module):
                     "min": "NA",
                     "max": "7",
                     "descr": "Log2 amount of buffer descriptors",
+                },
+                {
+                    "name": "BUFFER_W",
+                    "type": "P",
+                    "val": "11",
+                    "min": "0",
+                    "max": "32",
+                    "descr": "Buffer size",
                 },
             ]
         )
