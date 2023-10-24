@@ -74,7 +74,7 @@ module iob_eth # (
    wire [1-1:0] phy_clk_detected_sync;
    wire [1-1:0] phy_dv_detected_sync;
 
-   assign MIISTATUS_r = {
+   assign MIISTATUS_rd = {
       29'b0,
       1'b0, // NVALID
       1'b0, // BUSY
@@ -313,9 +313,9 @@ module iob_eth # (
       .BD_ADDR_W (BD_NUM_LOG2+1)
    ) dma_inst (
       // Control interface
-      .rx_en_i(MODER_w[0]),
-      .tx_en_i(MODER_w[1]),
-      .tx_bd_num_i(TX_BD_NUM_w[BD_NUM_LOG2:0]),
+      .rx_en_i(MODER_wr[0]),
+      .tx_en_i(MODER_wr[1]),
+      .tx_bd_num_i(TX_BD_NUM_wr[BD_NUM_LOG2:0]),
 
       // Buffer descriptors
       .bd_en_o(dma_bd_en),
@@ -401,9 +401,9 @@ module iob_eth # (
       // Port A - SWregs
       .addrA_i(buffer_addr[BD_NUM_LOG2:0]),
       .enA_i(BD_addressed),
-      .weA_i(BD_wen),
+      .weA_i(BD_wen_wr),
       .dA_i(iob_wdata_i),
-      .dA_o(BD_r),
+      .dA_o(BD_rdata_rd),
 
       // Port B - DMA module
       .addrB_i(dma_bd_addr),

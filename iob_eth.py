@@ -292,7 +292,7 @@ class iob_eth(iob_module):
                         "rst_val": 40960,
                         "addr": 0,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Mode Register",
                     },
                     {
@@ -302,7 +302,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 4,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Interrupt Source Register",
                     },
                     {
@@ -312,7 +312,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 8,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Interrupt Mask Register",
                     },
                     {
@@ -322,7 +322,7 @@ class iob_eth(iob_module):
                         "rst_val": 18,
                         "addr": 12,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Back to Back Inter Packet Gap Register",
                     },
                     {
@@ -332,7 +332,7 @@ class iob_eth(iob_module):
                         "rst_val": 12,
                         "addr": 16,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Non Back to Back Inter Packet Gap Register 1",
                     },
                     {
@@ -342,7 +342,7 @@ class iob_eth(iob_module):
                         "rst_val": 18,
                         "addr": 20,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Non Back to Back Inter Packet Gap Register 2",
                     },
                     {
@@ -352,7 +352,7 @@ class iob_eth(iob_module):
                         "rst_val": 4195840,
                         "addr": 24,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Packet Length (minimum and maximum) Register",
                     },
                     {
@@ -362,7 +362,7 @@ class iob_eth(iob_module):
                         "rst_val": 61443,
                         "addr": 28,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Collision and Retry Configuration",
                     },
                     {
@@ -372,7 +372,7 @@ class iob_eth(iob_module):
                         "rst_val": 64,
                         "addr": 32,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Transmit Buffer Descriptor Number",
                     },
                     {
@@ -382,7 +382,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 36,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Control Module Mode Register",
                     },
                     {
@@ -392,7 +392,7 @@ class iob_eth(iob_module):
                         "rst_val": 100,
                         "addr": 40,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Mode Register",
                     },
                     {
@@ -402,7 +402,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 44,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Command Register",
                     },
                     {
@@ -412,7 +412,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 48,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Address Register. Contains the PHY address and the register within the PHY address",
                     },
                     {
@@ -422,7 +422,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 52,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Transmit Data. The data to be transmitted to the PHY",
                     },
                     {
@@ -432,7 +432,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 56,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Receive Data. The data received from the PHY",
                     },
                     {
@@ -442,7 +442,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 60,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MII Status Register",
                     },
                     {
@@ -452,7 +452,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 64,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MAC Individual Address0. The LSB four bytes of the individual address are written to this register",
                     },
                     {
@@ -462,7 +462,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 68,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "MAC Individual Address1. The MSB two bytes of the individual address are written to this register",
                     },
                     {
@@ -472,7 +472,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 72,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "HASH0 Register",
                     },
                     {
@@ -482,7 +482,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 76,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "HASH1 Register",
                     },
                     {
@@ -492,7 +492,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 80,
                         "log2n_items": 0,
-                        "autologic": True,
+                        "autoreg": True,
                         "descr": "Transmit Control Register",
                     },
                 ],
@@ -508,7 +508,7 @@ class iob_eth(iob_module):
                         "rst_val": 0,
                         "addr": 1024,
                         "log2n_items": "BD_NUM_LOG2+1",
-                        "autologic": False,
+                        "autoreg": False,
                         "descr": "Buffer descriptors.",
                     },
                 ],
