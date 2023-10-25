@@ -280,6 +280,7 @@ class iob_eth(iob_module):
 
     @classmethod
     def _setup_regs(cls):
+        cls.autoaddr = False
         cls.regs += [
             {
                 "name": "iob_eth",
