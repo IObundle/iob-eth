@@ -138,11 +138,12 @@ module iob_eth # (
       .value_i (send_sync),
       .value_o (send)
    );
+   wire [1-1:0] rcv_sync;
    wire [1-1:0] rcv_ack;
    iob_f2s_1bit_sync rcv_f2s_sync (
       .clk_i   (MRxClk),
       .cke_i   (cke_i),
-      .value_i (1'b0), //FIXME
+      .value_i (rcv_sync),
       .value_o (rcv_ack)
    );
 
@@ -220,7 +221,7 @@ module iob_eth # (
       .data_rcvd(rx_data_rcvd),
 
       // mii side
-      .rcv_ack  (rcv_ack), //FIXME
+      .rcv_ack  (rcv_ack),
       .wr       (rx_wr),
       .addr     (rx_wr_addr),
       .data     (rx_wr_data),
@@ -348,8 +349,10 @@ module iob_eth # (
       .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
       .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
       .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
-      .crc_err_i(crc_err),
       .rx_data_rcvd_i(rx_data_rcvd),
+      .crc_err_i(crc_err),
+      .rx_nbytes_i(iob_eth_rx_buffer_addrA),
+      .rcv_ack_o(rcv_sync),
 
       // AXI master interface
       // Can't use generated include, because of `internal_axi_*addr_o` signals.
@@ -398,8 +401,11 @@ module iob_eth # (
       .arst_i(arst_i)
    );
 
-   wire BD_addressed = (`IOB_WORD_ADDR(iob_addr_i) >= `IOB_ETH_BD_ADDR) && (`IOB_WORD_ADDR(iob_addr_i) < (`IOB_ETH_BD_ADDR + (2 ** (BD_NUM_LOG2 + 1 + 2))));
    wire [31:0] buffer_addr = (iob_addr_i-`IOB_ETH_BD_ADDR)>>2;
+
+   assign BD_wready_wr = 1'b1;
+   assign BD_rready_rd = 1'b1;
+
    // Buffer descriptors memory
    iob_ram_dp #(
       .DATA_W(32),
@@ -410,7 +416,7 @@ module iob_eth # (
 
       // Port A - SWregs
       .addrA_i(buffer_addr[BD_NUM_LOG2:0]),
-      .enA_i(BD_addressed),
+      .enA_i(BD_wen_wr || BD_ren_rd),
       .weA_i(BD_wen_wr),
       .dA_i(iob_wdata_i),
       .dA_o(BD_rdata_rd),

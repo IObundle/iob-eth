@@ -34,11 +34,13 @@ module iob_eth_dma #(
    output reg                     send_o,
 
    // RX Back-End
-   output reg                     eth_data_rd_ren_o,
+   output                         eth_data_rd_ren_o,
    output reg [BUFFER_W-1:0]      eth_data_rd_addr_o,
    input  [32-1:0]                eth_data_rd_rdata_i,
-   input                          crc_err_i,
    input                          rx_data_rcvd_i,
+   input                          crc_err_i,
+   input  [11-1:0]                rx_nbytes_i,
+   output reg                     rcv_ack_o,
 
    // AXI master interface
    `include "axi_m_port.vs"
@@ -51,9 +53,14 @@ module iob_eth_dma #(
    input cke_i,
    input arst_i
 );
+
+   localparam AXI_MAX_BURST_LEN = 16;
+
    // ############# Transmitter #############
 
-   wire [1:0] bd_mem_arbiter_req;
+   reg rx_req;
+   reg tx_req;
+   wire [1:0] bd_mem_arbiter_req = {rx_req, tx_req};
    wire [1:0] bd_mem_arbiter_ack;
    wire [1:0] bd_mem_arbiter_grant;
    wire bd_mem_arbiter_grant_valid;
@@ -61,7 +68,7 @@ module iob_eth_dma #(
    arbiter #(
       .PORTS(2),
       // arbitration type: "PRIORITY" or "ROUND_ROBIN"
-      .TYPE("PRIORITY"),
+      .TYPE("ROUND_ROBIN"),
       // block type: "NONE", "REQUEST", "ACKNOWLEDGE"
       .BLOCK("NONE"),
       // LSB priority: "LOW", "HIGH"
@@ -85,9 +92,10 @@ module iob_eth_dma #(
    reg                 rx_bd_wen_o;
    reg [32-1:0]        tx_bd_o;
    reg [32-1:0]        rx_bd_o;
-   reg [32-1:0]        buffer_descriptor;
-   reg [32-1:0]        buffer_ptr;
-   reg [32-1:0]        buffer_word_counter;
+   reg [32-1:0]        tx_buffer_descriptor;
+   reg [32-1:0]        rx_buffer_descriptor;
+   reg [32-1:0]        tx_buffer_ptr;
+   reg [32-1:0]        rx_buffer_ptr;
 
    reg [    AXI_ADDR_W-1:0] axi_araddr_o_reg;
    reg [     AXI_LEN_W-1:0] axi_arlen_o_reg;
@@ -118,115 +126,194 @@ module iob_eth_dma #(
    assign bd_o = bd_mem_arbiter_grant_encoded==0 ? tx_bd_o : rx_bd_o;
 
    assign bd_en_o = 1'b1;
+   assign eth_data_rd_ren_o = 1'b1;
 
    //tx program
-   reg [1:0] tx_pc;
-   reg [BD_ADDR_W-1:0] tx_bd_num;
-   always @(posedge clk_i, posedge arst_i)
+   reg [3-1:0] tx_state_nxt;
+   wire [3-1:0] tx_state;
+   iob_reg #(
+      .DATA_W (3),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) tx_state_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(tx_state_nxt),
+      .data_o(tx_state)
+   );
+
+   reg [32-1:0] tx_buffer_word_counter_nxt;
+   wire [32-1:0] tx_buffer_word_counter;
+   iob_reg #(
+      .DATA_W (32),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) tx_buffer_word_counter_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(tx_buffer_word_counter_nxt),
+      .data_o(tx_buffer_word_counter)
+   );
+
+   reg [BD_ADDR_W-1:0] tx_bd_num_nxt;
+   wire [BD_ADDR_W-1:0] tx_bd_num;
+   iob_reg #(
+      .DATA_W (BD_ADDR_W),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) tx_bd_num_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(tx_bd_num_nxt),
+      .data_o(tx_bd_num)
+   );
+
+   always @* begin
+      tx_req = 1'b0;
 
       if (arst_i) begin
 
-         tx_pc       <= 1'b0;
-         tx_bd_num   <= 1'b0;
-         tx_bd_addr_o   <= 1'b0;
-         tx_bd_wen_o    <= 1'b0;
-         tx_bd_o        <= 1'b0;
+         tx_state_nxt   = 1'b0;
+         tx_bd_num_nxt  = 1'b0;
+         tx_bd_addr_o   = 1'b0;
+         tx_bd_wen_o    = 1'b0;
+         tx_bd_o        = 1'b0;
+         send_o = 1'b0;
+         axi_arvalid_o_reg = 1'b0;
+         axi_rready_o_reg = 1'b0;
+         eth_data_wr_wen_o = 1'b0;
+         tx_irq_o = 1'b0;
 
       end else if (tx_en_i) begin
 
-         tx_pc <= tx_pc + 1'b1;  // Increment pc by default
+         tx_state_nxt = tx_state + 1'b1;
 
-         case (tx_pc)
+         case (tx_state)
 
-            0: begin  // Read buffer descriptor
-               tx_bd_addr_o <= tx_bd_num<<1;
+            0: begin  // Request buffer descriptor
+               tx_bd_addr_o = tx_bd_num<<1;
+               tx_req = 1'b1;
+               send_o = 1'b0;
+               tx_irq_o = 1'b0;
+               tx_bd_wen_o    = 1'b0;
+
+               // Wait for arbiter
+               if (!bd_mem_arbiter_grant[0] || !bd_mem_arbiter_grant_valid)
+                  tx_state_nxt = tx_state;
             end
 
-            1: begin  // Read buffer pointer.
-               buffer_descriptor <= bd_i;
-               tx_bd_addr_o <= tx_bd_num<<1 + 1;
+            1: begin  // Read buffer descriptor.
+               tx_buffer_descriptor = bd_i;
 
-               // Wait for ready bit and
-               // wait for arbiter and
-               // wait for buffer ready for next frame
-               if ((bd_i[15]==0) ||
-                  (bd_mem_arbiter_ack[0]==0 || bd_mem_arbiter_grant[0]==0 || bd_mem_arbiter_grant_valid==0) ||
-                  (!tx_ready_i)) begin
-                  tx_bd_addr_o <= tx_bd_num<<1;
-                  tx_pc <= tx_pc;
-               end
+               // Wait for ready bit
+               if (!tx_buffer_descriptor[15])
+                  tx_state_nxt = tx_state - 1'b1;
             end
 
-            2: begin  // Store buffer pointer
-               buffer_ptr <= bd_i;
-               buffer_word_counter <= 0;
+            2: begin //Request buffer pointer
+               tx_bd_addr_o = (tx_bd_num<<1) + 1;
+               tx_req = 1'b1;
+
+               // Wait for arbiter
+               if (!bd_mem_arbiter_grant[0] || !bd_mem_arbiter_grant_valid)
+                  tx_state_nxt = tx_state;
             end
 
-            3: begin  // Start frame transfer from external memory
-               axi_araddr_o_reg <= buffer_ptr + buffer_word_counter;
-               axi_arlen_o_reg <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
-               axi_arvalid_o_reg <= 1'b1;
+            3: begin  // Read buffer pointer
+               tx_buffer_ptr = bd_i;
+               tx_buffer_word_counter_nxt = 0;
+
+               // Wait for buffer ready for next frame
+               if (!tx_ready_i)
+                  tx_state_nxt = tx_state - 1'b1;
+            end
+
+            4: begin  // Start frame transfer from external memory
+               axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_word_counter;
+               axi_arlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,tx_buffer_descriptor[31:16]-tx_buffer_word_counter) - 1'b1;
+               axi_arvalid_o_reg = 1'b1;
+               axi_rready_o_reg = 1'b0;
+               eth_data_wr_wen_o = 1'b0;
+
                // Wait for address ready
-               if (axi_arready_i==0)
-                  tx_pc <= tx_pc;
+               if (!axi_arready_i)
+                  tx_state_nxt = tx_state;
 
                // Check if frame transfer is complete
-               if (buffer_descriptor[31:16]-buffer_word_counter == 0) begin
-                  axi_arvalid_o_reg <= 1'b0;
+               if (tx_buffer_descriptor[31:16]-tx_buffer_word_counter == 0) begin
+                  axi_arvalid_o_reg = 1'b0;
 
-                  // Reset buffer word counter and go to next buffer descriptor
-                  buffer_word_counter <= 1'b0;
-                  tx_pc <= 1'b0;
+                  // Configure transmitter settings
+                  crc_en_o = tx_buffer_descriptor[11];
+                  //tx_nbytes_o = tx_buffer_descriptor[31:16];
+                  tx_nbytes_o = tx_buffer_descriptor[26:16]; // 11 bits is enough for frame size
+                  send_o = 1'b1;
 
-                  crc_en_o <= buffer_descriptor[11];
-                  //tx_nbytes_o <= buffer_descriptor[31:16];
-                  tx_nbytes_o <= buffer_descriptor[26:16];
-                  send_o <= 1'b1;
+                  // Disable ready bit
+                  tx_buffer_descriptor[15] = 1'b0;
 
                   // Write transmit status
-                  // - Disable ready bit
-
-                  // Generate interrupt
-                  tx_irq_o <= buffer_descriptor[14];
-
-                  // Select BD address based on WR bit
-                  if (buffer_descriptor[13] == 0)
-                     tx_bd_num <= tx_bd_num + 1'b1;
-                  else
-                     tx_bd_num <= 1'b0;
+                  tx_state_nxt = 6;
                end
             end
 
-            4: begin // receive frame word
-               tx_pc <= tx_pc;
+            5: begin // Transfer frame word from memory to buffer
+               tx_state_nxt = tx_state;
+               axi_rready_o_reg = 1'b0;
+               axi_arvalid_o_reg = 1'b0;
 
                if (axi_rvalid_i==1) begin
-                  buffer_word_counter <= buffer_word_counter + 1'b1;
-                  axi_rready_o_reg <= 1'b1;
+                  tx_buffer_word_counter_nxt = tx_buffer_word_counter + 1'b1;
+                  axi_rready_o_reg = 1'b1;
                   // Send word to buffer
-                  eth_data_wr_wen_o <= 1'b1;
-                  eth_data_wr_wstrb_o <= 4'hf;
-                  eth_data_wr_addr_o <= buffer_word_counter;
-                  eth_data_wr_wdata_o <= axi_rdata_i;
+                  eth_data_wr_wen_o = 1'b1;
+                  eth_data_wr_wstrb_o = 4'hf;
+                  eth_data_wr_addr_o = tx_buffer_word_counter;
+                  eth_data_wr_wdata_o = axi_rdata_i;
 
                   if (axi_rlast_i==1)
-                     tx_pc <= 3;
+                     tx_state_nxt = tx_state - 1'b1;
                end
 
+            end
+
+            6: begin // Write transmit status
+               tx_state_nxt = tx_state;
+
+               tx_bd_addr_o = tx_bd_num<<1;
+               tx_bd_wen_o = 1'b1;
+               tx_bd_o = tx_buffer_descriptor;
+               tx_req = 1'b1;
+
+               // Wait for arbiter
+               if (bd_mem_arbiter_grant[0] && bd_mem_arbiter_grant_valid) begin
+                  // Generate interrupt
+                  tx_irq_o = tx_buffer_descriptor[14];
+
+                  // Select next BD address based on WR bit
+                  if (tx_buffer_descriptor[13] == 0)
+                     tx_bd_num_nxt = tx_bd_num + 1'b1;
+                  else
+                     tx_bd_num_nxt = 1'b0;
+
+                  // Reset BD number if reached maximum
+                  if (tx_bd_num_nxt >= tx_bd_num_i)
+                     tx_bd_num_nxt = 1'b0;
+
+                  // Go to next buffer descriptor
+                  tx_state_nxt = 1'b0;
+               end
             end
 
             default: ;
 
          endcase
 
-      end else begin
-
-         tx_pc       <= 1'b0;
-         tx_bd_addr_o   <= 1'b0;
-         tx_bd_wen_o    <= 1'b0;
-         tx_bd_o        <= 1'b0;
-
       end
+   end
 
    // AXI Master Read interface
    // Constants
@@ -243,116 +330,212 @@ module iob_eth_dma #(
    // ############# Receiver #############
 
    //rx program
-   reg [1:0] rx_pc;
-   reg [BD_ADDR_W-1:0] rx_bd_num;
-   always @(posedge clk_i, posedge arst_i)
+   reg [3-1:0] rx_state_nxt;
+   wire [3-1:0] rx_state;
+   iob_reg #(
+      .DATA_W (3),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) rx_state_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_state_nxt),
+      .data_o(rx_state)
+   );
+
+   reg [32-1:0] rx_buffer_word_counter_nxt;
+   wire [32-1:0] rx_buffer_word_counter;
+   iob_reg #(
+      .DATA_W (32),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) rx_buffer_word_counter_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_buffer_word_counter_nxt),
+      .data_o(rx_buffer_word_counter)
+   );
+
+   reg [BD_ADDR_W-1:0] rx_bd_num_nxt;
+   wire [BD_ADDR_W-1:0] rx_bd_num;
+   iob_reg #(
+      .DATA_W (BD_ADDR_W),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) rx_bd_num_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_bd_num_nxt),
+      .data_o(rx_bd_num)
+   );
+
+   reg [32-1:0] rx_burst_word_num_nxt;
+   wire [32-1:0] rx_burst_word_num;
+   iob_reg #(
+      .DATA_W (32),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) rx_burst_word_num_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_burst_word_num_nxt),
+      .data_o(rx_burst_word_num)
+   );
+
+   always @* begin
+      rx_req = 1'b0;
 
       if (arst_i) begin
 
-         rx_pc       <= 1'b0;
-         rx_bd_num   <= 1'b0;
-         rx_bd_addr_o   <= 1'b0;
-         rx_bd_wen_o    <= 1'b0;
-         rx_bd_o        <= 1'b0;
+         rx_state_nxt   = 1'b0;
+         rx_bd_num_nxt  = tx_bd_num_i;
+         rx_bd_addr_o   = 1'b0;
+         rx_bd_wen_o    = 1'b0;
+         rx_bd_o        = 1'b0;
+         rcv_ack_o      = 1'b0;
+         axi_awvalid_o_reg = 1'b0;
+         axi_wlast_o_reg = 1'b0;
 
       end else if (rx_en_i) begin
 
-         rx_pc <= rx_pc + 1'b1;  // Increment pc by default
+         rx_state_nxt = rx_state + 1'b1;
 
-         case (rx_pc)
+         case (rx_state)
 
-            0: begin  // Read buffer descriptor
-               rx_bd_addr_o <= rx_bd_num<<1;
+            0: begin  // Request buffer descriptor
+               rx_bd_addr_o = rx_bd_num<<1;
+               rx_req = 1'b1;
+               rcv_ack_o = 1'b0;
+
+               // Wait for arbiter
+               if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid)
+                  rx_state_nxt = rx_state;
+
             end
 
-            1: begin  // Read buffer pointer.
-               buffer_descriptor <= bd_i;
-               rx_bd_addr_o <= rx_bd_num<<1 + 1;
+            1: begin  // Read buffer descriptor.
+               rx_buffer_descriptor = bd_i;
 
-               // Wait for empty bit and
-               // wait for arbiter
-               // wait for received data
-               if ((bd_i[15]==0) ||
-                  (bd_mem_arbiter_ack[1]==0 || bd_mem_arbiter_grant[1]==0 || bd_mem_arbiter_grant_valid==0) ||
-                  (!rx_data_rcvd_i)) begin
-                  rx_bd_addr_o <= rx_bd_num<<1;
-                  rx_pc <= rx_pc;
-               end
+               // Wait for ready bit
+               if (!rx_buffer_descriptor[15])
+                  rx_state_nxt = rx_state - 1'b1;
             end
 
-            2: begin  // Store buffer pointer; Write frame to external memeory.
-               buffer_ptr <= bd_i;
-               buffer_word_counter <= 0;
+            2: begin //Request buffer pointer
+               rx_bd_addr_o = (rx_bd_num<<1) + 1;
+               rx_req = 1'b1;
+
+               // Wait for arbiter
+               if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid)
+                  rx_state_nxt = rx_state;
             end
-            
-            3: begin  // Start frame transfer to external memory
-               axi_awaddr_o_reg <= buffer_ptr + buffer_word_counter;
-               axi_awlen_o_reg <= `IOB_MIN(16,buffer_descriptor[31:16]-buffer_word_counter);
-               axi_awvalid_o_reg <= 1'b1;
+
+            3: begin  // Read buffer pointer
+               rx_buffer_ptr = bd_i;
+               rx_buffer_word_counter_nxt = 0;
+
+               // Wait for buffer ready for next frame
+               if (!rx_data_rcvd_i)
+                  rx_state_nxt = rx_state - 1'b1;
+            end
+
+            4: begin  // Start frame transfer to external memory
+               axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_word_counter;
+               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_word_counter) - 1'b1;
+               axi_awvalid_o_reg = 1'b1;
+               // Get word from buffer
+               eth_data_rd_addr_o = rx_buffer_word_counter;
+               rx_burst_word_num_nxt = 1'b0;
+
                // Wait for address ready
-               if (axi_awready_i==0)
-                  rx_pc <= rx_pc;
+               if (!axi_awready_i)
+                  rx_state_nxt = rx_state;
 
                // Check if frame transfer is complete
-               if (buffer_descriptor[31:16]-buffer_word_counter == 0) begin
-                  axi_awvalid_o_reg <= 1'b0;
+               if (rx_nbytes_i-rx_buffer_word_counter == 0) begin
+                  axi_awvalid_o_reg = 1'b0;
 
-                  // Reset buffer word counter and go to next buffer descriptor
-                  buffer_word_counter <= 1'b0;
-                  rx_pc <= 1'b0;
+                  // Disable ready bit
+                  rx_buffer_descriptor[15] = 1'b0;
+                  // Write crc_err
+                  rx_buffer_descriptor[1] = crc_err_i;
+                  // Write buffer size
+                  rx_buffer_descriptor[31:16] = rx_nbytes_i;
+
+                  // Acknowledge read complete
+                  rcv_ack_o = 1'b1;
 
                   // Write receive status
-                  // - Disable ready bit
-                  // - Write crc_err
-
-                  // Generate interrupt
-                  rx_irq_o <= buffer_descriptor[14];
-
-                  // Select BD address based on WR bit
-                  if (buffer_descriptor[13] == 0)
-                     rx_bd_num <= rx_bd_num + 1'b1;
-                  else
-                     rx_bd_num <= 1'b0;
+                  rx_state_nxt = 6;
                end
-
-               // Get word from buffer
-               eth_data_rd_ren_o <= 1'b1;
-               eth_data_rd_addr_o <= buffer_word_counter;
 
             end
 
-            4: begin // receive frame word
-               rx_pc <= rx_pc;
-               axi_wvalid_o_reg <= 1'b0;
+            5: begin // Transfer frame word from buffer to memory
+               rx_state_nxt = rx_state;
+               axi_awvalid_o_reg = 1'b0;
+               axi_wvalid_o_reg = 1'b1;
+               axi_wdata_o_reg = eth_data_rd_rdata_i;
+               eth_data_rd_addr_o = rx_buffer_word_counter;
 
                // wait for write ready
-               // wait for arbiter
-               if ((axi_wready_i==1) &&
-                  (bd_mem_arbiter_ack[1]==1 && bd_mem_arbiter_grant[1]==1 && bd_mem_arbiter_grant_valid==1)) begin
-                  buffer_word_counter <= buffer_word_counter + 1'b1;
-                  axi_wdata_o_reg <= eth_data_rd_rdata_i;
-                  axi_wvalid_o_reg <= 1'b1;
-
-                  if (buffer_descriptor[31:16]-buffer_word_counter+1 == 0) begin
-                     axi_wlast_o_reg <= 1'b1;
-                     rx_pc <= 3;
-                  end
+               if (axi_wready_i==1) begin
+                  rx_buffer_word_counter_nxt = rx_buffer_word_counter + 1'b1;
+                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1;
+                  rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
                end
 
+               // Check if last word
+               if (rx_buffer_descriptor[31:16]-rx_buffer_word_counter == 1) begin
+                  axi_wlast_o_reg = 1'b1;
+                  rx_state_nxt = rx_state - 1'b1;
+               end
+
+               // Tranfer next burst
+               if (rx_burst_word_num == AXI_MAX_BURST_LEN-1)
+                  rx_state_nxt = rx_state - 1'b1;
+
+            end
+
+            6: begin // Write receive status
+               rx_state_nxt = rx_state;
+
+               rx_bd_addr_o = rx_bd_num<<1;
+               rx_bd_wen_o = 1'b1;
+               rx_bd_o = rx_buffer_descriptor;
+               rx_req = 1'b1;
+
+               // Wait for arbiter
+               if (bd_mem_arbiter_grant[0] && bd_mem_arbiter_grant_valid) begin
+                  // Generate interrupt
+                  rx_irq_o = rx_buffer_descriptor[14];
+
+                  // Select next BD address based on WR bit
+                  if (rx_buffer_descriptor[13] == 0)
+                     rx_bd_num_nxt = rx_bd_num + 1'b1;
+                  else
+                     rx_bd_num_nxt = tx_bd_num_i;
+
+                  // Reset BD number if reached maximum
+                  if (rx_bd_num_nxt >= 1<<BD_ADDR_W)
+                     rx_bd_num_nxt = tx_bd_num_i;
+
+
+                  // Go to next buffer descriptor
+                  rx_state_nxt = 1'b0;
+               end
             end
 
             default: ;
 
          endcase
 
-      end else begin
-
-         tx_pc       <= 1'b0;
-         rx_bd_addr_o   <= 1'b0;
-         rx_bd_wen_o    <= 1'b0;
-         rx_bd_o        <= 1'b0;
-
       end
+   end
 
    // AXI Master Write interface
    // Constants
