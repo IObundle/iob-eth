@@ -198,7 +198,7 @@ module iob_eth_dma #(
                tx_req = 1'b1;
                send_o = 1'b0;
                tx_irq_o = 1'b0;
-               tx_bd_wen_o    = 1'b0;
+               tx_bd_wen_o = 1'b0;
 
                // Wait for arbiter
                if (!bd_mem_arbiter_grant[0] || !bd_mem_arbiter_grant_valid)
@@ -232,8 +232,13 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer from external memory
-               axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_word_counter;
-               axi_arlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,tx_buffer_descriptor[31:16]-tx_buffer_word_counter) - 1'b1;
+               // TODO: Instead of having fixed words of 4 bytes (shifting
+               // 2 bits), we should use the AXI_DATA_W to calculate the
+               // correct shift.
+               axi_araddr_o_reg = tx_buffer_ptr + (tx_buffer_word_counter<<2);
+               // FIXME: 'tx_buffer_descriptor[31:(16+2)]' may not be correct
+               // if the frame size is not a multiple of 4 bytes
+               axi_arlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,tx_buffer_descriptor[31:(16+2)]-tx_buffer_word_counter) - 1'b1;
                axi_arvalid_o_reg = 1'b1;
                axi_rready_o_reg = 1'b0;
                eth_data_wr_wen_o = 1'b0;
@@ -243,7 +248,7 @@ module iob_eth_dma #(
                   tx_state_nxt = tx_state;
 
                // Check if frame transfer is complete
-               if (tx_buffer_descriptor[31:16]-tx_buffer_word_counter == 0) begin
+               if (tx_buffer_descriptor[31:(16+2)]-tx_buffer_word_counter == 0) begin
                   axi_arvalid_o_reg = 1'b0;
 
                   // Configure transmitter settings
@@ -399,6 +404,7 @@ module iob_eth_dma #(
          rcv_ack_o      = 1'b0;
          axi_awvalid_o_reg = 1'b0;
          axi_wlast_o_reg = 1'b0;
+         rx_irq_o = 1'b0;
 
       end else if (rx_en_i) begin
 
@@ -410,6 +416,7 @@ module iob_eth_dma #(
                rx_bd_addr_o = rx_bd_num<<1;
                rx_req = 1'b1;
                rcv_ack_o = 1'b0;
+               rx_irq_o = 1'b0;
 
                // Wait for arbiter
                if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid)
@@ -444,8 +451,8 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer to external memory
-               axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_word_counter;
-               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_word_counter) - 1'b1;
+               axi_awaddr_o_reg = rx_buffer_ptr + (rx_buffer_word_counter<<2);
+               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,(rx_nbytes_i>>2)-rx_buffer_word_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
                // Get word from buffer
                eth_data_rd_addr_o = rx_buffer_word_counter;
@@ -456,7 +463,7 @@ module iob_eth_dma #(
                   rx_state_nxt = rx_state;
 
                // Check if frame transfer is complete
-               if (rx_nbytes_i-rx_buffer_word_counter == 0) begin
+               if ((rx_nbytes_i>>2)-rx_buffer_word_counter == 0) begin
                   axi_awvalid_o_reg = 1'b0;
 
                   // Disable ready bit
@@ -510,7 +517,7 @@ module iob_eth_dma #(
                rx_req = 1'b1;
 
                // Wait for arbiter
-               if (bd_mem_arbiter_grant[0] && bd_mem_arbiter_grant_valid) begin
+               if (bd_mem_arbiter_grant[1] && bd_mem_arbiter_grant_valid) begin
                   // Generate interrupt
                   rx_irq_o = rx_buffer_descriptor[14];
 

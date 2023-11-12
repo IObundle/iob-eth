@@ -164,6 +164,10 @@
         })
 #define eth_set_empty(idx, enable) eth_set_ready(idx, enable)
 
+#define eth_set_interrupt(idx, enable) ({\
+        IOB_ETH_SET_BD(IOB_ETH_GET_BD(idx<<1) & ~TX_BD_IRQ | (enable ? TX_BD_IRQ : 0), idx<<1);\
+        })
+
 #define eth_set_wr(idx, enable) ({\
         IOB_ETH_SET_BD(IOB_ETH_GET_BD(idx<<1) & ~TX_BD_WRAP | (enable ? TX_BD_WRAP : 0), idx<<1);\
         })

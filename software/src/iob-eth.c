@@ -179,7 +179,7 @@ void eth_send_frame(char *data, unsigned int size) {
   eth_set_payload_size(0, TEMPLATE_LEN+size);
 
   printf("A4\n");
-  // Set ready bit; Enable CRC and PAD; Set as last descriptor
+  // Set ready bit; Enable CRC and PAD; Set as last descriptor; Enable interrupt.
   gpio_set(0x00000002);
   eth_set_ready(0, 1);
   gpio_set(0x00000003);
@@ -188,6 +188,7 @@ void eth_send_frame(char *data, unsigned int size) {
   eth_set_pad(0, 1);
   gpio_set(0x00000005);
   eth_set_wr(0, 1);
+  eth_set_interrupt(0, 1);
 
   printf("0x%x\n", IOB_ETH_GET_BD(0));
 
@@ -211,6 +212,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
 
+  // FIXME: Use 32bit aligned words?
   // Alloc memory for frame
   char *frame_ptr = (char *) malloc(TEMPLATE_LEN+ETH_NBYTES);
 
@@ -223,10 +225,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   eth_set_ptr(64, frame_ptr);
 
   gpio_set(0xa1000001);
-  // Mark empty; Set as last descriptor.
+  // Mark empty; Set as last descriptor; Enable interrupt.
   eth_set_empty(64, 1);
   gpio_set(0xa1000002);
   eth_set_wr(64, 1);
+  eth_set_interrupt(64, 1);
 
   gpio_set(0xa1000003);
   // Enable reception

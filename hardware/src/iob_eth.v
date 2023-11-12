@@ -312,6 +312,9 @@ module iob_eth # (
    wire dma_bd_wen;
    wire [31:0] dma_bd_i;
    wire [31:0] dma_bd_o;
+   wire rx_irq;
+   wire tx_irq;
+   assign inta_o = rx_irq | tx_irq;
 
    // DMA module
    iob_eth_dma #(
@@ -351,7 +354,7 @@ module iob_eth # (
       .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
       .rx_data_rcvd_i(rx_data_rcvd),
       .crc_err_i(crc_err),
-      .rx_nbytes_i(iob_eth_rx_buffer_addrA),
+      .rx_nbytes_i(rx_wr_addr),
       .rcv_ack_o(rcv_sync),
 
       // AXI master interface
@@ -394,6 +397,10 @@ module iob_eth # (
       .axi_rlast_i(axi_rlast_i), //Read channel last word.
       .axi_rvalid_i(axi_rvalid_i), //Read channel valid.
       .axi_rready_o(axi_rready_o), //Read channel ready.
+
+      // Interrupts
+      .tx_irq_o(tx_irq),
+      .rx_irq_o(rx_irq),
 
       // General signals interface
       .clk_i (clk_i),
