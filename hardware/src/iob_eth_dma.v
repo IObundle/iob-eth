@@ -49,6 +49,16 @@ module iob_eth_dma #(
    output reg tx_irq_o,
    output reg rx_irq_o,
 
+   // No-DMA interface
+   output reg tx_bd_cnt_o,
+   output reg tx_word_cnt_o,
+   input tx_frame_word_wen_i,
+   input [32-1:0] tx_frame_word_wdata_o,
+   output reg rx_bd_cnt_o,
+   output reg rx_word_cnt_o,
+   input rx_frame_word_ren_i,
+   output reg [32-1:0] rx_frame_word_rdata_o,
+
    input clk_i,
    input cke_i,
    input arst_i
@@ -186,6 +196,9 @@ module iob_eth_dma #(
          axi_rready_o_reg = 1'b0;
          eth_data_wr_wen_o = 1'b0;
          tx_irq_o = 1'b0;
+         // No-DMA interface
+         tx_bd_cnt_o = 1'b0;
+         tx_word_cnt_o = 1'b0;
 
       end else if (tx_en_i) begin
 
@@ -263,6 +276,19 @@ module iob_eth_dma #(
                   // Write transmit status
                   tx_state_nxt = 6;
                end
+
+               // No-DMA interface
+               tx_bd_cnt_o = tx_bd_num;
+               tx_word_cnt_o = tx_buffer_word_counter;
+               if (tx_frame_word_wen_i) begin
+                  tx_buffer_word_counter_nxt = tx_buffer_word_counter + 1'b1;
+                  // Send word from CPU to buffer
+                  eth_data_wr_wen_o = 1'b1;
+                  eth_data_wr_wstrb_o = 4'hf;
+                  eth_data_wr_addr_o = tx_buffer_word_counter;
+                  eth_data_wr_wdata_o = tx_frame_word_wdata_o;
+               end
+
             end
 
             5: begin // Transfer frame word from memory to buffer
@@ -405,6 +431,10 @@ module iob_eth_dma #(
          axi_awvalid_o_reg = 1'b0;
          axi_wlast_o_reg = 1'b0;
          rx_irq_o = 1'b0;
+         // No-DMA interface
+         rx_bd_cnt_o = 1'b0;
+         rx_word_cnt_o = 1'b0;
+         rx_frame_word_rdata_o = 1'b0;
 
       end else if (rx_en_i) begin
 
@@ -480,6 +510,16 @@ module iob_eth_dma #(
                   rx_state_nxt = 6;
                end
 
+               // No-DMA interface
+               rx_bd_cnt_o = rx_bd_num;
+               rx_word_cnt_o = rx_buffer_word_counter;
+               if (rx_frame_word_ren_i) begin
+                  rx_buffer_word_counter_nxt = rx_buffer_word_counter + 1'b1;
+                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1; // Update next word addr
+                  // Send word from buffer to CPU
+                  rx_frame_word_rdata_o = eth_data_rd_rdata_i;
+               end
+
             end
 
             5: begin // Transfer frame word from buffer to memory
@@ -492,7 +532,7 @@ module iob_eth_dma #(
                // wait for write ready
                if (axi_wready_i==1) begin
                   rx_buffer_word_counter_nxt = rx_buffer_word_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1;
+                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1; // Update next word addr
                   rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
                end
 
