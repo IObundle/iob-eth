@@ -1,24 +1,26 @@
 `timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 `include "iob_eth_swreg_def.vh"
 
 // FRAME_SIZE (bytes) = PREAMBLE + SFD + HDR + DATA + CRC -> Ethernet Frame
-`define FRAME_SIZE (`PREAMBLE_LEN + 1 + `HDR_LEN + `ETH_NBYTES + 4)
+`define FRAME_SIZE (`IOB_ETH_PREAMBLE_LEN + 1 + `HDR_LEN + `ETH_NBYTES + 4)
 `define FRAME_NIBBLE_SIZE (`FRAME_SIZE * 2)
 
 `define PREAMBLE_PTR 0
-`define SDF_PTR (`PREAMBLE_PTR + `PREAMBLE_LEN)
+`define SDF_PTR (`PREAMBLE_PTR + `IOB_ETH_PREAMBLE_LEN)
 `define MAC_DEST_PTR (`SDF_PTR + 1)
-`define MAC_SRC_PTR (`MAC_DEST_PTR + `MAC_ADDR_LEN)
-//`define TAG_PTR          (`MAC_SRC_PTR + `MAC_ADDR_LEN) // Optional - not supported
-`define ETH_TYPE_PTR (`MAC_SRC_PTR + `MAC_ADDR_LEN)
+`define MAC_SRC_PTR (`MAC_DEST_PTR + `IOB_ETH_MAC_ADDR_LEN)
+//`define TAG_PTR          (`MAC_SRC_PTR + `IOB_ETH_MAC_ADDR_LEN) // Optional - not supported
+`define ETH_TYPE_PTR (`MAC_SRC_PTR + `IOB_ETH_MAC_ADDR_LEN)
 `define PAYLOAD_PTR (`ETH_TYPE_PTR + 2)
 
 module iob_eth_tb;
 
    parameter clk_per = 10;
    parameter pclk_per = 40;
+
+   localparam ETH_MAC_ADDR = 48'h123456789abc;
 
    // CPU SIDE
    reg rst;
@@ -57,28 +59,28 @@ module iob_eth_tb;
    assign RX_DATA = dataNibbleView[rx_index];
 
    // mac_addr
-   reg  [                   47:0] mac_addr = `ETH_MAC_ADDR;
+   reg  [                   47:0] mac_addr = ETH_MAC_ADDR;
 
    // External Memory Macros
    // TX Front-End
    wire                           iob_eth_tx_buffer_enA;
    wire [               32/8-1:0] iob_eth_tx_buffer_weA;
-   wire [`ETH_DATA_WR_ADDR_W-1:0] iob_eth_tx_buffer_addrA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
    wire [                 32-1:0] iob_eth_tx_buffer_dinA;
 
    // TX Back-End
-   wire [`ETH_DATA_WR_ADDR_W-1:0] iob_eth_tx_buffer_addrB;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrB;
    wire [                 32-1:0] iob_eth_tx_buffer_doutB;
 
    // RX Front-End
    wire                           iob_eth_rx_buffer_enA;
    wire [               32/8-1:0] iob_eth_rx_buffer_weA;
-   wire [`ETH_DATA_RD_ADDR_W-1:0] iob_eth_rx_buffer_addrA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrA;
    wire [                 32-1:0] iob_eth_rx_buffer_dinA;
 
    // RX Back-End
    wire                           iob_eth_rx_buffer_enB;
-   wire [`ETH_DATA_RD_ADDR_W-1:0] iob_eth_rx_buffer_addrB;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
    wire [                 32-1:0] iob_eth_rx_buffer_doutB;
 
    `include "iob_eth_buffer_inst.vs"
@@ -127,20 +129,20 @@ module iob_eth_tb;
       RX_DV        = 0;
 
       //preamble
-      for (i = 0; i < `PREAMBLE_LEN; i = i + 1) data[`PREAMBLE_PTR+i] = `ETH_PREAMBLE;
+      for (i = 0; i < `IOB_ETH_PREAMBLE_LEN; i = i + 1) data[`PREAMBLE_PTR+i] = `ETH_PREAMBLE;
 
       //sfd
-      data[`SDF_PTR] = `ETH_SFD;
+      data[`SDF_PTR] = `IOB_ETH_SFD;
 
       //dest mac address
-      mac_addr       = `ETH_MAC_ADDR;
-      for (i = 0; i < `MAC_ADDR_LEN; i = i + 1) begin
+      mac_addr       = ETH_MAC_ADDR;
+      for (i = 0; i < `IOB_ETH_MAC_ADDR_LEN; i = i + 1) begin
          data[`MAC_DEST_PTR+i] = mac_addr[47:40];
          mac_addr              = mac_addr << 8;
       end
       //source mac address
-      mac_addr = `ETH_MAC_ADDR;
-      for (i = 0; i < `MAC_ADDR_LEN; i = i + 1) begin
+      mac_addr = ETH_MAC_ADDR;
+      for (i = 0; i < `IOB_ETH_MAC_ADDR_LEN; i = i + 1) begin
          data[`MAC_SRC_PTR+i] = mac_addr[47:40];
          mac_addr             = mac_addr << 8;
       end

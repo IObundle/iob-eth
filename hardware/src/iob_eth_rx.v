@@ -1,10 +1,8 @@
 `timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 
-module iob_eth_rx #(
-   parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
-) (
+module iob_eth_rx (
    // async reset
    input rst,
 
@@ -16,7 +14,7 @@ module iob_eth_rx #(
    output reg [10:0] addr,
    output reg [ 7:0] data,
    output reg        wr,
-   output     [31:0] crc_value,
+   output            crc_err,
 
    input       RX_CLK,
    input       RX_DV,
@@ -33,6 +31,7 @@ module iob_eth_rx #(
    // data
    wire [ 7:0] data_int;
 
+   wire [31:0] crc_sum;
 
    // SYNCHRONIZERS
 
@@ -60,9 +59,9 @@ module iob_eth_rx #(
 
          case (pc)
 
-            0: if (data_int != `ETH_SFD || !RX_DV) pc <= pc;
+            0: if (data_int != `IOB_ETH_SFD || !RX_DV) pc <= pc;
 
-            1: addr <= `ETH_RX_BUFFER_START;
+            1: addr <= 0;
 
             2: begin
                dest_mac_addr <= {dest_mac_addr[39:0], data_int};
@@ -70,10 +69,8 @@ module iob_eth_rx #(
             end
 
             3:
-            if (addr != (`MAC_ADDR_LEN - 1 + `ETH_RX_BUFFER_START)) begin
+            if (addr != (`IOB_ETH_MAC_ADDR_LEN - 1)) begin
                pc <= pc - 1'b1;
-            end else if (dest_mac_addr != ETH_MAC_ADDR) begin
-               pc <= 7;
             end
 
             4: wr <= 1;
@@ -120,7 +117,9 @@ module iob_eth_rx #(
 
       .data_in(data),
       .data_en(wr),
-      .crc_out(crc_value)
+      .crc_out(crc_sum)
    );
+
+   assign crc_err = crc_sum != 32'hc704dd7b;
 
 endmodule
