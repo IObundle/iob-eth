@@ -212,7 +212,6 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
 
-  // FIXME: Use 32bit aligned words?
   // Alloc memory for frame
   char *frame_ptr = (char *) malloc(TEMPLATE_LEN+ETH_NBYTES);
 

@@ -25,9 +25,8 @@ module iob_eth_dma #(
 
    // TX Front-End
    output reg                     eth_data_wr_wen_o,
-   output reg [4-1:0]             eth_data_wr_wstrb_o,
    output reg [BUFFER_W-1:0]      eth_data_wr_addr_o,
-   output reg [32-1:0]            eth_data_wr_wdata_o,
+   output reg [8-1:0]             eth_data_wr_wdata_o,
    output reg                     tx_ready_i,
    output reg                     crc_en_o,
    output reg [11-1:0]            tx_nbytes_o,
@@ -36,7 +35,7 @@ module iob_eth_dma #(
    // RX Back-End
    output                         eth_data_rd_ren_o,
    output reg [BUFFER_W-1:0]      eth_data_rd_addr_o,
-   input  [32-1:0]                eth_data_rd_rdata_i,
+   input  [8-1:0]                 eth_data_rd_rdata_i,
    input                          rx_data_rcvd_i,
    input                          crc_err_i,
    input  [11-1:0]                rx_nbytes_i,
@@ -53,11 +52,11 @@ module iob_eth_dma #(
    output reg tx_bd_cnt_o,
    output reg tx_word_cnt_o,
    input tx_frame_word_wen_i,
-   input [32-1:0] tx_frame_word_wdata_o,
+   input [8-1:0] tx_frame_word_wdata_o,
    output reg rx_bd_cnt_o,
    output reg rx_word_cnt_o,
    input rx_frame_word_ren_i,
-   output reg [32-1:0] rx_frame_word_rdata_o,
+   output reg [8-1:0] rx_frame_word_rdata_o,
 
    input clk_i,
    input cke_i,
@@ -120,12 +119,14 @@ module iob_eth_dma #(
    reg [     AXI_LEN_W-1:0] axi_awlen_o_reg;
    reg                      axi_awvalid_o_reg;
    reg                      axi_wvalid_o_reg;
+   reg [             4-1:0] axi_wstrb_o_reg;
    reg [    AXI_DATA_W-1:0] axi_wdata_o_reg;
    reg                      axi_wlast_o_reg;
    assign axi_awaddr_o = axi_awaddr_o_reg;
    assign axi_awlen_o = axi_awlen_o_reg;
    assign axi_awvalid_o = axi_awvalid_o_reg;
    assign axi_wvalid_o = axi_wvalid_o_reg;
+   assign axi_wstrb_o = axi_wstrb_o_reg;
    assign axi_wdata_o = axi_wdata_o_reg;
    assign axi_wlast_o = axi_wlast_o_reg;
 
@@ -153,18 +154,18 @@ module iob_eth_dma #(
       .data_o(tx_state)
    );
 
-   reg [32-1:0] tx_buffer_word_counter_nxt;
-   wire [32-1:0] tx_buffer_word_counter;
+   reg [32-1:0] tx_buffer_byte_counter_nxt;
+   wire [32-1:0] tx_buffer_byte_counter;
    iob_reg #(
       .DATA_W (32),
       .RST_VAL(0),
       .CLKEDGE("posedge")
-   ) tx_buffer_word_counter_reg (
+   ) tx_buffer_byte_counter_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i),
-      .data_i(tx_buffer_word_counter_nxt),
-      .data_o(tx_buffer_word_counter)
+      .data_i(tx_buffer_byte_counter_nxt),
+      .data_o(tx_buffer_byte_counter)
    );
 
    reg [BD_ADDR_W-1:0] tx_bd_num_nxt;
@@ -237,7 +238,7 @@ module iob_eth_dma #(
 
             3: begin  // Read buffer pointer
                tx_buffer_ptr = bd_i;
-               tx_buffer_word_counter_nxt = 0;
+               tx_buffer_byte_counter_nxt = 0;
 
                // Wait for buffer ready for next frame
                if (!tx_ready_i)
@@ -245,13 +246,8 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer from external memory
-               // TODO: Instead of having fixed words of 4 bytes (shifting
-               // 2 bits), we should use the AXI_DATA_W to calculate the
-               // correct shift.
-               axi_araddr_o_reg = tx_buffer_ptr + (tx_buffer_word_counter<<2);
-               // FIXME: 'tx_buffer_descriptor[31:(16+2)]' may not be correct
-               // if the frame size is not a multiple of 4 bytes
-               axi_arlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,tx_buffer_descriptor[31:(16+2)]-tx_buffer_word_counter) - 1'b1;
+               axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_byte_counter;
+               axi_arlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,tx_buffer_descriptor[31:16]-tx_buffer_byte_counter) - 1'b1;
                axi_arvalid_o_reg = 1'b1;
                axi_rready_o_reg = 1'b0;
                eth_data_wr_wen_o = 1'b0;
@@ -261,7 +257,7 @@ module iob_eth_dma #(
                   tx_state_nxt = tx_state;
 
                // Check if frame transfer is complete
-               if (tx_buffer_descriptor[31:(16+2)]-tx_buffer_word_counter == 0) begin
+               if (tx_buffer_descriptor[31:16]-tx_buffer_byte_counter == 0) begin
                   axi_arvalid_o_reg = 1'b0;
 
                   // Configure transmitter settings
@@ -279,13 +275,12 @@ module iob_eth_dma #(
 
                // No-DMA interface
                tx_bd_cnt_o = tx_bd_num;
-               tx_word_cnt_o = tx_buffer_word_counter;
+               tx_word_cnt_o = tx_buffer_byte_counter;
                if (tx_frame_word_wen_i) begin
-                  tx_buffer_word_counter_nxt = tx_buffer_word_counter + 1'b1;
+                  tx_buffer_byte_counter_nxt = tx_buffer_byte_counter + 1'b1;
                   // Send word from CPU to buffer
                   eth_data_wr_wen_o = 1'b1;
-                  eth_data_wr_wstrb_o = 4'hf;
-                  eth_data_wr_addr_o = tx_buffer_word_counter;
+                  eth_data_wr_addr_o = tx_buffer_byte_counter;
                   eth_data_wr_wdata_o = tx_frame_word_wdata_o;
                end
 
@@ -297,13 +292,12 @@ module iob_eth_dma #(
                axi_arvalid_o_reg = 1'b0;
 
                if (axi_rvalid_i==1) begin
-                  tx_buffer_word_counter_nxt = tx_buffer_word_counter + 1'b1;
+                  tx_buffer_byte_counter_nxt = tx_buffer_byte_counter + 1'b1;
                   axi_rready_o_reg = 1'b1;
                   // Send word to buffer
                   eth_data_wr_wen_o = 1'b1;
-                  eth_data_wr_wstrb_o = 4'hf;
-                  eth_data_wr_addr_o = tx_buffer_word_counter;
-                  eth_data_wr_wdata_o = axi_rdata_i;
+                  eth_data_wr_wdata_o = axi_rdata_i[eth_data_wr_addr_o[1:0]*8+:8];
+                  eth_data_wr_addr_o = tx_buffer_byte_counter;
 
                   if (axi_rlast_i==1)
                      tx_state_nxt = tx_state - 1'b1;
@@ -349,7 +343,7 @@ module iob_eth_dma #(
    // AXI Master Read interface
    // Constants
    assign axi_arid_o    = 0;
-   assign axi_arsize_o  = 2;
+   assign axi_arsize_o  = 0; // arsize=0 to transfer 8-bit data
    assign axi_arburst_o = 1;
    assign axi_arlock_o  = 0;
    assign axi_arcache_o = 2;
@@ -375,18 +369,18 @@ module iob_eth_dma #(
       .data_o(rx_state)
    );
 
-   reg [32-1:0] rx_buffer_word_counter_nxt;
-   wire [32-1:0] rx_buffer_word_counter;
+   reg [32-1:0] rx_buffer_byte_counter_nxt;
+   wire [32-1:0] rx_buffer_byte_counter;
    iob_reg #(
       .DATA_W (32),
       .RST_VAL(0),
       .CLKEDGE("posedge")
-   ) rx_buffer_word_counter_reg (
+   ) rx_buffer_byte_counter_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i),
-      .data_i(rx_buffer_word_counter_nxt),
-      .data_o(rx_buffer_word_counter)
+      .data_i(rx_buffer_byte_counter_nxt),
+      .data_o(rx_buffer_byte_counter)
    );
 
    reg [BD_ADDR_W-1:0] rx_bd_num_nxt;
@@ -429,6 +423,7 @@ module iob_eth_dma #(
          rx_bd_o        = 1'b0;
          rcv_ack_o      = 1'b0;
          axi_awvalid_o_reg = 1'b0;
+         axi_wvalid_o_reg = 1'b0;
          axi_wlast_o_reg = 1'b0;
          rx_irq_o = 1'b0;
          // No-DMA interface
@@ -473,7 +468,7 @@ module iob_eth_dma #(
 
             3: begin  // Read buffer pointer
                rx_buffer_ptr = bd_i;
-               rx_buffer_word_counter_nxt = 0;
+               rx_buffer_byte_counter_nxt = 0;
 
                // Wait for buffer ready for next frame
                if (!rx_data_rcvd_i)
@@ -481,11 +476,12 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer to external memory
-               axi_awaddr_o_reg = rx_buffer_ptr + (rx_buffer_word_counter<<2);
-               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,(rx_nbytes_i>>2)-rx_buffer_word_counter) - 1'b1;
+               axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
+               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_byte_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
+               axi_wvalid_o_reg = 1'b0;
                // Get word from buffer
-               eth_data_rd_addr_o = rx_buffer_word_counter;
+               eth_data_rd_addr_o = rx_buffer_byte_counter;
                rx_burst_word_num_nxt = 1'b0;
 
                // Wait for address ready
@@ -493,7 +489,7 @@ module iob_eth_dma #(
                   rx_state_nxt = rx_state;
 
                // Check if frame transfer is complete
-               if ((rx_nbytes_i>>2)-rx_buffer_word_counter == 0) begin
+               if (rx_nbytes_i-rx_buffer_byte_counter == 0) begin
                   axi_awvalid_o_reg = 1'b0;
 
                   // Disable ready bit
@@ -512,10 +508,10 @@ module iob_eth_dma #(
 
                // No-DMA interface
                rx_bd_cnt_o = rx_bd_num;
-               rx_word_cnt_o = rx_buffer_word_counter;
+               rx_word_cnt_o = rx_buffer_byte_counter;
                if (rx_frame_word_ren_i) begin
-                  rx_buffer_word_counter_nxt = rx_buffer_word_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1; // Update next word addr
+                  rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
+                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
                   // Send word from buffer to CPU
                   rx_frame_word_rdata_o = eth_data_rd_rdata_i;
                end
@@ -526,18 +522,19 @@ module iob_eth_dma #(
                rx_state_nxt = rx_state;
                axi_awvalid_o_reg = 1'b0;
                axi_wvalid_o_reg = 1'b1;
-               axi_wdata_o_reg = eth_data_rd_rdata_i;
-               eth_data_rd_addr_o = rx_buffer_word_counter;
+               axi_wstrb_o_reg = 1<<eth_data_rd_addr_o[1:0];
+               axi_wdata_o_reg = eth_data_rd_rdata_i<<(eth_data_rd_addr_o[1:0]*8);
+               eth_data_rd_addr_o = rx_buffer_byte_counter;
 
                // wait for write ready
                if (axi_wready_i==1) begin
-                  rx_buffer_word_counter_nxt = rx_buffer_word_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_word_counter + 1'b1; // Update next word addr
+                  rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
+                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
                   rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
                end
 
                // Check if last word
-               if (rx_buffer_descriptor[31:16]-rx_buffer_word_counter == 1) begin
+               if (rx_buffer_descriptor[31:16]-rx_buffer_byte_counter == 1) begin
                   axi_wlast_o_reg = 1'b1;
                   rx_state_nxt = rx_state - 1'b1;
                end
@@ -587,13 +584,12 @@ module iob_eth_dma #(
    // AXI Master Write interface
    // Constants
    assign axi_awid_o    = 0;
-   assign axi_awsize_o  = 2;
+   assign axi_awsize_o  = 0; // awsize=0 to transfer 8-bit data
    assign axi_awburst_o = 1;
    assign axi_awlock_o  = 0;
    assign axi_awcache_o = 2;
    assign axi_awprot_o  = 2;
    assign axi_awqos_o   = 0;
-   assign axi_wstrb_o   = 4'b1111;
    assign axi_bready_o  = 1'b1;
    // axi_bid_i
    // axi_bresp_i,
