@@ -64,6 +64,7 @@ module iob_eth_dma #(
 );
 
    localparam AXI_MAX_BURST_LEN = 16;
+   localparam PRE_FRAME_LEN = `IOB_ETH_PREAMBLE_LEN + 1;
 
    // ############# Transmitter #############
 
@@ -187,7 +188,7 @@ module iob_eth_dma #(
 
       if (arst_i) begin
 
-         tx_state_nxt   = 1'b0;
+         tx_state_nxt   = 7; // Fill Preamble and SFD
          tx_bd_num_nxt  = 1'b0;
          tx_bd_addr_o   = 1'b0;
          tx_bd_wen_o    = 1'b0;
@@ -280,7 +281,7 @@ module iob_eth_dma #(
                   tx_buffer_byte_counter_nxt = tx_buffer_byte_counter + 1'b1;
                   // Send word from CPU to buffer
                   eth_data_wr_wen_o = 1'b1;
-                  eth_data_wr_addr_o = tx_buffer_byte_counter;
+                  eth_data_wr_addr_o = PRE_FRAME_LEN + tx_buffer_byte_counter;
                   eth_data_wr_wdata_o = tx_frame_word_wdata_o;
                end
 
@@ -297,7 +298,7 @@ module iob_eth_dma #(
                   // Send word to buffer
                   eth_data_wr_wen_o = 1'b1;
                   eth_data_wr_wdata_o = axi_rdata_i[eth_data_wr_addr_o[1:0]*8+:8];
-                  eth_data_wr_addr_o = tx_buffer_byte_counter;
+                  eth_data_wr_addr_o = PRE_FRAME_LEN + tx_buffer_byte_counter;
 
                   if (axi_rlast_i==1)
                      tx_state_nxt = tx_state - 1'b1;
@@ -331,6 +332,19 @@ module iob_eth_dma #(
                   // Go to next buffer descriptor
                   tx_state_nxt = 1'b0;
                end
+            end
+
+            7: begin // Wirte Preamble and SFD (runs at arst)
+               tx_state_nxt = tx_state;
+               eth_data_wr_wen_o = 1'b1;
+               if (tx_buffer_byte_counter == `IOB_ETH_PREAMBLE_LEN)
+                  eth_data_wr_wdata_o = `IOB_ETH_SFD;
+               else
+                  eth_data_wr_wdata_o = `IOB_ETH_PREAMBLE;
+               eth_data_wr_addr_o = tx_buffer_byte_counter;
+               tx_buffer_byte_counter_nxt = tx_buffer_byte_counter + 1'b1;
+               if (tx_buffer_byte_counter == PRE_FRAME_LEN)
+                  tx_state_nxt = 1'b0;
             end
 
             default: ;
@@ -411,6 +425,8 @@ module iob_eth_dma #(
       .data_o(rx_burst_word_num)
    );
 
+   wire rx_nbytes_int = rx_nbytes_i - PRE_FRAME_LEN;
+
    always @* begin
       rx_req = 1'b0;
 
@@ -477,11 +493,11 @@ module iob_eth_dma #(
 
             4: begin  // Start frame transfer to external memory
                axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
-               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_byte_counter) - 1'b1;
+               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_int-rx_buffer_byte_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
                axi_wvalid_o_reg = 1'b0;
                // Get word from buffer
-               eth_data_rd_addr_o = rx_buffer_byte_counter;
+               eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter;
                rx_burst_word_num_nxt = 1'b0;
 
                // Wait for address ready
@@ -489,7 +505,7 @@ module iob_eth_dma #(
                   rx_state_nxt = rx_state;
 
                // Check if frame transfer is complete
-               if (rx_nbytes_i-rx_buffer_byte_counter == 0) begin
+               if (rx_nbytes_int-rx_buffer_byte_counter == 0) begin
                   axi_awvalid_o_reg = 1'b0;
 
                   // Disable ready bit
@@ -497,7 +513,7 @@ module iob_eth_dma #(
                   // Write crc_err
                   rx_buffer_descriptor[1] = crc_err_i;
                   // Write buffer size
-                  rx_buffer_descriptor[31:16] = rx_nbytes_i;
+                  rx_buffer_descriptor[31:16] = rx_nbytes_int;
 
                   // Acknowledge read complete
                   rcv_ack_o = 1'b1;
@@ -511,7 +527,7 @@ module iob_eth_dma #(
                rx_word_cnt_o = rx_buffer_byte_counter;
                if (rx_frame_word_ren_i) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
+                  eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter + 1'b1; // Update next word addr
                   // Send word from buffer to CPU
                   rx_frame_word_rdata_o = eth_data_rd_rdata_i;
                end
@@ -524,12 +540,12 @@ module iob_eth_dma #(
                axi_wvalid_o_reg = 1'b1;
                axi_wstrb_o_reg = 1<<eth_data_rd_addr_o[1:0];
                axi_wdata_o_reg = eth_data_rd_rdata_i<<(eth_data_rd_addr_o[1:0]*8);
-               eth_data_rd_addr_o = rx_buffer_byte_counter;
+               eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter;
 
                // wait for write ready
                if (axi_wready_i==1) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
+                  eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter + 1'b1; // Update next word addr
                   rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
                end
 

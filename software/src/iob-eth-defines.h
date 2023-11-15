@@ -127,9 +127,7 @@
 #define ETH_DATA_RCV 0
 
 // Pointers for fields of frame template
-#define PREAMBLE_PTR     0
-#define SDF_PTR          (PREAMBLE_PTR + PREAMBLE_LEN)
-#define MAC_DEST_PTR     (SDF_PTR + 1)
+#define MAC_DEST_PTR     0
 #define MAC_SRC_PTR      (MAC_DEST_PTR + MAC_ADDR_LEN)
 //#define TAG_PTR          (MAC_SRC_PTR + MAC_ADDR_LEN) // Optional - not supported
 #define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
