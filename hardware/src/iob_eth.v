@@ -40,8 +40,6 @@ module iob_eth # (
    //
    // SWRegs
    //
-   // wire ETH_SEND;
-   // wire ETH_RCVACK;
    // wire ETH_SOFTRST;
 
    //

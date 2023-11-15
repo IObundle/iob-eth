@@ -458,6 +458,7 @@ module iob_eth_dma #(
                rx_req = 1'b1;
                rcv_ack_o = 1'b0;
                rx_irq_o = 1'b0;
+               rx_bd_wen_o = 1'b0;
 
                // Wait for arbiter
                if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid)

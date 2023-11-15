@@ -144,8 +144,7 @@
 #endif
 
 #define eth_tx_ready(idx) !((IOB_ETH_GET_BD(idx<<1) & TX_BD_READY) || 0)
-
-#define eth_rx_ready(idx) !((IOB_ETH_GET_BD(idx<<1) & RX_BD_EMPTY) || 0)
+#define eth_rx_ready(idx) eth_tx_ready(idx)
 
 #define eth_bad_crc(idx) ((IOB_ETH_GET_BD(idx<<1) & RX_BD_CRC) || 0)
 
@@ -181,11 +180,4 @@
 #define eth_set_ptr(idx, ptr) ({\
         IOB_ETH_SET_BD((uint32_t)ptr, (idx<<1)+1);\
         })
-
-// FIXME
-#define eth_ack()
-//        IOB_ETH_SET_RCVACK(1);\
-//        IOB_ETH_SET_RCVACK(0);\
-//        })
-
 

@@ -239,7 +239,6 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   gpio_set(0xa1000005);
 
   if(eth_bad_crc(64)) {
-    eth_ack();
     eth_receive(0);
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
@@ -254,14 +253,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   free(frame_ptr);
   
   gpio_set(0xa1000007);
-  // send receive ack
-  eth_ack();
 
-  gpio_set(0xa1000008);
   // Disable reception
   eth_receive(0);
 
-  gpio_set(0xa1000009);
+  gpio_set(0xa1000008);
   
   return ETH_DATA_RCV;
 }
