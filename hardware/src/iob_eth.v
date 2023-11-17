@@ -218,6 +218,9 @@ module iob_eth # (
    // BUFFER memories
    iob_ram_tdp_be #(
                        .DATA_W(8),
+                       // Note: the tx buffer also includes PREAMBLE+SFD,
+                       // maybe we should increase this size to acount for
+                       // this.
                        .ADDR_W(`IOB_ETH_BUFFER_W)
                        )
    tx_buffer

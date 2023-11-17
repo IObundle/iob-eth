@@ -95,6 +95,8 @@ module iob_eth_dma #(
       .grant_encoded(bd_mem_arbiter_grant_encoded)
    );
 
+   assign bd_mem_arbiter_ack = bd_mem_arbiter_grant & bd_mem_arbiter_grant_valid;
+
 
    reg [BD_ADDR_W-1:0] tx_bd_addr_o;
    reg [BD_ADDR_W-1:0] rx_bd_addr_o;
@@ -145,7 +147,7 @@ module iob_eth_dma #(
    wire [3-1:0] tx_state;
    iob_reg #(
       .DATA_W (3),
-      .RST_VAL(0),
+      .RST_VAL(7),
       .CLKEDGE("posedge")
    ) tx_state_reg (
       .clk_i (clk_i),
@@ -202,7 +204,7 @@ module iob_eth_dma #(
          tx_bd_cnt_o = 1'b0;
          tx_word_cnt_o = 1'b0;
 
-      end else if (tx_en_i) begin
+      end else begin
 
          tx_state_nxt = tx_state + 1'b1;
 
@@ -223,8 +225,8 @@ module iob_eth_dma #(
             1: begin  // Read buffer descriptor.
                tx_buffer_descriptor = bd_i;
 
-               // Wait for ready bit
-               if (!tx_buffer_descriptor[15])
+               // Wait for ready bit and tx enable
+               if (!tx_buffer_descriptor[15] || !tx_en_i)
                   tx_state_nxt = tx_state - 1'b1;
             end
 
@@ -297,8 +299,10 @@ module iob_eth_dma #(
                   axi_rready_o_reg = 1'b1;
                   // Send word to buffer
                   eth_data_wr_wen_o = 1'b1;
-                  eth_data_wr_wdata_o = axi_rdata_i[eth_data_wr_addr_o[1:0]*8+:8];
                   eth_data_wr_addr_o = PRE_FRAME_LEN + tx_buffer_byte_counter;
+
+                  axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_byte_counter;
+                  eth_data_wr_wdata_o = axi_rdata_i[axi_araddr_o_reg[1:0]*8+:8];
 
                   if (axi_rlast_i==1)
                      tx_state_nxt = tx_state - 1'b1;
@@ -425,8 +429,6 @@ module iob_eth_dma #(
       .data_o(rx_burst_word_num)
    );
 
-   wire rx_nbytes_int = rx_nbytes_i - PRE_FRAME_LEN;
-
    always @* begin
       rx_req = 1'b0;
 
@@ -447,7 +449,7 @@ module iob_eth_dma #(
          rx_word_cnt_o = 1'b0;
          rx_frame_word_rdata_o = 1'b0;
 
-      end else if (rx_en_i) begin
+      end else begin
 
          rx_state_nxt = rx_state + 1'b1;
 
@@ -469,8 +471,8 @@ module iob_eth_dma #(
             1: begin  // Read buffer descriptor.
                rx_buffer_descriptor = bd_i;
 
-               // Wait for ready bit
-               if (!rx_buffer_descriptor[15])
+               // Wait for ready bit and rx enable
+               if (!rx_buffer_descriptor[15] || !rx_en_i)
                   rx_state_nxt = rx_state - 1'b1;
             end
 
@@ -494,11 +496,12 @@ module iob_eth_dma #(
 
             4: begin  // Start frame transfer to external memory
                axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
-               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_int-rx_buffer_byte_counter) - 1'b1;
+               axi_awlen_o_reg = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_byte_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
                axi_wvalid_o_reg = 1'b0;
+               axi_wlast_o_reg = 1'b0;
                // Get word from buffer
-               eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter;
+               eth_data_rd_addr_o = rx_buffer_byte_counter;
                rx_burst_word_num_nxt = 1'b0;
 
                // Wait for address ready
@@ -506,7 +509,7 @@ module iob_eth_dma #(
                   rx_state_nxt = rx_state;
 
                // Check if frame transfer is complete
-               if (rx_nbytes_int-rx_buffer_byte_counter == 0) begin
+               if (rx_nbytes_i-rx_buffer_byte_counter == 0) begin
                   axi_awvalid_o_reg = 1'b0;
 
                   // Disable ready bit
@@ -514,7 +517,7 @@ module iob_eth_dma #(
                   // Write crc_err
                   rx_buffer_descriptor[1] = crc_err_i;
                   // Write buffer size
-                  rx_buffer_descriptor[31:16] = rx_nbytes_int;
+                  rx_buffer_descriptor[31:16] = rx_nbytes_i;
 
                   // Acknowledge read complete
                   rcv_ack_o = 1'b1;
@@ -528,7 +531,7 @@ module iob_eth_dma #(
                rx_word_cnt_o = rx_buffer_byte_counter;
                if (rx_frame_word_ren_i) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter + 1'b1; // Update next word addr
+                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
                   // Send word from buffer to CPU
                   rx_frame_word_rdata_o = eth_data_rd_rdata_i;
                end
@@ -539,26 +542,29 @@ module iob_eth_dma #(
                rx_state_nxt = rx_state;
                axi_awvalid_o_reg = 1'b0;
                axi_wvalid_o_reg = 1'b1;
-               axi_wstrb_o_reg = 1<<eth_data_rd_addr_o[1:0];
-               axi_wdata_o_reg = eth_data_rd_rdata_i<<(eth_data_rd_addr_o[1:0]*8);
-               eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter;
+
+               axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
+               axi_wstrb_o_reg = 1<<axi_awaddr_o_reg[1:0];
+               axi_wdata_o_reg = eth_data_rd_rdata_i<<(axi_awaddr_o_reg[1:0]*8);
+
+               eth_data_rd_addr_o = rx_buffer_byte_counter;
+
+               // Enable wlast in last transfer of the burst
+               if (rx_burst_word_num == axi_awlen_o_reg) begin
+                  axi_wlast_o_reg = 1'b1;
+               end
 
                // wait for write ready
                if (axi_wready_i==1) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = PRE_FRAME_LEN + rx_buffer_byte_counter + 1'b1; // Update next word addr
+                  eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1; // Update next word addr
                   rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
-               end
 
-               // Check if last word
-               if (rx_buffer_descriptor[31:16]-rx_buffer_byte_counter == 1) begin
-                  axi_wlast_o_reg = 1'b1;
-                  rx_state_nxt = rx_state - 1'b1;
+                  // Burst complete
+                  if (rx_burst_word_num == axi_awlen_o_reg) begin
+                     rx_state_nxt = rx_state - 1'b1;
+                  end
                end
-
-               // Tranfer next burst
-               if (rx_burst_word_num == AXI_MAX_BURST_LEN-1)
-                  rx_state_nxt = rx_state - 1'b1;
 
             end
 

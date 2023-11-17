@@ -1,5 +1,8 @@
 // driver functions
-void eth_init(int base_address);
+
+void eth_init(int base_address, void (*clear_cache_func)(void));
+
+void eth_init_clear_cache( void (*clear_cache_func)(void) );
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr);
 

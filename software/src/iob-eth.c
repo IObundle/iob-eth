@@ -8,6 +8,9 @@
 // Frame template (includes every field of the frame before the payload)
 static char TEMPLATE[TEMPLATE_LEN];
 
+// Function to clear cache
+static void (*clear_cache)(void);
+
 /*******************************************/
 /********** AUXILIAR FUNCTIONS *************/
 /*******************************************/
@@ -57,12 +60,17 @@ static void print_buffer(char *buffer, int size){
 /*********** ETHERNET DRIVERS **************/
 /*******************************************/
 
-void eth_init(int base_address) {
+void eth_init(int base_address, void (*clear_cache_func)(void)) {
+        eth_init_clear_cache(clear_cache_func);
 #ifdef LOOPBACK
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
 #else
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_RMAC_ADDR);
 #endif
+}
+
+void eth_init_clear_cache( void (*clear_cache_func)(void) ) {
+  clear_cache = clear_cache_func;
 }
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
@@ -206,7 +214,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int cnt = timeout;
 
   // Alloc memory for frame
-  char *frame_ptr = (char *) malloc(TEMPLATE_LEN+ETH_NBYTES);
+  char *frame_ptr = (char *) malloc(ETH_NBYTES);
 
   // Copy template to frame
   //for (i=0; i < TEMPLATE_LEN; i++)
@@ -214,6 +222,8 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   // set frame pointer
   gpio_set(0xa1000010);
+  gpio_set((uint32_t)frame_ptr);
+  printf("D:0x%p\n", frame_ptr);
   eth_set_ptr(64, frame_ptr);
 
   gpio_set(0xa1000001);
@@ -243,11 +253,17 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
+  
+  // Clear cache
+  (*clear_cache)();
+
   gpio_set(0xa1000006);
 
   // Copy payload to return array
   for (i=0; i < size; i++) {
+    gpio_set(i);
     data_rcv[i] = frame_ptr[i+TEMPLATE_LEN];
+    gpio_set(data_rcv[i]);
   }
 
   free(frame_ptr);
