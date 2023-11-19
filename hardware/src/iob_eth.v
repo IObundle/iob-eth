@@ -356,6 +356,16 @@ module iob_eth # (
       .axi_rvalid_i(axi_rvalid_i), //Read channel valid.
       .axi_rready_o(axi_rready_o), //Read channel ready.
 
+      // No-DMA interface TODO
+      .tx_bd_cnt_o(),
+      .tx_word_cnt_o(),
+      .tx_frame_word_wen_i(1'b0),
+      .tx_frame_word_wdata_i(8'b0),
+      .rx_bd_cnt_o(),
+      .rx_word_cnt_o(),
+      .rx_frame_word_ren_i(1'b0),
+      .rx_frame_word_rdata_o(),
+
       // Interrupts
       .tx_irq_o(tx_irq),
       .rx_irq_o(rx_irq),

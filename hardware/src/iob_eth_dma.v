@@ -52,7 +52,7 @@ module iob_eth_dma #(
    output reg tx_bd_cnt_o,
    output reg tx_word_cnt_o,
    input tx_frame_word_wen_i,
-   input [8-1:0] tx_frame_word_wdata_o,
+   input [8-1:0] tx_frame_word_wdata_i,
    output reg rx_bd_cnt_o,
    output reg rx_word_cnt_o,
    input rx_frame_word_ren_i,
@@ -266,7 +266,7 @@ module iob_eth_dma #(
                   // Configure transmitter settings
                   crc_en_o = tx_buffer_descriptor[11];
                   //tx_nbytes_o = tx_buffer_descriptor[31:16];
-                  tx_nbytes_o = tx_buffer_descriptor[26:16]; // 11 bits is enough for frame size
+                  tx_nbytes_o = PRE_FRAME_LEN + tx_buffer_descriptor[26:16]; // 11 bits is enough for frame size
                   send_o = 1'b1;
 
                   // Disable ready bit
@@ -284,7 +284,7 @@ module iob_eth_dma #(
                   // Send word from CPU to buffer
                   eth_data_wr_wen_o = 1'b1;
                   eth_data_wr_addr_o = PRE_FRAME_LEN + tx_buffer_byte_counter;
-                  eth_data_wr_wdata_o = tx_frame_word_wdata_o;
+                  eth_data_wr_wdata_o = tx_frame_word_wdata_i;
                end
 
             end
