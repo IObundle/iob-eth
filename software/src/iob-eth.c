@@ -282,9 +282,13 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
 
 #define MAX(A,B) ((A) > (B) ? (A) : (B)) 
-#define RCV_TIMEOUT 500000
 
+static unsigned int rcv_timeout = 500000;
 static char buffer[ETH_NBYTES+HDR_LEN];
+
+void eth_set_receive_timeout(unsigned int timeout){
+  rcv_timeout = timeout;
+}
 
 static void SyncAckFirst(){
   while(1){
@@ -295,7 +299,7 @@ static void SyncAckFirst(){
 
     gpio_set(0x30000001); //DEBUG
     // Wait to receive ack
-    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,RCV_TIMEOUT) == ETH_DATA_RCV)
+    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,rcv_timeout) == ETH_DATA_RCV)
       break;
   }
 }
@@ -305,7 +309,7 @@ static void SyncAckLast(){
   while(1){
   gpio_set(0xa1000000); //DEBUG
     // Wait to receive ack
-    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,RCV_TIMEOUT) == ETH_DATA_RCV)
+    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,rcv_timeout) == ETH_DATA_RCV)
       break;
   gpio_set(0xa2000000); //DEBUG
   }
@@ -327,7 +331,7 @@ static unsigned int eth_rcv_file_impl(char *data, int size) {
      else bytes_to_receive = ETH_NBYTES;
 
      // wait to receive frame
-     while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
+     while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, rcv_timeout));
 
      // send data back as ack
      eth_send_frame(&data[count_bytes], MAX(bytes_to_receive,ETH_MINIMUM_NBYTES));
@@ -360,7 +364,7 @@ static unsigned int eth_send_file_impl(char *data, int size) {
 
      gpio_set(0x40000002); //DEBUG
      // wait to receive frame as ack
-     while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+     while(eth_rcv_frame(buffer, bytes_to_send, rcv_timeout));
 
      gpio_set(0x40000003); //DEBUG
      for(int i = 0; i < bytes_to_send; i++){
@@ -407,7 +411,7 @@ unsigned int eth_rcv_variable_file(char *data) {
   SyncAckLast();
 
   // Receive file size
-  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, rcv_timeout));
 
   // Send data back as ack
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
@@ -425,7 +429,7 @@ unsigned int eth_send_variable_file(char *data, int size) {
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
 
   // Wait for ack
-  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, rcv_timeout));
 
   // Transfer file
   return eth_send_file_impl(data,size);

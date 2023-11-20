@@ -24,6 +24,8 @@ void eth_send_frame(char *data_to_send, unsigned int size);
  */
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
 
+void eth_set_receive_timeout(unsigned int timeout);
+
 unsigned int eth_rcv_file(char *data, int size);
 
 unsigned int eth_send_file(char *data, int size);

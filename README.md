@@ -4,6 +4,16 @@ IObundle's ethernet core.
 This core implements raw socket ethernet communication. This corresponds to the
 data link layer (2) of the OSI Model.
 
+This core is driver compatible with the [ethmac](https://opencores.org/projects/ethmac) core, as it contains a similar SWreg interface.
+
+This peripheral can be used as a verification tool of the [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project.
+
+## Integrate in SoC ##
+
+* Check out [IOb-SoC-SUT](https://github.com/IObundle/iob-soc-sut)
+
+## Usage
+
 * * *
 ## Setup
 The main steps to integrate iob-eth core into an iob-soc system:
@@ -157,3 +167,16 @@ clean:
     (...)
     make clean-eth-socket
 ```
+
+# Acknowledgement
+The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
+with financial support from the European Commission's Next Generation Internet
+programme, under the aegis of DG Communications Networks, Content and Technology
+under grant agreement No 957073.
+
+<table>
+    <tr>
+        <td align="center" width="50%"><img src="https://nlnet.nl/logo/banner.svg" alt="NLnet foundation logo" style="width:90%"></td>
+        <td align="center"><img src="https://nlnet.nl/image/logos/NGIAssure_tag.svg" alt="NGI Assure logo" style="width:90%"></td>
+    </tr>
+</table>
