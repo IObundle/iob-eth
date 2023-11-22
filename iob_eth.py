@@ -270,7 +270,7 @@ class iob_eth(iob_module):
                     },
                     {
                         "name": "MDIO",
-                        "type": "IO",
+                        "type": "O", #TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
                         "n_bits": "1",
                         "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
                     },
