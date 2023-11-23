@@ -168,6 +168,23 @@ clean:
     make clean-eth-socket
 ```
 
+### Generate Quartus IP
+https://cdrdv2-public.intel.com/705131/ug_intro_to_megafunctions_131-683102-705131.pdf
+
+Use the following command to generate the `ddio_out_clkbuf` IP module.
+```
+/opt/intelFPGA/20.1/nios2eds/nios2_command_shell.sh qmegawiz -silent wizard=altddio_out \
+INTENDED_DEVICE_FAMILY="Cyclone V" \
+INVERT_OUTPUT=OFF \
+LPM_HINT=UNUSED \
+LPM_TYPE=altddio_out \
+WIDTH=1 \
+DEVICE_FAMILY="Cyclone V" \
+CBX_AUTO_BLACKBOX=ALL \
+ddio_out_clkbuf.v
+```
+
+
 # Acknowledgement
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
 with financial support from the European Commission's Next Generation Internet

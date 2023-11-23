@@ -4,7 +4,7 @@ Size of data transfered is known by destination address.
 """
 
 # Import libraries
-from .ethBase import (
+from ethBase import (
     TimedPrintProgress,
     CreateSocket,
     SendAndAck,

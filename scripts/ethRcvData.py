@@ -3,7 +3,7 @@
 Size of data to be received is known at the start.
 """
 # Import libraries
-from .ethBase import (
+from ethBase import (
     PrintBaseUsage,
     TimedPrintProgress,
     CreateSocket,

@@ -1,5 +1,6 @@
 #include "stdint.h"
 #include "printf.h"
+#include "iob_eth_rmac.h"
 #include "iob-eth-defines.h"
 #include "iob-eth.h"
 #include <stdlib.h>
@@ -92,7 +93,7 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   }
 
   #ifdef ETH_DEBUG_PRINT
-  printf("\nSender:");
+  printf("\nSender: ");
   for(i=0; i < MAC_ADDR_LEN; i++){
     printf("%02x ", (unsigned char) TEMPLATE[MAC_SRC_PTR+i]);
   }

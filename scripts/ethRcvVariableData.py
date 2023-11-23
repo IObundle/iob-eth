@@ -4,8 +4,8 @@ Size of data to be received is unknown at the start.
 """
 
 # Import libraries
-from .ethBase import CreateSocket, FormPacket, SyncAckLast, RcvAndAck
-from .ethRcvData import RcvFile
+from ethBase import CreateSocket, FormPacket, SyncAckLast, RcvAndAck
+from ethRcvData import RcvFile
 import sys
 import struct
 
