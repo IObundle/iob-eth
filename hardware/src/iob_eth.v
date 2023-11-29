@@ -80,6 +80,8 @@ module iob_eth # (
       1'b0 // LINKFAIL
    };
 
+   assign MTxErr = 1'b0; //TODO
+
    //
    // REGISTERS
    //

@@ -9,7 +9,7 @@ import os
 
 
 def PrintBaseUsage():
-    print("<usage>: python eth_comm.py <RMAC> <file path>")
+    print("<usage>: python eth_comm.py <RMAC>")
 
 # Get interface name based on given MAC address
 def get_eth_interface(mac_addr):
@@ -26,7 +26,7 @@ def get_eth_interface(mac_addr):
     raise Exception(f"No interface with MAC address '{mac_addr}' found!")
 
 # Check arguments common to all scripts
-if len(sys.argv) < 3:
+if len(sys.argv) < 2:
     PrintBaseUsage()
     sys.exit()
 
