@@ -140,11 +140,11 @@ module iob_eth_dma #(
    assign eth_data_rd_ren_o = 1'b1;
 
    //tx program
-   reg [3-1:0] tx_state_nxt;
-   wire [3-1:0] tx_state;
+   reg [4-1:0] tx_state_nxt;
+   wire [4-1:0] tx_state;
    iob_reg #(
-      .DATA_W (3),
-      .RST_VAL(7),
+      .DATA_W (4),
+      .RST_VAL(8),
       .CLKEDGE("posedge")
    ) tx_state_reg (
       .clk_i (clk_i),
@@ -283,7 +283,7 @@ module iob_eth_dma #(
 
       if (arst_i) begin
 
-         tx_state_nxt   = 7; // Fill Preamble and SFD
+         tx_state_nxt   = 8; // Fill Preamble and SFD
          tx_bd_num_nxt  = 1'b0;
          tx_bd_addr_o   = 1'b0;
          tx_bd_wen_o    = 1'b0;
@@ -356,7 +356,6 @@ module iob_eth_dma #(
 
                   // Configure transmitter settings
                   crc_en_nxt = tx_buffer_descriptor[11];
-                  //tx_nbytes_nxt = tx_buffer_descriptor[31:16];
                   tx_nbytes_nxt = PRE_FRAME_LEN + tx_buffer_descriptor[26:16]; // 11 bits is enough for frame size
                   send_o = 1'b1;
 
@@ -401,7 +400,14 @@ module iob_eth_dma #(
 
             end
 
-            6: begin // Write transmit status
+            6: begin // Wait for send_o to be read by transmitter
+               tx_state_nxt = tx_state;
+               send_o = 1'b1;
+               if (!tx_ready_i)
+                  tx_state_nxt = tx_state + 1'b1;
+            end
+
+            7: begin // Write transmit status
                tx_state_nxt = tx_state;
 
                tx_bd_addr_o = tx_bd_num<<1;
@@ -429,7 +435,7 @@ module iob_eth_dma #(
                end
             end
 
-            7: begin // Wirte Preamble and SFD (runs at arst)
+            8: begin // Wirte Preamble and SFD (runs at arst)
                tx_state_nxt = tx_state;
                eth_data_wr_wen_o = 1'b1;
                if (tx_buffer_byte_counter == `IOB_ETH_PREAMBLE_LEN)
@@ -647,7 +653,7 @@ module iob_eth_dma #(
                rx_buffer_ptr_nxt = bd_i;
                rx_buffer_byte_counter_nxt = 0;
 
-               // Wait for buffer ready for next frame
+               // Wait for buffer to be filled with next frame
                if (!rx_data_rcvd_i)
                   rx_state_nxt = rx_state - 1'b1;
             end
@@ -726,7 +732,14 @@ module iob_eth_dma #(
 
             end
 
-            6: begin // Write receive status
+            6: begin // Wait for rcv_ack to be read by receiver
+               rx_state_nxt = rx_state;
+               rcv_ack_o = 1'b1;
+               if (!rx_data_rcvd_i)
+                  rx_state_nxt = rx_state + 1'b1;
+            end
+
+            7: begin // Write receive status
                rx_state_nxt = rx_state;
 
                rx_bd_addr_o = rx_bd_num<<1;
