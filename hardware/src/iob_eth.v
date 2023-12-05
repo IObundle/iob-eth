@@ -37,23 +37,13 @@ module iob_eth # (
    assign axi_awaddr_o = internal_axi_awaddr_o + MEM_ADDR_OFFSET;
    assign axi_araddr_o = internal_axi_araddr_o + MEM_ADDR_OFFSET;
 
-   //
-   // SWRegs
-   //
-   // wire ETH_SOFTRST;
-
-   //
-   // WIRES and REGISTERS
-   //
-   wire [1-1:0] rst_int;
-
    // ETH CLOCK DOMAIN
-   reg [1-1:0] phy_clk_detected;
-   reg [1-1:0] phy_dv_detected;
-   wire [1-1:0] tx_ready;
-   wire [1-1:0] rx_data_rcvd;
-   wire [1-1:0] crc_err;
-   wire [1-1:0] crc_en;
+   reg  phy_clk_detected;
+   reg  phy_dv_detected;
+   wire  tx_ready;
+   wire  rx_data_rcvd;
+   wire  crc_err;
+   wire  crc_en;
    wire [11-1:0] tx_nbytes;
 
    wire                         iob_eth_tx_buffer_enA;
@@ -69,9 +59,6 @@ module iob_eth # (
    wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
    wire [8-1:0]                iob_eth_rx_buffer_doutB;
 
-   // Ethernet Status
-   wire [1-1:0] phy_clk_detected_sync;
-   wire [1-1:0] phy_dv_detected_sync;
 
    assign MIISTATUS_rd = {
       29'b0,
@@ -83,70 +70,28 @@ module iob_eth # (
    assign MTxErr = 1'b0; //TODO
 
    //
-   // REGISTERS
-   //
-
-   // soft reset self-clearing register
-   reg [1-1:0] rst_soft;
-   always @(posedge clk_i, posedge arst_i)
-      if (arst_i) rst_soft <= 1'b1;
-      //else if (ETH_SOFTRST && !rst_soft) rst_soft <= 1'b1;
-      else rst_soft <= 1'b0;
-
-   assign rst_int              = rst_soft | arst_i;
-
-
-   //
    // SYNCHRONIZERS
    //
-
-   // MRxClk to clk
-
-   iob_sync #(
-      .DATA_W(1),
-      .RST_VAL(1'b0)
-   ) iob_sync_phy_clk_detected (
-      .clk_i     (clk_i),
-      .arst_i    (rst_int),
-      .signal_i(phy_clk_detected),
-      .signal_o(phy_clk_detected_sync) // TODO
-   );
-   iob_sync #(
-      .DATA_W(1),
-      .RST_VAL(1'b0)
-   ) iob_sync_phy_dv_detected (
-      .clk_i     (clk_i),
-      .arst_i    (rst_int),
-      .signal_i(phy_dv_detected),
-      .signal_o(phy_dv_detected_sync) // TODO
-   );
+   
    // clk to MRxClk
-   wire [1-1:0] send_sync;
-   wire [1-1:0] send;
-   iob_f2s_1bit_sync send_f2s_sync (
+   wire  send_sync;
+   wire  send;
+   
+   iob_sync send_f2s_sync (
       .clk_i   (MTxClk),
-      .cke_i   (cke_i),
-      .value_i (send_sync),
-      .value_o (send)
+      .arst_i   (arst_i),
+      .signal_i (send),
+      .signal_o (send_sync)
    );
-   wire [1-1:0] rcv_sync;
-   wire [1-1:0] rcv_ack;
-   iob_f2s_1bit_sync rcv_f2s_sync (
+   wire  rcv_sync;
+   wire  rcv_ack;
+   
+   iob_sync rcv_f2s_sync (
       .clk_i   (MRxClk),
-      .cke_i   (cke_i),
-      .value_i (rcv_sync),
-      .value_o (rcv_ack)
+      .arst_i   (arst_i),
+      .signal_i (rcv),
+      .signal_o (rcv_sync)
    );
-
-   //
-   // TX and RX BUFFERS
-   //
-
-   // TX Buffer Logic
-   // TX Back-End
-
-   // RX Buffer Logic
-   // RX Front-End
 
    //
    // TRANSMITTER
@@ -154,7 +99,7 @@ module iob_eth # (
 
    iob_eth_tx tx (
       // cpu side
-      .rst   (rst_int),
+      .rst   (arst_i),
       .nbytes(tx_nbytes),
       .ready (tx_ready),
 
@@ -175,7 +120,7 @@ module iob_eth # (
 
    iob_eth_rx rx (
       // cpu side
-      .rst      (rst_int),
+      .rst      (arst_i),
       .data_rcvd(rx_data_rcvd),
 
       // mii side
@@ -188,34 +133,6 @@ module iob_eth # (
       .RX_DV    (MRxDv),
       .crc_err  (crc_err)
    );
-
-
-   //
-   //  PHY RESET
-   //
-   reg [20-1:0] phy_rst_cnt;
-   reg ETH_PHY_RESETN;
-
-   always @(posedge clk_i, posedge rst_int)
-      if (rst_int) begin
-         phy_rst_cnt    <= 0;
-         ETH_PHY_RESETN <= 0;
-      end else if (phy_rst_cnt != PHY_RST_CNT) phy_rst_cnt <= phy_rst_cnt + 1'b1;
-      else ETH_PHY_RESETN <= 1;
-
-   reg [1:0] rx_rst;
-   always @(posedge MRxClk, negedge ETH_PHY_RESETN)
-      if (!ETH_PHY_RESETN) rx_rst <= 2'b11;
-      else rx_rst <= {rx_rst[0], 1'b0};
-
-   always @(posedge MRxClk, posedge rx_rst[1])
-      if (rx_rst[1]) begin
-         phy_clk_detected <= 1'b0;
-         phy_dv_detected  <= 1'b0;
-      end else begin
-         phy_clk_detected <= 1'b1;
-         if (MRxDv) phy_dv_detected <= 1'b1;
-      end
 
    // BUFFER memories
    iob_ram_tdp_be #(
@@ -306,7 +223,7 @@ module iob_eth # (
       .tx_ready_i(tx_ready),
       .crc_en_o(crc_en),
       .tx_nbytes_o(tx_nbytes),
-      .send_o(send_sync),
+      .send_o(send),
 
       // RX Back-End
       .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
@@ -315,7 +232,7 @@ module iob_eth # (
       .rx_data_rcvd_i(rx_data_rcvd),
       .crc_err_i(crc_err),
       .rx_nbytes_i(iob_eth_rx_buffer_addrA),
-      .rcv_ack_o(rcv_sync),
+      .rcv_ack_o(rcv),
 
       // AXI master interface
       // Can't use generated include, because of `internal_axi_*addr_o` signals.
