@@ -32,10 +32,10 @@ module iob_eth_dma #(
    output reg                     eth_data_wr_wen_o,
    output reg [BUFFER_W-1:0]      eth_data_wr_addr_o,
    output reg [8-1:0]             eth_data_wr_wdata_o,
-   output reg                     tx_ready_i,
-   output reg                     crc_en_o,
-   output reg [11-1:0]            tx_nbytes_o,
-   output reg                     send_o,
+   input                          tx_ready_i,
+   output                         crc_en_o,
+   output     [11-1:0]            tx_nbytes_o,
+   output                         send_o,
 
    // RX Back-End
    output                         eth_data_rd_ren_o,
@@ -44,7 +44,7 @@ module iob_eth_dma #(
    input                          rx_data_rcvd_i,
    input                          crc_err_i,
    input  [11-1:0]                rx_nbytes_i,
-   output reg                     rcv_ack_o,
+   output                         rcv_ack_o,
 
    // AXI master interface
    `include "axi_m_port.vs"
@@ -238,7 +238,7 @@ module iob_eth_dma #(
       .data_i(crc_en_nxt),
       .data_o(crc_en)
    );
-   assign crc_en_o = crc_en_nxt;
+   assign crc_en_o = crc_en;
 
    reg [11-1:0] tx_nbytes_nxt;
    wire [11-1:0] tx_nbytes;
@@ -253,7 +253,22 @@ module iob_eth_dma #(
       .data_i(tx_nbytes_nxt),
       .data_o(tx_nbytes)
    );
-   assign tx_nbytes_o = tx_nbytes_nxt;
+   assign tx_nbytes_o = tx_nbytes;
+
+   reg [1-1:0] send_nxt;
+   wire [1-1:0] send;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) send_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(send_nxt),
+      .data_o(send)
+   );
+   assign send_o = send;
 
    always @* begin
       tx_req = 1'b0;
@@ -262,7 +277,7 @@ module iob_eth_dma #(
       tx_bd_addr_o = 1'b0;
       tx_bd_wen_o    = 1'b0;
       tx_bd_o        = 1'b0;
-      send_o = 1'b0;
+      send_nxt = send;
       axi_arvalid_o_reg = 1'b0;
       axi_rready_o_reg = 1'b0;
       eth_data_wr_wen_o = 1'b0;
@@ -288,7 +303,7 @@ module iob_eth_dma #(
          tx_bd_addr_o   = 1'b0;
          tx_bd_wen_o    = 1'b0;
          tx_bd_o        = 1'b0;
-         send_o = 1'b0;
+         send_nxt = 1'b0;
          axi_arvalid_o_reg = 1'b0;
          axi_rready_o_reg = 1'b0;
          eth_data_wr_wen_o = 1'b0;
@@ -304,7 +319,7 @@ module iob_eth_dma #(
             0: begin  // Request buffer descriptor
                tx_bd_addr_o = tx_bd_num<<1;
                tx_req = 1'b1;
-               send_o = 1'b0;
+               send_nxt = 1'b0;
                tx_irq_o = 1'b0;
                tx_bd_wen_o = 1'b0;
 
@@ -357,7 +372,7 @@ module iob_eth_dma #(
                   // Configure transmitter settings
                   crc_en_nxt = tx_buffer_descriptor[11];
                   tx_nbytes_nxt = PRE_FRAME_LEN + tx_buffer_descriptor[26:16]; // 11 bits is enough for frame size
-                  send_o = 1'b1;
+                  send_nxt = 1'b1;
 
                   // Disable ready bit
                   tx_buffer_descriptor_nxt[15] = 1'b0;
@@ -402,8 +417,8 @@ module iob_eth_dma #(
 
             6: begin // Wait for send_o to be read by transmitter
                tx_state_nxt = tx_state;
-               send_o = 1'b1;
                if (!tx_ready_i)
+                  send_nxt = 1'b0;
                   tx_state_nxt = tx_state + 1'b1;
             end
 
@@ -569,6 +584,20 @@ module iob_eth_dma #(
    );
    assign axi_awlen_o = axi_awlen_nxt;
 
+   reg [1-1:0] rcv_ack_nxt;
+   wire [1-1:0] rcv_ack;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0),
+      .CLKEDGE("posedge")
+   ) rcv_ack_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rcv_ack_nxt),
+      .data_o(rcv_ack)
+   );
+   assign rcv_ack_o = rcv_ack;
 
    always @* begin
       rx_req = 1'b0;
@@ -577,7 +606,7 @@ module iob_eth_dma #(
       rx_bd_addr_o   = 1'b0;
       rx_bd_wen_o    = 1'b0;
       rx_bd_o        = 1'b0;
-      rcv_ack_o      = 1'b0;
+      rcv_ack_nxt = rcv_ack;
       axi_awvalid_o_reg = 1'b0;
       axi_wvalid_o_reg = 1'b0;
       axi_wlast_o_reg = 1'b0;
@@ -605,7 +634,7 @@ module iob_eth_dma #(
          rx_bd_addr_o   = 1'b0;
          rx_bd_wen_o    = 1'b0;
          rx_bd_o        = 1'b0;
-         rcv_ack_o      = 1'b0;
+         rcv_ack_nxt      = 1'b0;
          axi_awvalid_o_reg = 1'b0;
          axi_wvalid_o_reg = 1'b0;
          axi_wlast_o_reg = 1'b0;
@@ -622,7 +651,7 @@ module iob_eth_dma #(
             0: begin  // Request buffer descriptor
                rx_bd_addr_o = rx_bd_num<<1;
                rx_req = 1'b1;
-               rcv_ack_o = 1'b0;
+               rcv_ack_nxt = 1'b0;
                rx_irq_o = 1'b0;
                rx_bd_wen_o = 1'b0;
 
@@ -684,7 +713,7 @@ module iob_eth_dma #(
                   rx_buffer_descriptor_nxt[31:16] = rx_nbytes_i;
 
                   // Acknowledge read complete
-                  rcv_ack_o = 1'b1;
+                  rcv_ack_nxt = 1'b1;
 
                   // Write receive status
                   rx_state_nxt = 6;
@@ -734,8 +763,8 @@ module iob_eth_dma #(
 
             6: begin // Wait for rcv_ack to be read by receiver
                rx_state_nxt = rx_state;
-               rcv_ack_o = 1'b1;
                if (!rx_data_rcvd_i)
+                  rcv_ack_nxt = 1'b0;
                   rx_state_nxt = rx_state + 1'b1;
             end
 
