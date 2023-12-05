@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
 
 from iob_module import iob_module
 from iob_block_group import iob_block_group
@@ -39,6 +40,28 @@ class iob_eth(iob_module):
                 iob_ram_dp,
             ]
         )
+
+    @classmethod
+    def _post_setup(cls):
+        super()._post_setup()
+
+        # Copy CYCLONEV-GT-DK files
+        dst = f"{cls.build_dir}/scripts"
+        src = f"{__class__.setup_dir}/scripts"
+        files = os.listdir(src)
+        for fname in files:
+            src_file = os.path.join(src, fname)
+            if os.path.isfile(src_file):
+                shutil.copy2(src_file, dst)
+
+        # Copy CYCLONEV-GT-DK files
+        dst = f"{cls.build_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK"
+        src = f"{__class__.setup_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK/components"
+        files = os.listdir(src)
+        for fname in files:
+            src_file = os.path.join(src, fname)
+            if os.path.isfile(src_file):
+                shutil.copy2(src_file, dst)
 
     @classmethod
     def _setup_confs(cls):
@@ -270,7 +293,7 @@ class iob_eth(iob_module):
                     },
                     {
                         "name": "MDIO",
-                        "type": "IO",
+                        "type": "O", #TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
                         "n_bits": "1",
                         "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
                     },

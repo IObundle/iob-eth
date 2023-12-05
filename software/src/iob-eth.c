@@ -1,5 +1,6 @@
 #include "stdint.h"
 #include "printf.h"
+#include "iob_eth_rmac.h"
 #include "iob-eth-defines.h"
 #include "iob-eth.h"
 #include <stdlib.h>
@@ -7,6 +8,9 @@
 
 // Frame template (includes every field of the frame before the payload)
 static char TEMPLATE[TEMPLATE_LEN];
+
+// Function to clear cache
+static void (*clear_cache)(void);
 
 /*******************************************/
 /********** AUXILIAR FUNCTIONS *************/
@@ -57,7 +61,8 @@ static void print_buffer(char *buffer, int size){
 /*********** ETHERNET DRIVERS **************/
 /*******************************************/
 
-void eth_init(int base_address) {
+void eth_init(int base_address, void (*clear_cache_func)(void)) {
+        eth_init_clear_cache(clear_cache_func);
 #ifdef LOOPBACK
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
 #else
@@ -65,18 +70,15 @@ void eth_init(int base_address) {
 #endif
 }
 
+void eth_init_clear_cache( void (*clear_cache_func)(void) ) {
+  clear_cache = clear_cache_func;
+}
+
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   int i,ret;
 
   // set base address
   IOB_ETH_INIT_BASEADDR(base_address);
-  
-  // Preamble
-  for(i=0; i < PREAMBLE_LEN; i++)
-    TEMPLATE[PREAMBLE_PTR+i] = PREAMBLE;
-
-  // SFD
-  TEMPLATE[SDF_PTR] = SFD;
 
   // dest mac address
   for (i=0; i < MAC_ADDR_LEN; i++) {
@@ -91,7 +93,7 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   }
 
   #ifdef ETH_DEBUG_PRINT
-  printf("\nSender:");
+  printf("\nSender: ");
   for(i=0; i < MAC_ADDR_LEN; i++){
     printf("%02x ", (unsigned char) TEMPLATE[MAC_SRC_PTR+i]);
   }
@@ -152,14 +154,14 @@ void eth_set_payload_size(unsigned int idx, unsigned int size) {
 void eth_send_frame(char *data, unsigned int size) {
   int i;
 
-  printf("A1 %x\n", IOB_ETH_GET_BD(0));
+  printf("A1 %x\n", IOB_ETH_GET_BD(0)); //DEBUG
   // wait for ready
   while(!eth_tx_ready(0));
 
   // Alloc memory for frame
   char *frame_ptr = (char *) malloc(TEMPLATE_LEN+size);
 
-  printf("A2\n");
+  printf("A2\n"); //DEBUG
   // Copy template to frame
   for (i=0; i < TEMPLATE_LEN; i++)
     frame_ptr[i] = TEMPLATE[i];
@@ -171,35 +173,35 @@ void eth_send_frame(char *data, unsigned int size) {
   /* Buffer descriptor configuration */
     
   // set frame pointer
-  gpio_set(0x00000010);
+  gpio_set(0x00000010); //DEBUG
   eth_set_ptr(0, frame_ptr);
-  printf("A3\n");
+  printf("A3\n"); //DEBUG
   // set frame size
-  gpio_set(0x00000001);
+  gpio_set(0x00000001); //DEBUG
   eth_set_payload_size(0, TEMPLATE_LEN+size);
 
-  printf("A4\n");
+  printf("A4\n"); //DEBUG
   // Set ready bit; Enable CRC and PAD; Set as last descriptor; Enable interrupt.
-  gpio_set(0x00000002);
+  gpio_set(0x00000002); //DEBUG
   eth_set_ready(0, 1);
-  gpio_set(0x00000003);
+  gpio_set(0x00000003); //DEBUG
   eth_set_crc(0, 1);
-  gpio_set(0x00000004);
+  gpio_set(0x00000004); //DEBUG
   eth_set_pad(0, 1);
-  gpio_set(0x00000005);
+  gpio_set(0x00000005); //DEBUG
   eth_set_wr(0, 1);
   eth_set_interrupt(0, 1);
 
-  printf("0x%x\n", IOB_ETH_GET_BD(0));
+  printf("0x%x\n", IOB_ETH_GET_BD(0)); //DEBUG
 
   // start sending
-  gpio_set(0x00000006);
+  gpio_set(0x00000006); //DEBUG
   eth_send(1);
 
-  printf("A5\n");
+  printf("A5\n"); //DEBUG
   // wait for ready
   while(!eth_tx_ready(0));
-  printf("A6\n");
+  printf("A6\n"); //DEBUG
 
   // Disable transmission and free memory
   eth_send(0);
@@ -212,30 +214,31 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
 
-  // FIXME: Use 32bit aligned words?
   // Alloc memory for frame
-  char *frame_ptr = (char *) malloc(TEMPLATE_LEN+ETH_NBYTES);
+  volatile char *frame_ptr = (volatile char *) malloc(ETH_NBYTES+HDR_LEN);
 
   // Copy template to frame
   //for (i=0; i < TEMPLATE_LEN; i++)
   //  frame_ptr[i] = TEMPLATE[i];
 
   // set frame pointer
-  gpio_set(0xa1000010);
+  gpio_set(0xa1000010); //DEBUG
+  gpio_set((uint32_t)frame_ptr); //DEBUG
+  printf("D:0x%p\n", frame_ptr); //DEBUG
   eth_set_ptr(64, frame_ptr);
 
-  gpio_set(0xa1000001);
+  gpio_set(0xa1000001); //DEBUG
   // Mark empty; Set as last descriptor; Enable interrupt.
   eth_set_empty(64, 1);
-  gpio_set(0xa1000002);
+  gpio_set(0xa1000002); //DEBUG
   eth_set_wr(64, 1);
   eth_set_interrupt(64, 1);
 
-  gpio_set(0xa1000003);
+  gpio_set(0xa1000003); //DEBUG
   // Enable reception
   eth_receive(1);
 
-  gpio_set(0xa1000004);
+  gpio_set(0xa1000004); //DEBUG
   // wait until data received
   while (!eth_rx_ready(64)) {
      timeout--;
@@ -244,32 +247,35 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
        return ETH_NO_DATA;
      }
   }
-  gpio_set(0xa1000005);
+  gpio_set(0xa1000005); //DEBUG
 
   if(eth_bad_crc(64)) {
-    eth_ack();
     eth_receive(0);
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
-  gpio_set(0xa1000006);
+  
+  // Clear cache
+  (*clear_cache)();
+
+  gpio_set(0xa1000006); //DEBUG
 
   // Copy payload to return array
   for (i=0; i < size; i++) {
+    gpio_set(i); //DEBUG
     data_rcv[i] = frame_ptr[i+TEMPLATE_LEN];
+    gpio_set(data_rcv[i]); //DEBUG
   }
 
-  free(frame_ptr);
+  free((char *)frame_ptr);
   
-  gpio_set(0xa1000007);
-  // send receive ack
-  eth_ack();
+  gpio_set(0xa1000007); //DEBUG
 
-  gpio_set(0xa1000008);
   // Disable reception
   eth_receive(0);
 
-  gpio_set(0xa1000009);
+  gpio_set(0xa1000008); //DEBUG
+  //printf("C: %p\n", __builtin_return_address(0)); //DEBUG
   
   return ETH_DATA_RCV;
 }
@@ -277,18 +283,24 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
 
 #define MAX(A,B) ((A) > (B) ? (A) : (B)) 
-#define RCV_TIMEOUT 500000
 
+static unsigned int rcv_timeout = 500000;
 static char buffer[ETH_NBYTES+HDR_LEN];
+
+void eth_set_receive_timeout(unsigned int timeout){
+  rcv_timeout = timeout;
+}
 
 static void SyncAckFirst(){
   while(1){
+    gpio_set(0x30000000); //DEBUG
     // Send frame
     eth_send_frame(buffer,ETH_MINIMUM_NBYTES); // Do not care what we send, any frame is the ack
-    printf("D2\n");
+    printf("D2\n"); //DEBUG
 
+    gpio_set(0x30000001); //DEBUG
     // Wait to receive ack
-    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,RCV_TIMEOUT) == ETH_DATA_RCV)
+    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,rcv_timeout) == ETH_DATA_RCV)
       break;
   }
 }
@@ -296,11 +308,11 @@ static void SyncAckFirst(){
 static void SyncAckLast(){
   // Wait to receive frame
   while(1){
-  gpio_set(0xa1000000);
+  gpio_set(0xa1000000); //DEBUG
     // Wait to receive ack
-    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,RCV_TIMEOUT) == ETH_DATA_RCV)
+    if(eth_rcv_frame(buffer,ETH_MINIMUM_NBYTES,rcv_timeout) == ETH_DATA_RCV)
       break;
-  gpio_set(0xa2000000);
+  gpio_set(0xa2000000); //DEBUG
   }
 
   eth_send_frame(buffer,ETH_MINIMUM_NBYTES); // Do not care what we send, any frame is the ack
@@ -320,7 +332,7 @@ static unsigned int eth_rcv_file_impl(char *data, int size) {
      else bytes_to_receive = ETH_NBYTES;
 
      // wait to receive frame
-     while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, RCV_TIMEOUT));
+     while(eth_rcv_frame(&data[count_bytes], bytes_to_receive, rcv_timeout));
 
      // send data back as ack
      eth_send_frame(&data[count_bytes], MAX(bytes_to_receive,ETH_MINIMUM_NBYTES));
@@ -339,6 +351,7 @@ static unsigned int eth_send_file_impl(char *data, int size) {
   unsigned int error_bytes = 0;
   int i,j;
 
+  gpio_set(0x40000000); //DEBUG
   // Loop to send data
   for(j = 0; j < num_frames; j++) {
 
@@ -346,21 +359,26 @@ static unsigned int eth_send_file_impl(char *data, int size) {
      if(j == (num_frames-1)) bytes_to_send = size - count_bytes;
      else bytes_to_send = ETH_NBYTES;
 
+     gpio_set(0x40000001); //DEBUG
      // send frame
      eth_send_frame(&data[count_bytes], MAX(bytes_to_send,ETH_MINIMUM_NBYTES));
 
+     gpio_set(0x40000002); //DEBUG
      // wait to receive frame as ack
-     while(eth_rcv_frame(buffer, bytes_to_send, RCV_TIMEOUT));
+     while(eth_rcv_frame(buffer, bytes_to_send, rcv_timeout));
 
+     gpio_set(0x40000003); //DEBUG
      for(int i = 0; i < bytes_to_send; i++){
       if(buffer[i] != data[count_bytes + i]){
         error_bytes += 1;
+        printf("Err byte %d: %x %x\n",i,buffer[i], data[count_bytes + i]); //DEBUG
       }
      }
 
      // update byte counter
      count_bytes += bytes_to_send;
   }
+  gpio_set(0x40000004); //DEBUG
 
   printf("File transmitted with %d errors...\n",error_bytes);
 
@@ -369,20 +387,23 @@ static unsigned int eth_send_file_impl(char *data, int size) {
 
 unsigned int eth_rcv_file(char *data, int size) {
 
-  gpio_set(0xa0000000);
+  gpio_set(0xa0000000); //DEBUG
   SyncAckLast();
-  gpio_set(0xa3000000);
+  gpio_set(0xa3000000); //DEBUG
 
   return eth_rcv_file_impl(data,size);
 }
 
 unsigned int eth_send_file(char *data, int size) {
 
-  printf("D1\n");
+  printf("D1\n"); //DEBUG
+  gpio_set(0x20000000); //DEBUG
   SyncAckFirst();
-  printf("D3\n");
+  printf("D3\n"); //DEBUG
 
+  gpio_set(0x20000001); //DEBUG
   return eth_send_file_impl(data,size);
+  gpio_set(0x20000002); //DEBUG
 }
 
 unsigned int eth_rcv_variable_file(char *data) {
@@ -391,7 +412,7 @@ unsigned int eth_rcv_variable_file(char *data) {
   SyncAckLast();
 
   // Receive file size
-  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, rcv_timeout));
 
   // Send data back as ack
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
@@ -409,7 +430,7 @@ unsigned int eth_send_variable_file(char *data, int size) {
   eth_send_frame(buffer, ETH_MINIMUM_NBYTES);
 
   // Wait for ack
-  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, RCV_TIMEOUT));
+  while(eth_rcv_frame(buffer, ETH_MINIMUM_NBYTES, rcv_timeout));
 
   // Transfer file
   return eth_send_file_impl(data,size);

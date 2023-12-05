@@ -9,20 +9,34 @@ import os
 
 
 def PrintBaseUsage():
-    print("<usage>: python eth_comm.py <interface> <RMAC> <file path>")
+    print("<usage>: python eth_comm.py <RMAC>")
 
+# Get interface name based on given MAC address
+def get_eth_interface(mac_addr):
+    net_dir = '/sys/class/net'
+    interfaces = os.listdir(net_dir)
+    for interface in interfaces:
+        try:
+            with open(os.path.join(net_dir, interface, 'address'), 'r') as f:
+                mac = f.read().strip().replace(':', '')
+        except FileNotFoundError:
+            pass  # Ignore interfaces without MAC address
+        if mac == mac_addr:
+            return interface
+    raise Exception(f"No interface with MAC address '{mac_addr}' found!")
 
 # Check arguments common to all scripts
-if len(sys.argv) < 4:
+if len(sys.argv) < 2:
     PrintBaseUsage()
     sys.exit()
 
 addr = "/tmp/tmpLocalSocket"
 
 # Ethernet parameters
-interface = sys.argv[1]
+interface = get_eth_interface(sys.argv[1])
+print(f"Using ethernet interface '{interface}'.")
 # use byte arrays by default
-src_addr = bytes.fromhex(sys.argv[2])  # sender MAC address
+src_addr = bytes.fromhex(sys.argv[1])  # sender MAC address
 dst_addr = bytes.fromhex("01606e11020f")  # receiver MAC address
 eth_type = bytes.fromhex("6000")  # ethernet frame type
 ETH_P_ALL = 0x6000

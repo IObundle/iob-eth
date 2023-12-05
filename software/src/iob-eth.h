@@ -1,5 +1,8 @@
 // driver functions
-void eth_init(int base_address);
+
+void eth_init(int base_address, void (*clear_cache_func)(void));
+
+void eth_init_clear_cache( void (*clear_cache_func)(void) );
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr);
 
@@ -20,6 +23,8 @@ void eth_send_frame(char *data_to_send, unsigned int size);
  * 	successfully received
  */
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout);
+
+void eth_set_receive_timeout(unsigned int timeout);
 
 unsigned int eth_rcv_file(char *data, int size);
 
