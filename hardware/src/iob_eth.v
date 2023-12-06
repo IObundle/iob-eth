@@ -38,9 +38,6 @@ module iob_eth # (
    assign axi_araddr_o = internal_axi_araddr_o + MEM_ADDR_OFFSET;
 
    // ETH CLOCK DOMAIN
-   wire  tx_ready;
-   wire  rx_data_rcvd;
-   wire [11-1:0] tx_nbytes;
 
    wire                         iob_eth_tx_buffer_enA;
    wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
@@ -68,7 +65,7 @@ module iob_eth # (
    //
    // SYNCHRONIZERS
    //
-   
+
    // clk to MRxClk (f2s)
    wire  eth_send;
    wire  send;
@@ -104,6 +101,17 @@ module iob_eth # (
       .signal_o (eth_crc_en)
    );
 
+   wire [11-1:0] eth_tx_nbytes;
+   wire [11-1:0] tx_nbytes;
+   iob_sync #(
+      .DATA_W(11)
+   ) tx_nbytes_f2s_sync (
+      .clk_i    (MTxClk),
+      .arst_i   (arst_i),
+      .signal_i (tx_nbytes),
+      .signal_o (eth_tx_nbytes)
+   );
+
    // MRxClk to clk (s2f)
 
    wire  eth_crc_err;
@@ -127,26 +135,64 @@ module iob_eth # (
       .signal_o (rx_nbytes)
    );
 
+   wire  eth_rx_data_rcvd;
+   wire  rx_data_rcvd;
+   iob_sync #(
+      .DATA_W(1)
+   ) rx_data_rcvd_sync (
+      .clk_i   (clk_i),
+      .arst_i   (arst_i),
+      .signal_i (eth_rx_data_rcvd),
+      .signal_o (rx_data_rcvd)
+   );
+
    // MTxclk to clk (s2f)
+
+   wire  eth_tx_ready;
+   wire  tx_ready;
+   iob_sync #(
+      .DATA_W(1)
+   ) tx_ready_sync (
+      .clk_i   (clk_i),
+      .arst_i   (arst_i),
+      .signal_i (eth_tx_ready),
+      .signal_o (tx_ready)
+   );
+
+
+   // arst synchronizers
+   wire rx_arst;
+   iob_reset_sync rx_arst_sync (
+      .clk_i(MRxClk),
+      .arst_i(arst_i),
+      .arst_o(rx_arst)
+   );
+
+   wire tx_arst;
+   iob_reset_sync tx_arst_sync (
+      .clk_i(MTxClk),
+      .arst_i(arst_i),
+      .arst_o(tx_arst)
+   );
 
    //
    // TRANSMITTER
    //
 
    iob_eth_tx tx (
-      // cpu side
-      .rst   (arst_i),
-      .nbytes(tx_nbytes),
-      .ready (tx_ready), //TODO: Should this have synchronizer?
-
-      // mii side
-      .send   (eth_send),
-      .addr   (iob_eth_tx_buffer_addrB),
-      .data   (iob_eth_tx_buffer_doutB),
-      .TX_CLK (MTxClk),
-      .TX_EN  (MTxEn),
-      .TX_DATA(MTxD),
-      .crc_en (eth_crc_en)
+      .arst_i   (tx_arst),
+      // Buffer interface
+      .addr_o   (iob_eth_tx_buffer_addrB),
+      .data_i   (iob_eth_tx_buffer_doutB),
+      // DMA control interface
+      .send_i   (eth_send),
+      .ready_o  (eth_tx_ready),
+      .nbytes_i (eth_tx_nbytes),
+      .crc_en_i (eth_crc_en),
+      // MII interface
+      .tx_clk_i (MTxClk),
+      .tx_en_o  (MTxEn),
+      .tx_data_o(MTxD)
    );
 
 
@@ -155,19 +201,19 @@ module iob_eth # (
    //
 
    iob_eth_rx rx (
-      // cpu side
-      .rst      (arst_i),
-      .data_rcvd(rx_data_rcvd), //TODO: Should this have synchronizer?
-
-      // mii side
-      .rcv_ack  (eth_rcv_ack),
-      .wr       (iob_eth_rx_buffer_enA),
-      .addr     (iob_eth_rx_buffer_addrA),
-      .data     (iob_eth_rx_buffer_dinA),
-      .RX_CLK   (MRxClk),
-      .RX_DATA  (MRxD),
-      .RX_DV    (MRxDv),
-      .crc_err  (eth_crc_err)
+      .arst_i      (rx_arst),
+      // Buffer interface
+      .wr_o       (iob_eth_rx_buffer_enA),
+      .addr_o     (iob_eth_rx_buffer_addrA),
+      .data_o     (iob_eth_rx_buffer_dinA),
+      // DMA control interface
+      .rcv_ack_i  (eth_rcv_ack),
+      .data_rcvd_o (eth_rx_data_rcvd),
+      .crc_err_o  (eth_crc_err),
+      // MII interface
+      .rx_clk_i   (MRxClk),
+      .rx_data_i  (MRxD),
+      .rx_dv_i    (MRxDv)
    );
 
    // BUFFER memories
@@ -226,6 +272,7 @@ module iob_eth # (
    wire dma_bd_wen;
    wire [31:0] dma_bd_i;
    wire [31:0] dma_bd_o;
+   // DMA interrupt wires
    wire rx_irq;
    wire tx_irq;
    assign inta_o = rx_irq | tx_irq;
@@ -240,7 +287,7 @@ module iob_eth # (
       .BUFFER_W  (`IOB_ETH_BUFFER_W),
       .BD_ADDR_W (BD_NUM_LOG2+1)
    ) dma_inst (
-      // Control interface
+      // SW reg control interface
       .rx_en_i(MODER_wr[0]),
       .tx_en_i(MODER_wr[1]),
       .tx_bd_num_i(TX_BD_NUM_wr[BD_NUM_LOG2:0]),

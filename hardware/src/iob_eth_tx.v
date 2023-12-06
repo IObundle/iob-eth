@@ -3,20 +3,23 @@
 `include "iob_eth_conf.vh"
 
 module iob_eth_tx (
-                   input             tx_clk_i,
-                   input             tx_arst_i,
+   input             arst_i,
 
-                   input [10:0]      nbytes_i,
-                   output reg        ready_o,
-                   input             send_i,
+   // Buffer interface
+   output reg [10:0] addr_o,
+   input [ 7:0]      data_i,
 
-                   output reg [10:0] addr_o,
-                   input [ 7:0]      data_i,
+   // DMA control interface
+   input             send_i,
+   output reg        ready_o,
+   input [10:0]      nbytes_i,
+   input             crc_en_i,
 
-                   input             crc_en_i,
-                   output reg        tx_en_o,
-                   output reg [ 3:0] tx_data_o
-                   );
+   // MII interface
+   input             tx_clk_i,
+   output reg        tx_en_o,
+   output reg [ 3:0] tx_data_o
+   );
 
    function automatic [7:0] reverse_byte;
       input [7:0]                    word;
@@ -38,8 +41,8 @@ module iob_eth_tx (
    //
    // TRANSMITTER PROGRAM
    //
-   always @(posedge tx_clk_i, posedge tx_arst_i)
-     if (tx_arst_i) begin
+   always @(posedge tx_clk_i, posedge arst_i)
+     if (arst_i) begin
         pc      <= 0;
         crc_en_int  <= 0;
         addr_o    <= 0;
@@ -121,14 +124,14 @@ module iob_eth_tx (
    //
 
    iob_eth_crc crc_tx (
-                       .clk(tx_clk_i),
-                       .tx_arst_i(tx_arst_i),
+                       .clk_i(tx_clk_i),
+                       .arst_i(arst_i),
 
-                       .start(pc == 0),
+                       .start_i(pc == 0),
 
-                       .data_in(data_i),
-                       .data_en(crc_en_int),
-                       .crc_out(crc_value)
+                       .data_i(data_i),
+                       .data_en_i(crc_en_int),
+                       .crc_o(crc_value)
                        );
 
    assign crc_out = ~{reverse_byte(
