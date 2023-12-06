@@ -133,41 +133,57 @@ module iob_eth # (
    // TRANSMITTER
    //
 
-   iob_eth_tx tx (
-      // cpu side
-      .rst   (arst_i),
-      .nbytes(tx_nbytes),
-      .ready (tx_ready), //TODO: Should this have synchronizer?
+   //TODO: Move to sync_unit
+   wire tx_arst;
+   iob_reset_sync tx_arst_sync (
+      .clk_i(MTxClk),
+      .arst_i(arst_i),
+      .arst_o(tx_arst)
+   );
 
-      // mii side
-      .send   (eth_send),
-      .addr   (iob_eth_tx_buffer_addrB),
-      .data   (iob_eth_tx_buffer_doutB),
-      .TX_CLK (MTxClk),
-      .TX_EN  (MTxEn),
-      .TX_DATA(MTxD),
-      .crc_en (eth_crc_en)
+   iob_eth_tx tx (
+      .arst_i   (tx_arst),
+      // Buffer interface
+      .addr_o   (iob_eth_tx_buffer_addrB),
+      .data_i   (iob_eth_tx_buffer_doutB),
+      // DMA control interface
+      .send_i   (eth_send),
+      .ready_o  (tx_ready), //TODO: Should this have synchronizer?
+      .nbytes_i (tx_nbytes),
+      .crc_en_i (eth_crc_en)
+      // MII interface
+      .tx_clk_i (MTxClk),
+      .tx_en_o  (MTxEn),
+      .tx_data_o(MTxD),
    );
 
 
    //
    // RECEIVER
    //
+   
+   //TODO: Move to sync_unit
+   wire rx_arst;
+   iob_reset_sync rx_arst_sync (
+      .clk_i(MRxClk),
+      .arst_i(arst_i),
+      .arst_o(rx_arst)
+   );
 
    iob_eth_rx rx (
-      // cpu side
-      .rst      (arst_i),
-      .data_rcvd(rx_data_rcvd), //TODO: Should this have synchronizer?
-
-      // mii side
-      .rcv_ack  (eth_rcv_ack),
-      .wr       (iob_eth_rx_buffer_enA),
-      .addr     (iob_eth_rx_buffer_addrA),
-      .data     (iob_eth_rx_buffer_dinA),
-      .RX_CLK   (MRxClk),
-      .RX_DATA  (MRxD),
-      .RX_DV    (MRxDv),
-      .crc_err  (eth_crc_err)
+      .arst_i      (rx_arst),
+      // Buffer interface
+      .wr_o       (iob_eth_rx_buffer_enA),
+      .addr_o     (iob_eth_rx_buffer_addrA),
+      .data_o     (iob_eth_rx_buffer_dinA),
+      // DMA control interface
+      .rcv_ack_i  (eth_rcv_ack),
+      .data_rcvd_o (rx_data_rcvd), //TODO: Should this have synchronizer?
+      .crc_err_o  (eth_crc_err),
+      // MII interface
+      .rx_clk_i   (MRxClk),
+      .rx_data_i  (MRxD),
+      .rx_dv_i    (MRxDv)
    );
 
    // BUFFER memories
