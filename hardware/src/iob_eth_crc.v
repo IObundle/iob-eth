@@ -1,11 +1,11 @@
 `timescale 1ns / 1ps
 module iob_eth_crc (
-   input             rst,
-   input             clk,
-   input             start,
-   input      [ 7:0] data_in,
-   input             data_en,
-   output reg [31:0] crc_out
+   input             arst_i,
+   input             clk_i,
+   input             start_i,
+   input      [ 7:0] data_i,
+   input             data_en_i,
+   output reg [31:0] crc_o
 );
 
    function static [31:0] crc_nxt;
@@ -49,10 +49,10 @@ module iob_eth_crc (
       end
    endfunction
 
-   always @(posedge clk or posedge rst)
-      if (rst) crc_out <= 32'hffffffff;
-      else if (start) crc_out <= 32'hffffffff;
-      else if (data_en) crc_out <= crc_nxt(data_in, crc_out);
+   always @(posedge clk_i or posedge arst_i)
+      if (arst_i) crc_o <= 32'hffffffff;
+      else if (start_i) crc_o <= 32'hffffffff;
+      else if (data_en_i) crc_o <= crc_nxt(data_i, crc_o);
 
 endmodule
 

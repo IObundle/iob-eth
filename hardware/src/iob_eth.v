@@ -40,7 +40,6 @@ module iob_eth # (
    // ETH CLOCK DOMAIN
    wire  tx_ready;
    wire  rx_data_rcvd;
-   wire [11-1:0] tx_nbytes;
 
    wire                         iob_eth_tx_buffer_enA;
    wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
@@ -104,6 +103,17 @@ module iob_eth # (
       .signal_o (eth_crc_en)
    );
 
+   wire [11-1:0] eth_tx_nbytes;
+   wire [11-1:0] tx_nbytes;
+   iob_sync #(
+      .DATA_W(11)
+   ) tx_nbytes_f2s_sync (
+      .clk_i    (MTxClk),
+      .arst_i   (arst_i),
+      .signal_i (tx_nbytes),
+      .signal_o (eth_tx_nbytes)
+   );
+
    // MRxClk to clk (s2f)
 
    wire  eth_crc_err;
@@ -129,17 +139,25 @@ module iob_eth # (
 
    // MTxclk to clk (s2f)
 
-   //
-   // TRANSMITTER
-   //
 
-   //TODO: Move to sync_unit
+   // arst syncs
+   wire rx_arst;
+   iob_reset_sync rx_arst_sync (
+      .clk_i(MRxClk),
+      .arst_i(arst_i),
+      .arst_o(rx_arst)
+   );
+
    wire tx_arst;
    iob_reset_sync tx_arst_sync (
       .clk_i(MTxClk),
       .arst_i(arst_i),
       .arst_o(tx_arst)
    );
+
+   //
+   // TRANSMITTER
+   //
 
    iob_eth_tx tx (
       .arst_i   (tx_arst),
@@ -149,26 +167,18 @@ module iob_eth # (
       // DMA control interface
       .send_i   (eth_send),
       .ready_o  (tx_ready), //TODO: Should this have synchronizer?
-      .nbytes_i (tx_nbytes),
-      .crc_en_i (eth_crc_en)
+      .nbytes_i (eth_tx_nbytes),
+      .crc_en_i (eth_crc_en),
       // MII interface
       .tx_clk_i (MTxClk),
       .tx_en_o  (MTxEn),
-      .tx_data_o(MTxD),
+      .tx_data_o(MTxD)
    );
 
 
    //
    // RECEIVER
    //
-   
-   //TODO: Move to sync_unit
-   wire rx_arst;
-   iob_reset_sync rx_arst_sync (
-      .clk_i(MRxClk),
-      .arst_i(arst_i),
-      .arst_o(rx_arst)
-   );
 
    iob_eth_rx rx (
       .arst_i      (rx_arst),

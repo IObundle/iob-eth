@@ -12,8 +12,8 @@ module iob_eth_rx (
 
    // DMA control interface
    input             rcv_ack_i,
-   output            crc_err_o,
    output reg data_rcvd_o,
+   output            crc_err_o,
 
    // MII interface
    input       rx_clk_i,
@@ -100,14 +100,14 @@ module iob_eth_rx (
    // CRC MODULE
    //
    iob_eth_crc crc_rx (
-      .clk(rx_clk_i),
-      .rst(arst_i),
+      .clk_i(rx_clk_i),
+      .arst_i(arst_i),
 
-      .start(pc == 0),
+      .start_i(pc == 0),
 
-      .data_in(data_o),
-      .data_en(wr_o),
-      .crc_out(crc_sum)
+      .data_i(data_o),
+      .data_en_i(wr_o),
+      .crc_o(crc_sum)
    );
 
    assign crc_err_o = crc_sum != 32'hc704dd7b;
