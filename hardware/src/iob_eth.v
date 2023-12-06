@@ -66,37 +66,52 @@ module iob_eth # (
    // SYNCHRONIZERS
    //
 
-   // clk to MRxClk (f2s)
-   wire  eth_send;
-   wire  send;
-   iob_sync #(
-      .DATA_W(1)
-   ) send_f2s_sync (
-      .clk_i   (MTxClk),
-      .arst_i   (arst_i),
-      .signal_i (send),
-      .signal_o (eth_send)
+   // arst synchronizers
+   wire rx_arst;
+   iob_reset_sync rx_arst_sync (
+      .clk_i(MRxClk),
+      .arst_i(arst_i),
+      .arst_o(rx_arst)
    );
 
+   wire tx_arst;
+   iob_reset_sync tx_arst_sync (
+      .clk_i(MTxClk),
+      .arst_i(arst_i),
+      .arst_o(tx_arst)
+   );
+
+   // clk to MRxClk (f2s)
    wire  rcv_ack;
    wire  eth_rcv_ack;
    iob_sync #(
       .DATA_W(1)
    ) rcv_f2s_sync (
       .clk_i   (MRxClk),
-      .arst_i   (arst_i),
+      .arst_i   (rx_arst),
       .signal_i (rcv_ack),
       .signal_o (eth_rcv_ack)
    );
 
    // clk to MTxClk (f2s)
+   wire  eth_send;
+   wire  send;
+   iob_sync #(
+      .DATA_W(1)
+   ) send_f2s_sync (
+      .clk_i   (MTxClk),
+      .arst_i   (tx_arst),
+      .signal_i (send),
+      .signal_o (eth_send)
+   );
+
    wire  eth_crc_en;
    wire  crc_en;
    iob_sync #(
       .DATA_W(1)
    ) crc_en_f2s_sync (
       .clk_i   (MTxClk),
-      .arst_i   (arst_i),
+      .arst_i   (tx_arst),
       .signal_i (crc_en),
       .signal_o (eth_crc_en)
    );
@@ -107,7 +122,7 @@ module iob_eth # (
       .DATA_W(11)
    ) tx_nbytes_f2s_sync (
       .clk_i    (MTxClk),
-      .arst_i   (arst_i),
+      .arst_i   (tx_arst),
       .signal_i (tx_nbytes),
       .signal_o (eth_tx_nbytes)
    );
@@ -157,22 +172,6 @@ module iob_eth # (
       .arst_i   (arst_i),
       .signal_i (eth_tx_ready),
       .signal_o (tx_ready)
-   );
-
-
-   // arst synchronizers
-   wire rx_arst;
-   iob_reset_sync rx_arst_sync (
-      .clk_i(MRxClk),
-      .arst_i(arst_i),
-      .arst_o(rx_arst)
-   );
-
-   wire tx_arst;
-   iob_reset_sync tx_arst_sync (
-      .clk_i(MTxClk),
-      .arst_i(arst_i),
-      .arst_o(tx_arst)
    );
 
    //
