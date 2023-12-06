@@ -110,6 +110,16 @@ module iob_eth_rx (
       .crc_o(crc_sum)
    );
 
-   assign crc_err_o = crc_sum != 32'hc704dd7b;
+   wire crc_err = crc_sum != 32'hc704dd7b;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) crc_err_reg (
+      .clk_i (rx_clk_i),
+      .arst_i(arst_i),
+      .cke_i (1'b1),
+      .data_i(crc_err),
+      .data_o(crc_err_o)
+   );
 
 endmodule
