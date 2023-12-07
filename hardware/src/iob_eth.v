@@ -63,22 +63,48 @@ module iob_eth # (
    assign MTxErr = 1'b0; //TODO
 
    //
+   //  PHY RESET
+   //
+
+   wire [21-1:0] phy_rst_cnt_o;
+   iob_acc #(
+      .DATA_W(21),
+      .RST_VAL(21'h100000 | (PHY_RST_CNT - 1))
+   ) phy_rst_cnt (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .rst_i(1'b0),
+      .en_i(phy_rst_cnt_o[20]),
+      .incr_i(-21'd1),
+      .data_o(phy_rst_cnt_o)
+   );
+   wire phy_rst = phy_rst_cnt_o[20];
+   assign phy_rstn_o = ~phy_rst;
+
+   //
    // SYNCHRONIZERS
    //
 
    // arst synchronizers
    wire rx_arst;
-   iob_reset_sync rx_arst_sync (
+   iob_sync #(
+      .DATA_W(1)
+   ) rx_arst_sync (
       .clk_i(MRxClk),
       .arst_i(arst_i),
-      .arst_o(rx_arst)
+      .signal_i(phy_rst),
+      .signal_o(rx_arst)
    );
 
    wire tx_arst;
-   iob_reset_sync tx_arst_sync (
+   iob_sync #(
+      .DATA_W(1)
+   ) tx_arst_sync (
       .clk_i(MTxClk),
       .arst_i(arst_i),
-      .arst_o(tx_arst)
+      .signal_i(phy_rst),
+      .signal_o(tx_arst)
    );
 
    // clk to MRxClk (f2s)

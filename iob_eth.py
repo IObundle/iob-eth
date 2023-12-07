@@ -14,6 +14,7 @@ from iob_sync import iob_sync
 from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 from iob_ram_tdp_be import iob_ram_tdp_be
 from iob_ram_dp import iob_ram_dp
+from iob_acc import iob_acc
 
 
 class iob_eth(iob_module):
@@ -40,6 +41,7 @@ class iob_eth(iob_module):
                 iob_f2s_1bit_sync,
                 iob_ram_tdp_be,
                 iob_ram_dp,
+                iob_acc,
             ]
         )
 
@@ -167,7 +169,7 @@ class iob_eth(iob_module):
                     "val": "20'hFFFFF",
                     "min": "NA",
                     "max": "NA",
-                    "descr": "Reset counter value",
+                    "descr": "PHY reset counter value. Sets the duration of the PHY reset signal.",
                 },
                 {
                     "name": "BD_NUM_LOG2",
@@ -302,6 +304,12 @@ class iob_eth(iob_module):
                         "type": "O",  # TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
                         "n_bits": "1",
                         "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
+                    },
+                    {
+                        "name": "phy_rstn_o",
+                        "type": "O",
+                        "n_bits": "1",
+                        "descr": "Reset signal for PHY.Duration configurable via PHY_RST_CNT parameter.",
                     },
                 ],
             },
