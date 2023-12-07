@@ -27,6 +27,8 @@ class iob_eth(iob_module):
         """Create submodules list with dependencies of this module"""
         super()._create_submodules_list(
             [
+                {"interface": "axi_m_port"},
+                {"interface": "iob_wire"},
                 {"interface": "iob_s_port"},
                 {"interface": "iob_s_portmap"},
                 {"interface": "clk_en_rst_s_s_portmap"},
@@ -79,7 +81,7 @@ class iob_eth(iob_module):
                 {
                     "name": "PREAMBLE_LEN",
                     "type": "M",
-                    "val": "7", # Should it be 7 + 2 bytes to align data transfers?
+                    "val": "7",  # Should it be 7 + 2 bytes to align data transfers?
                     "max": "NA",
                     "min": "NA",
                     "descr": "",
@@ -190,7 +192,11 @@ class iob_eth(iob_module):
     def _setup_ios(cls):
         cls.ios += [
             {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
-            {'name': 'axi_m_port', 'descr':'AXI master interface for external memory.', 'ports': []},
+            {
+                "name": "axi_m_port",
+                "descr": "AXI master interface for external memory.",
+                "ports": [],
+            },
             {
                 "name": "general",
                 "descr": "General Interface Signals",
@@ -293,7 +299,7 @@ class iob_eth(iob_module):
                     },
                     {
                         "name": "MDIO",
-                        "type": "O", #TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
+                        "type": "O",  # TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
                         "n_bits": "1",
                         "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
                     },
