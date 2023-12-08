@@ -244,6 +244,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
      timeout--;
      if (!timeout) {
        eth_receive(0);
+      free((char *)frame_ptr);
        return ETH_NO_DATA;
      }
   }
@@ -251,6 +252,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
 
   if(eth_bad_crc(64)) {
     eth_receive(0);
+    free((char *)frame_ptr);
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
