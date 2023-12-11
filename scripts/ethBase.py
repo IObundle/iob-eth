@@ -11,19 +11,21 @@ import os
 def PrintBaseUsage():
     print("<usage>: python eth_comm.py <RMAC>")
 
+
 # Get interface name based on given MAC address
 def get_eth_interface(mac_addr):
-    net_dir = '/sys/class/net'
+    net_dir = "/sys/class/net"
     interfaces = os.listdir(net_dir)
     for interface in interfaces:
         try:
-            with open(os.path.join(net_dir, interface, 'address'), 'r') as f:
-                mac = f.read().strip().replace(':', '')
+            with open(os.path.join(net_dir, interface, "address"), "r") as f:
+                mac = f.read().strip().replace(":", "")
         except FileNotFoundError:
             pass  # Ignore interfaces without MAC address
         if mac == mac_addr:
             return interface
     raise Exception(f"No interface with MAC address '{mac_addr}' found!")
+
 
 # Check arguments common to all scripts
 if len(sys.argv) < 2:
