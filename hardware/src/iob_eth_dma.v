@@ -688,6 +688,8 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer to external memory
+               // TODO: If awlen > 0, ensure that awaddr does not cause
+               // a transaction that may cross the AXI 4k boundary
                axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
                axi_awlen_nxt = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_byte_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
