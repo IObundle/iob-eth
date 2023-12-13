@@ -31,6 +31,29 @@ module iob_eth # (
    //BLOCK Register File & Configuration control and status register file.
    `include "iob_eth_swreg_inst.vs"
 
+   // Connect write outputs to read
+   assign MODER_rd = MODER_wr;
+   assign INT_SOURCE_rd = INT_SOURCE_wr;
+   assign INT_MASK_rd = INT_MASK_wr;
+   assign IPGT_rd = IPGT_wr;
+   assign IPGR1_rd = IPGR1_wr;
+   assign IPGR2_rd = IPGR2_wr;
+   assign PACKETLEN_rd = PACKETLEN_wr;
+   assign COLLCONF_rd = COLLCONF_wr;
+   assign TX_BD_NUM_rd = TX_BD_NUM_wr;
+   assign CTRLMODER_rd = CTRLMODER_wr;
+   assign MIIMODER_rd = MIIMODER_wr;
+   assign MIICOMMAND_rd = MIICOMMAND_wr;
+   assign MIIADDRESS_rd = MIIADDRESS_wr;
+   assign MIITX_DATA_rd = MIITX_DATA_wr;
+   assign MIIRX_DATA_rd = MIIRX_DATA_wr;
+   assign MIISTATUS_rd = MIISTATUS_wr;
+   assign MAC_ADDR0_rd = MAC_ADDR0_wr;
+   assign MAC_ADDR1_rd = MAC_ADDR1_wr;
+   assign ETH_HASH0_ADR_rd = ETH_HASH0_ADR_wr;
+   assign ETH_HASH1_ADR_rd = ETH_HASH1_ADR_wr;
+   assign ETH_TXCTRL_rd = ETH_TXCTRL_wr;
+
    wire [AXI_ADDR_W-1:0] internal_axi_awaddr_o;
    wire [AXI_ADDR_W-1:0] internal_axi_araddr_o;
 
