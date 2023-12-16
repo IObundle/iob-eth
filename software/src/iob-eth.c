@@ -80,24 +80,24 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   IOB_ETH_INIT_BASEADDR(base_address);
 
   // dest mac address
-  for (i=0; i < MAC_ADDR_LEN; i++) {
+  for (i=0; i < IOB_ETH_MAC_ADDR_LEN; i++) {
     TEMPLATE[MAC_DEST_PTR+i] = dest_mac_addr >> 40;
     dest_mac_addr = dest_mac_addr << 8;
   }
 
   // source mac address
-  for (i=0; i < MAC_ADDR_LEN; i++) {
+  for (i=0; i < IOB_ETH_MAC_ADDR_LEN; i++) {
     TEMPLATE[MAC_SRC_PTR+i] = mac_addr >> 40;
     mac_addr = mac_addr << 8;
   }
 
   #ifdef ETH_DEBUG_PRINT
   printf("\nSender: ");
-  for(i=0; i < MAC_ADDR_LEN; i++){
+  for(i=0; i < IOB_ETH_MAC_ADDR_LEN; i++){
     printf("%02x ", (unsigned char) TEMPLATE[MAC_SRC_PTR+i]);
   }
   printf("\nDest: ");
-  for(i=0; i < MAC_ADDR_LEN; i++){
+  for(i=0; i < IOB_ETH_MAC_ADDR_LEN; i++){
     printf("%02x ", (unsigned char) TEMPLATE[MAC_DEST_PTR+i]);
   }
   printf("\n");

@@ -51,6 +51,7 @@ class iob_eth(iob_module):
 
         # Copy CYCLONEV-GT-DK files
         dst = f"{cls.build_dir}/scripts"
+        os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/scripts"
         files = os.listdir(src)
         for fname in files:
@@ -60,6 +61,7 @@ class iob_eth(iob_module):
 
         # Copy CYCLONEV-GT-DK files
         dst = f"{cls.build_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK"
+        os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK/components"
         files = os.listdir(src)
         for fname in files:
