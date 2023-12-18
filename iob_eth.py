@@ -594,6 +594,22 @@ class iob_eth(iob_module):
                 ],
             },
             {
+                "name": "phy_rst",
+                "descr": "PHY reset control registers",
+                "regs": [
+                    {
+                        "name": "PHY_RST_VAL",
+                        "type": "R",
+                        "n_bits": 1,
+                        "rst_val": 0,
+                        "addr": 104,
+                        "log2n_items": 0,
+                        "autoreg": True,
+                        "descr": "Current PHY reset signal value",
+                    },
+                ],
+            },
+            {
                 "name": "iob_eth_bd",
                 "descr": "IOb-Eth Buffer Descriptors.",
                 "regs": [

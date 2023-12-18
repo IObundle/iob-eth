@@ -34,4 +34,6 @@ unsigned int eth_rcv_variable_file(char *data);
 
 unsigned int eth_send_variable_file(char *data, int size);
 
+void eth_wait_phy_rst();
+
 void eth_print_status(void);

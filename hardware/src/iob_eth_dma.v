@@ -408,9 +408,10 @@ module iob_eth_dma #(
 
             6: begin // Wait for send_o to be read by transmitter
                tx_state_nxt = tx_state;
-               if (!tx_ready_i)
+               if (!tx_ready_i) begin
                   send_nxt = 1'b0;
                   tx_state_nxt = tx_state + 1'b1;
+               end
             end
 
             7: begin // Write transmit status
@@ -748,9 +749,10 @@ module iob_eth_dma #(
 
             6: begin // Wait for rcv_ack to be read by receiver
                rx_state_nxt = rx_state;
-               if (!rx_data_rcvd_i)
+               if (!rx_data_rcvd_i) begin
                   rcv_ack_nxt = 1'b0;
                   rx_state_nxt = rx_state + 1'b1;
+               end
             end
 
             7: begin // Write receive status

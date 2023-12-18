@@ -85,7 +85,11 @@ module iob_eth # (
    wire [21-1:0] phy_rst_cnt_o;
    iob_acc #(
       .DATA_W(21),
+`ifndef SIMULATION
       .RST_VAL(21'h100000 | (PHY_RST_CNT - 1))
+`else
+      .RST_VAL(21'h1000FF) // Shorter reset for simulation
+`endif
    ) phy_rst_cnt (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -97,6 +101,7 @@ module iob_eth # (
    );
    wire phy_rst = phy_rst_cnt_o[20];
    assign phy_rstn_o = ~phy_rst;
+   assign PHY_RST_VAL_rd = phy_rst;
 
    //
    // SYNCHRONIZERS

@@ -389,6 +389,10 @@ unsigned int eth_send_variable_file(char *data, int size) {
   return eth_send_file_impl(data,size);
 }
 
+void eth_wait_phy_rst() {
+  while(IOB_ETH_GET_PHY_RST_VAL());
+}
+
 void eth_print_status(void) {
   printf("tx_ready = %x\n", eth_tx_ready(0));
   printf("rx_ready = %x\n", eth_rx_ready(0));
