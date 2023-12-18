@@ -85,7 +85,7 @@ The main steps to integrate iob-eth core into an iob-soc system:
     For iob-soc type systems, include the headers in `system_top_core.vh`.
 5. Update FPGA Board files:
     1. Check 
-    `ETHERNET/hardware/fpga/vivado/AES-KU040-DG-B/top_system_eth_template.vh`
+    `ETHERNET/hardware/fpga/vivado/AES-KU040-DB-G/top_system_eth_template.vh`
     for details on the ports and logic to add to the top level module.
     2. Check `ETHERNET/hardware/fpga/vivado/AES-KU040-DB-G/iob_eth.xdc` for an
     example of constraints required for the ethernet core.
