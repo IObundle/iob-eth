@@ -144,8 +144,7 @@ module iob_eth_dma #(
    wire [4-1:0] tx_state;
    iob_reg #(
       .DATA_W (4),
-      .RST_VAL(8),
-      .CLKEDGE("posedge")
+      .RST_VAL(8)
    ) tx_state_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -158,8 +157,7 @@ module iob_eth_dma #(
    wire [32-1:0] tx_buffer_byte_counter;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) tx_buffer_byte_counter_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -172,8 +170,7 @@ module iob_eth_dma #(
    wire [BD_ADDR_W-1:0] tx_bd_num;
    iob_reg #(
       .DATA_W (BD_ADDR_W),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) tx_bd_num_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -186,8 +183,7 @@ module iob_eth_dma #(
    wire [32-1:0] tx_buffer_descriptor;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) tx_buffer_descriptor_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -200,8 +196,7 @@ module iob_eth_dma #(
    wire [32-1:0] tx_buffer_ptr;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) tx_buffer_ptr_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -214,8 +209,7 @@ module iob_eth_dma #(
    wire [AXI_LEN_W-1:0] axi_arlen;
    iob_reg #(
       .DATA_W (AXI_LEN_W),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) axi_arlen_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -229,8 +223,7 @@ module iob_eth_dma #(
    wire [1-1:0] crc_en;
    iob_reg #(
       .DATA_W (1),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) crc_en_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -244,8 +237,7 @@ module iob_eth_dma #(
    wire [11-1:0] tx_nbytes;
    iob_reg #(
       .DATA_W (11),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) tx_nbytes_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -259,8 +251,7 @@ module iob_eth_dma #(
    wire [1-1:0] send;
    iob_reg #(
       .DATA_W (1),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) send_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -417,9 +408,10 @@ module iob_eth_dma #(
 
             6: begin // Wait for send_o to be read by transmitter
                tx_state_nxt = tx_state;
-               if (!tx_ready_i)
+               if (!tx_ready_i) begin
                   send_nxt = 1'b0;
                   tx_state_nxt = tx_state + 1'b1;
+               end
             end
 
             7: begin // Write transmit status
@@ -489,8 +481,7 @@ module iob_eth_dma #(
    wire [3-1:0] rx_state;
    iob_reg #(
       .DATA_W (3),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rx_state_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -503,8 +494,7 @@ module iob_eth_dma #(
    wire [32-1:0] rx_buffer_byte_counter;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rx_buffer_byte_counter_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -517,8 +507,7 @@ module iob_eth_dma #(
    wire [BD_ADDR_W-1:0] rx_bd_num;
    iob_reg #(
       .DATA_W (BD_ADDR_W),
-      .RST_VAL(32'd64), // Same as default value of 'TX_BD_NUM' register
-      .CLKEDGE("posedge")
+      .RST_VAL(32'd64) // Same as default value of 'TX_BD_NUM' register
    ) rx_bd_num_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -531,8 +520,7 @@ module iob_eth_dma #(
    wire [32-1:0] rx_burst_word_num;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rx_burst_word_num_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -545,8 +533,7 @@ module iob_eth_dma #(
    wire [32-1:0] rx_buffer_descriptor;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rx_buffer_descriptor_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -559,8 +546,7 @@ module iob_eth_dma #(
    wire [32-1:0] rx_buffer_ptr;
    iob_reg #(
       .DATA_W (32),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rx_buffer_ptr_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -573,8 +559,7 @@ module iob_eth_dma #(
    wire [AXI_LEN_W-1:0] axi_awlen;
    iob_reg #(
       .DATA_W (AXI_LEN_W),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) axi_awlen_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -588,8 +573,7 @@ module iob_eth_dma #(
    wire [1-1:0] rcv_ack;
    iob_reg #(
       .DATA_W (1),
-      .RST_VAL(0),
-      .CLKEDGE("posedge")
+      .RST_VAL(0)
    ) rcv_ack_reg (
       .clk_i (clk_i),
       .cke_i (cke_i),
@@ -688,6 +672,8 @@ module iob_eth_dma #(
             end
 
             4: begin  // Start frame transfer to external memory
+               // TODO: If awlen > 0, ensure that awaddr does not cause
+               // a transaction that may cross the AXI 4k boundary
                axi_awaddr_o_reg = rx_buffer_ptr + rx_buffer_byte_counter;
                axi_awlen_nxt = `IOB_MIN(AXI_MAX_BURST_LEN,rx_nbytes_i-rx_buffer_byte_counter) - 1'b1;
                axi_awvalid_o_reg = 1'b1;
@@ -763,9 +749,10 @@ module iob_eth_dma #(
 
             6: begin // Wait for rcv_ack to be read by receiver
                rx_state_nxt = rx_state;
-               if (!rx_data_rcvd_i)
+               if (!rx_data_rcvd_i) begin
                   rcv_ack_nxt = 1'b0;
                   rx_state_nxt = rx_state + 1'b1;
+               end
             end
 
             7: begin // Write receive status

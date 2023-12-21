@@ -51,6 +51,7 @@ class iob_eth(iob_module):
 
         # Copy CYCLONEV-GT-DK files
         dst = f"{cls.build_dir}/scripts"
+        os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/scripts"
         files = os.listdir(src)
         for fname in files:
@@ -60,6 +61,7 @@ class iob_eth(iob_module):
 
         # Copy CYCLONEV-GT-DK files
         dst = f"{cls.build_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK"
+        os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/hardware/fpga/quartus/CYCLONEV-GT-DK/components"
         files = os.listdir(src)
         for fname in files:
@@ -588,6 +590,22 @@ class iob_eth(iob_module):
                         "log2n_items": 0,
                         "autoreg": False,
                         "descr": "Frame word to transfer to/from buffer.",
+                    },
+                ],
+            },
+            {
+                "name": "phy_rst",
+                "descr": "PHY reset control registers",
+                "regs": [
+                    {
+                        "name": "PHY_RST_VAL",
+                        "type": "R",
+                        "n_bits": 1,
+                        "rst_val": 0,
+                        "addr": 104,
+                        "log2n_items": 0,
+                        "autoreg": True,
+                        "descr": "Current PHY reset signal value",
                     },
                 ],
             },

@@ -128,9 +128,9 @@
 
 // Pointers for fields of frame template
 #define MAC_DEST_PTR     0
-#define MAC_SRC_PTR      (MAC_DEST_PTR + MAC_ADDR_LEN)
-//#define TAG_PTR          (MAC_SRC_PTR + MAC_ADDR_LEN) // Optional - not supported
-#define ETH_TYPE_PTR     (MAC_SRC_PTR + MAC_ADDR_LEN)
+#define MAC_SRC_PTR      (MAC_DEST_PTR + IOB_ETH_MAC_ADDR_LEN)
+//#define TAG_PTR          (MAC_SRC_PTR + IOB_ETH_MAC_ADDR_LEN) // Optional - not supported
+#define ETH_TYPE_PTR     (MAC_SRC_PTR + IOB_ETH_MAC_ADDR_LEN)
 #define PAYLOAD_PTR      (ETH_TYPE_PTR + 2)
 
 #define TEMPLATE_LEN     (PAYLOAD_PTR)

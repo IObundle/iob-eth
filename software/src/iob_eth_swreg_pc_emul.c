@@ -70,7 +70,7 @@ union bd {
 };
 
 // BD memory
-static union bd bd_list[1<<BD_NUM_LOG2];
+static union bd bd_list[1<<IOB_ETH_BD_NUM_LOG2];
 
 
 /*****************************
@@ -221,7 +221,7 @@ static void send_frames() {
 static void receive_frame(){
     // Emulate rx_ready() behaviour to receive data
     int ret = -1;
-    ret = recv(data_socket, bd_list[current_rx_bd].rx.ptr, 1<<BUFFER_W, MSG_DONTWAIT);
+    ret = recv(data_socket, bd_list[current_rx_bd].rx.ptr, 1<<IOB_ETH_BUFFER_W, MSG_DONTWAIT);
     if ( ret < 1 ){
         bd_list[current_rx_bd].rx.crc = 1;
         bd_list[current_rx_bd].rx.len = 0;
@@ -234,7 +234,7 @@ static void receive_frame(){
 
 static void receive_frames() {
     // Run through RX BDs, starting from latest that wasn't received
-    for (int i=current_rx_bd; i<(1<<BD_NUM_LOG2); i++) {
+    for (int i=current_rx_bd; i<(1<<IOB_ETH_BD_NUM_LOG2); i++) {
         current_rx_bd = i;
         // Check ready bit
         if (!bd_list[i].rx.e){
@@ -449,6 +449,10 @@ uint32_t IOB_ETH_GET_FRAME_WORD() {
     return 0;
 }
 
+uint8_t IOB_ETH_GET_PHY_RST_VAL() {
+  return 0;
+}
+
 // Buffer descriptors
 void IOB_ETH_SET_BD(uint32_t value, int addr) {
     bd_list[addr>>1].val[addr & 1] = value;
@@ -464,5 +468,5 @@ uint32_t IOB_ETH_GET_BD(int addr) {
 }
 
 uint16_t IOB_ETH_GET_VERSION() {
-    return VERSION;
+    return IOB_ETH_VERSION;
 }
