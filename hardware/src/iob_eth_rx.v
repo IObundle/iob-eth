@@ -1,130 +1,125 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
 
-`include "iob_eth.vh"
+`include "iob_eth_conf.vh"
 
-module iob_eth_rx #(
-                    parameter ETH_MAC_ADDR = `ETH_MAC_ADDR
-                    )
-   (
-    // async reset
-    input             rst,
+module iob_eth_rx (
+   input arst_i,
 
-    // system clock domain
-    output reg        data_rcvd,
+   // Buffer interface
+   output reg        wr_o,
+   output reg [10:0] addr_o,
+   output reg [ 7:0] data_o,
 
-    // RX_CLK domain
-    input             rcv_ack,
-    output reg [10:0] addr,
-    output reg [7:0]  data,
-    output reg        wr,
-    output [31:0]     crc_value,
+   // DMA control interface
+   input             rcv_ack_i,
+   output reg data_rcvd_o,
+   output            crc_err_o,
 
-    input             RX_CLK,
-    input             RX_DV,
-    input [3:0]       RX_DATA
-    );
-
-   // rx reset
-   reg [1:0]          rx_rst;
+   // MII interface
+   input       rx_clk_i,
+   input       rx_dv_i,
+   input [3:0] rx_data_i
+);
 
    // state
-   reg [2:0]          pc;
-   reg [47:0]         dest_mac_addr;
-   
-   // data
-   wire [7:0]         data_int;
-   
-   
-   // SYNCHRONIZERS
+   reg  [ 2:0] pc;
+   reg  [47:0] dest_mac_addr;
 
-   // reset sync
-   always @(posedge RX_CLK, posedge rst)
-     if (rst)
-       rx_rst <= 2'b11;
-     else
-       rx_rst <= {rx_rst[0], 1'b0};
+   // data
+   wire [ 7:0] data_int;
+
+   wire [31:0] crc_sum;
 
    //
    // RECEIVER PROGRAM
    //
-   always @(posedge RX_CLK, posedge rx_rst[1])
+   always @(posedge rx_clk_i, posedge arst_i)
 
-     if(rx_rst[1]) begin
-        pc <= 0;
-        addr <= 0;
-        dest_mac_addr <= 0;
-        wr <= 0;
-        data_rcvd <= 0;
-     end else begin
+      if (arst_i) begin
+         pc            <= 0;
+         addr_o          <= 0;
+         dest_mac_addr <= 0;
+         wr_o            <= 0;
+         data_rcvd_o     <= 0;
+      end else begin
 
-        pc <= pc + 1'b1;
-        addr <= addr + pc[0];
-        wr <= 0;
+         pc   <= pc + 1'b1;
+         addr_o <= addr_o + pc[0];
+         wr_o   <= 0;
 
-        case(pc)
+         case (pc)
 
-          0 : if (data_int != `ETH_SFD || !RX_DV)
-            pc <= pc;
+            0: if (data_int != `IOB_ETH_SFD || !rx_dv_i) pc <= pc;
 
-          1: addr <= `ETH_RX_BUFFER_START;
+            1: addr_o <= 0;
 
-          2: begin
-             dest_mac_addr <= {dest_mac_addr[39:0], data_int};
-             wr <= 1;
-          end
+            2: begin
+               dest_mac_addr <= {dest_mac_addr[39:0], data_int};
+               wr_o            <= 1;
+            end
 
-          3: if (addr != (`MAC_ADDR_LEN-1 + `ETH_RX_BUFFER_START)) begin
-             pc <= pc - 1'b1;
-          end else if (dest_mac_addr != ETH_MAC_ADDR) begin
-             pc <= 7;
-          end
+            3:
+            if (addr_o != (`IOB_ETH_MAC_ADDR_LEN - 1)) begin
+               pc <= pc - 1'b1;
+            end
 
-          4: wr <= 1;
+            4: wr_o <= 1;
 
-          5: if (RX_DV) begin
-             pc <= pc - 1'b1;
-          end
+            5:
+            if (rx_dv_i) begin
+               pc <= pc - 1'b1;
+            end
 
-          6: begin
-             pc <= pc;
-             data_rcvd <= 1;
-             if (rcv_ack) begin
-                pc <= 0;
-                addr <= 0;
-                data_rcvd <= 0;
-             end
-          end
+            6: begin
+               pc        <= pc;
+               data_rcvd_o <= 1;
+               if (rcv_ack_i) begin
+                  pc        <= 0;
+                  addr_o      <= 0;
+                  data_rcvd_o <= 0;
+               end
+            end
 
-          // Wait for DV to deassert
-          7: if(RX_DV)
-            pc <= pc;
-          else
-            pc <= 0;
+            // Wait for DV to deassert
+            7:
+            if (rx_dv_i) pc <= pc;
+            else pc <= 0;
 
-        endcase
-     end
+            default: pc <= 0;
+
+         endcase
+      end
 
    // capture RX_DATA
-   assign data_int = {RX_DATA, data[7:4]};
-   always @(posedge RX_CLK, posedge rx_rst[1])
-     if (rx_rst[1])
-       data <= 0;
-     else if (RX_DV)
-       data <= data_int;
+   assign data_int = {rx_data_i, data_o[7:4]};
+   always @(posedge rx_clk_i, posedge arst_i)
+      if (arst_i) data_o <= 0;
+      else if (rx_dv_i) data_o <= data_int;
 
    //
    // CRC MODULE
    //
-   iob_eth_crc
-     crc_rx (
-             .clk(RX_CLK),
-             .rst(rx_rst[1]),
+   iob_eth_crc crc_rx (
+      .clk_i(rx_clk_i),
+      .arst_i(arst_i),
 
-             .start(pc == 0),
+      .start_i(pc == 0),
 
-             .data_in(data),
-             .data_en(wr),
-             .crc_out(crc_value)
-             );
+      .data_i(data_o),
+      .data_en_i(wr_o),
+      .crc_o(crc_sum)
+   );
+
+   wire crc_err = crc_sum != 32'hc704dd7b;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) crc_err_reg (
+      .clk_i (rx_clk_i),
+      .arst_i(arst_i),
+      .cke_i (1'b1),
+      .data_i(crc_err),
+      .data_o(crc_err_o)
+   );
 
 endmodule
