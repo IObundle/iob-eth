@@ -141,6 +141,7 @@ static void reset_socket(){
     unlink(SOCKET_NAME);
 
     /*create socket to receive connections */
+    //TODO: Use SOCK_RAW instead of AF_UNIX
     connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
     /* check for errors */
     if(connection_socket == -1){
@@ -170,13 +171,13 @@ static void reset_socket(){
     }
     printf("Waiting for client connection...\n");
 
-    /* accept connection */
-    data_socket = accept(connection_socket, NULL, NULL);
-    /* check for errors */
-    if(data_socket == -1){
-        printf("Failed to accept connection\n");
-        exit(EXIT_FAILURE);
-    }
+    // /* accept connection */
+    // data_socket = accept(connection_socket, NULL, NULL);
+    // /* check for errors */
+    // if(data_socket == -1){
+    //     printf("Failed to accept connection\n");
+    //     exit(EXIT_FAILURE);
+    // }
     return;
 }
 
