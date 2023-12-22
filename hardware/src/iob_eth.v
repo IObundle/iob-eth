@@ -263,7 +263,7 @@ module iob_eth # (
    );
 
    // BUFFER memories
-   iob_ram_tdp_be #(
+   iob_ram_t2p #(
                        .DATA_W(8),
                        // Note: the tx buffer also includes PREAMBLE+SFD,
                        // maybe we should increase this size to acount for
@@ -273,43 +273,35 @@ module iob_eth # (
    tx_buffer
    (
     // Front-End (written by host)
-      .clkA_i(clk_i),
-      .enA_i(iob_eth_tx_buffer_enA),
-      .weA_i(iob_eth_tx_buffer_enA),
-      .addrA_i(iob_eth_tx_buffer_addrA),
-      .dA_i(iob_eth_tx_buffer_dinA),
-      .dA_o(),
+      .w_clk_i(clk_i),
+      .w_en_i(iob_eth_tx_buffer_enA),
+      .w_addr_i(iob_eth_tx_buffer_addrA),
+      .w_data_i(iob_eth_tx_buffer_dinA),
 
     // Back-End (read by core)
-      .clkB_i(MTxClk),
-      .enB_i(1'b1),
-      .weB_i(1'b0),
-      .addrB_i(iob_eth_tx_buffer_addrB),
-      .dB_i(8'b0),
-      .dB_o(iob_eth_tx_buffer_doutB)
+      .r_clk_i(MTxClk),
+      .r_en_i(1'b1),
+      .r_addr_i(iob_eth_tx_buffer_addrB),
+      .r_data_o(iob_eth_tx_buffer_doutB)
    );
 
-   iob_ram_tdp_be #(
+   iob_ram_t2p #(
                        .DATA_W(8),
                        .ADDR_W(`IOB_ETH_BUFFER_W)
                        )
    rx_buffer
    (
      // Front-End (written by core)
-     .clkA_i(MRxClk),
-     .enA_i(iob_eth_rx_buffer_enA),
-     .weA_i(iob_eth_rx_buffer_enA),
-     .addrA_i(iob_eth_rx_buffer_addrA),
-     .dA_i(iob_eth_rx_buffer_dinA),
-     .dA_o(),
+     .w_clk_i(MRxClk),
+     .w_en_i(iob_eth_rx_buffer_enA),
+     .w_addr_i(iob_eth_rx_buffer_addrA),
+     .w_data_i(iob_eth_rx_buffer_dinA),
 
      // Back-End (read by host)
-     .clkB_i(clk_i),
-     .enB_i(iob_eth_rx_buffer_enB),
-     .weB_i(1'b0),
-     .addrB_i(iob_eth_rx_buffer_addrB),
-     .dB_i(8'b0),
-     .dB_o(iob_eth_rx_buffer_doutB)
+     .r_clk_i(clk_i),
+     .r_en_i(iob_eth_rx_buffer_enB),
+     .r_addr_i(iob_eth_rx_buffer_addrB),
+     .r_data_o(iob_eth_rx_buffer_doutB)
    );
 
    // DMA buffer descriptor wires

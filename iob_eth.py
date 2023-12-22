@@ -12,7 +12,7 @@ from iob_reg import iob_reg
 from iob_reg_e import iob_reg_e
 from iob_sync import iob_sync
 from iob_f2s_1bit_sync import iob_f2s_1bit_sync
-from iob_ram_tdp_be import iob_ram_tdp_be
+from iob_ram_t2p import iob_ram_t2p
 from iob_ram_dp import iob_ram_dp
 from iob_acc import iob_acc
 
@@ -39,7 +39,7 @@ class iob_eth(iob_module):
                 iob_reg_e,
                 iob_sync,
                 iob_f2s_1bit_sync,
-                iob_ram_tdp_be,
+                iob_ram_t2p,
                 iob_ram_dp,
                 iob_acc,
             ]
