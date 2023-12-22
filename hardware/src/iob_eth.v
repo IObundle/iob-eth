@@ -90,7 +90,7 @@ module iob_eth # (
 `else
       .RST_VAL(21'h1000FF) // Shorter reset for simulation
 `endif
-   ) phy_rst_cnt (
+   ) phy_rst_cnt_acc (
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i),
