@@ -21,6 +21,33 @@ module iob_eth_rx (
    input [3:0] rx_data_i
 );
 
+   // Register MII inputs
+
+   wire rx_dv;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) rx_dv_reg (
+      .clk_i (rx_clk_i),
+      .cke_i (1'b1),
+      .arst_i(arst_i),
+      .data_i(rx_dv_i),
+      .data_o(rx_dv)
+   );
+
+   wire [3:0] rx_data;
+   iob_reg #(
+      .DATA_W (4),
+      .RST_VAL(0)
+   ) rx_data_reg (
+      .clk_i (rx_clk_i),
+      .cke_i (1'b1),
+      .arst_i(arst_i),
+      .data_i(rx_data_i),
+      .data_o(rx_data)
+   );
+
+
    // state
    reg  [ 2:0] pc;
    reg  [47:0] dest_mac_addr;
@@ -49,7 +76,7 @@ module iob_eth_rx (
 
          case (pc)
 
-            0: if (data_int != `IOB_ETH_SFD || !rx_dv_i) pc <= pc;
+            0: if (data_int != `IOB_ETH_SFD || !rx_dv) pc <= pc;
 
             1: addr_o <= 0;
 
@@ -66,7 +93,7 @@ module iob_eth_rx (
             4: wr_o <= 1;
 
             5:
-            if (rx_dv_i) begin
+            if (rx_dv) begin
                pc <= pc - 1'b1;
             end
 
@@ -82,7 +109,7 @@ module iob_eth_rx (
 
             // Wait for DV to deassert
             7:
-            if (rx_dv_i) pc <= pc;
+            if (rx_dv) pc <= pc;
             else pc <= 0;
 
             default: pc <= 0;
@@ -91,10 +118,10 @@ module iob_eth_rx (
       end
 
    // capture RX_DATA
-   assign data_int = {rx_data_i, data_o[7:4]};
+   assign data_int = {rx_data, data_o[7:4]};
    always @(posedge rx_clk_i, posedge arst_i)
       if (arst_i) data_o <= 0;
-      else if (rx_dv_i) data_o <= data_int;
+      else if (rx_dv) data_o <= data_int;
 
    //
    // CRC MODULE
