@@ -10,6 +10,9 @@ static char TEMPLATE[TEMPLATE_LEN];
 
 // Function to clear cache
 static void (*clear_cache)(void);
+// Functions to alloc and clear memory
+static void* (*mem_alloc)(size_t) = &malloc;
+static void (*mem_free)(void*) = &free;
 
 /*******************************************/
 /********** AUXILIAR FUNCTIONS *************/
@@ -71,6 +74,12 @@ void eth_init(int base_address, void (*clear_cache_func)(void)) {
 
 void eth_init_clear_cache( void (*clear_cache_func)(void) ) {
   clear_cache = clear_cache_func;
+}
+
+// Use custom memory allocator
+void eth_init_mem_alloc( void* (*mem_alloc_func)(size_t), void (*mem_free_func)(void*) ) {
+  mem_alloc = mem_alloc_func;
+  mem_free = mem_free_func;
 }
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
@@ -157,7 +166,7 @@ void eth_send_frame(char *data, unsigned int size) {
   while(!eth_tx_ready(0));
 
   // Alloc memory for frame
-  char *frame_ptr = (char *) malloc(TEMPLATE_LEN+size);
+  char *frame_ptr = (char *) (*mem_alloc)(TEMPLATE_LEN+size);
 
   // Copy template to frame
   for (i=0; i < TEMPLATE_LEN; i++)
@@ -189,7 +198,7 @@ void eth_send_frame(char *data, unsigned int size) {
 
   // Disable transmission and free memory
   eth_send(0);
-  free(frame_ptr);
+  (*mem_free)(frame_ptr);
 
   return;
 }
@@ -197,55 +206,67 @@ void eth_send_frame(char *data, unsigned int size) {
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
+  int ignore;
 
   // Alloc memory for frame
-  volatile char *frame_ptr = (volatile char *) malloc(ETH_NBYTES+HDR_LEN);
+  volatile char *frame_ptr = (volatile char *) (*mem_alloc)(ETH_NBYTES+HDR_LEN);
 
   // Copy template to frame
   //for (i=0; i < TEMPLATE_LEN; i++)
   //  frame_ptr[i] = TEMPLATE[i];
 
-  // set frame pointer
-  eth_set_ptr(64, frame_ptr);
+  do {
+    // set frame pointer
+    eth_set_ptr(64, frame_ptr);
 
-  // Mark empty; Set as last descriptor; Enable interrupt.
-  eth_set_empty(64, 1);
-  eth_set_wr(64, 1);
-  eth_set_interrupt(64, 1);
+    // Mark empty; Set as last descriptor; Enable interrupt.
+    eth_set_empty(64, 1);
+    eth_set_wr(64, 1);
+    eth_set_interrupt(64, 1);
 
-  // Enable reception
-  eth_receive(1);
+    // Enable reception
+    eth_receive(1);
 
-  // wait until data received
-  while (!eth_rx_ready(64)) {
-     timeout--;
-     if (!timeout) {
-       eth_receive(0);
-      free((char *)frame_ptr);
-       return ETH_NO_DATA;
-     }
-  }
+    // wait until data received
+    while (!eth_rx_ready(64)) {
+       timeout--;
+       if (!timeout) {
+         eth_receive(0);
+        (*mem_free)((char *)frame_ptr);
+         return ETH_NO_DATA;
+       }
+    }
 
-  if(eth_bad_crc(64)) {
+    if(eth_bad_crc(64)) {
+      eth_receive(0);
+      (*mem_free)((char *)frame_ptr);
+      printf("Bad CRC\n");
+      return ETH_INVALID_CRC;
+    }
+    
+    
+    // Disable reception
     eth_receive(0);
-    free((char *)frame_ptr);
-    printf("Bad CRC\n");
-    return ETH_INVALID_CRC;
-  }
-  
-  // Clear cache
-  (*clear_cache)();
 
+    // Clear cache
+    (*clear_cache)();
+
+    // Check destination MAC address to see if should ignore frame
+    ignore = 0;
+    for (i=0; i < IOB_ETH_MAC_ADDR_LEN; i++)
+      if (TEMPLATE[MAC_SRC_PTR+i] != frame_ptr[MAC_DEST_PTR+i]){
+        ignore = 1;
+        break;  
+      }
+
+  } while(ignore);
 
   // Copy payload to return array
   for (i=0; i < size; i++) {
     data_rcv[i] = frame_ptr[i+TEMPLATE_LEN];
   }
 
-  free((char *)frame_ptr);
-  
-  // Disable reception
-  eth_receive(0);
+  (*mem_free)((char *)frame_ptr);
 
   return ETH_DATA_RCV;
 }
