@@ -206,6 +206,7 @@ void eth_send_frame(char *data, unsigned int size) {
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int i;
   int cnt = timeout;
+  int ignore;
 
   // Alloc memory for frame
   volatile char *frame_ptr = (volatile char *) (*mem_alloc)(ETH_NBYTES+HDR_LEN);
@@ -214,37 +215,51 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   //for (i=0; i < TEMPLATE_LEN; i++)
   //  frame_ptr[i] = TEMPLATE[i];
 
-  // set frame pointer
-  eth_set_ptr(64, frame_ptr);
+  do {
+    // set frame pointer
+    eth_set_ptr(64, frame_ptr);
 
-  // Mark empty; Set as last descriptor; Enable interrupt.
-  eth_set_empty(64, 1);
-  eth_set_wr(64, 1);
-  eth_set_interrupt(64, 1);
+    // Mark empty; Set as last descriptor; Enable interrupt.
+    eth_set_empty(64, 1);
+    eth_set_wr(64, 1);
+    eth_set_interrupt(64, 1);
 
-  // Enable reception
-  eth_receive(1);
+    // Enable reception
+    eth_receive(1);
 
-  // wait until data received
-  while (!eth_rx_ready(64)) {
-     timeout--;
-     if (!timeout) {
-       eth_receive(0);
+    // wait until data received
+    while (!eth_rx_ready(64)) {
+       timeout--;
+       if (!timeout) {
+         eth_receive(0);
+        (*mem_free)((char *)frame_ptr);
+         return ETH_NO_DATA;
+       }
+    }
+
+    if(eth_bad_crc(64)) {
+      eth_receive(0);
       (*mem_free)((char *)frame_ptr);
-       return ETH_NO_DATA;
-     }
-  }
-
-  if(eth_bad_crc(64)) {
+      printf("Bad CRC\n");
+      return ETH_INVALID_CRC;
+    }
+    
+    
+    // Disable reception
     eth_receive(0);
-    (*mem_free)((char *)frame_ptr);
-    printf("Bad CRC\n");
-    return ETH_INVALID_CRC;
-  }
-  
-  // Clear cache
-  (*clear_cache)();
 
+    // Clear cache
+    (*clear_cache)();
+
+    // Check destination MAC address to see if should ignore frame
+    ignore = 0;
+    for (i=0; i < IOB_ETH_MAC_ADDR_LEN; i++)
+      if (TEMPLATE[MAC_SRC_PTR+i] != frame_ptr[MAC_DEST_PTR+i]){
+        ignore = 1;
+        break;  
+      }
+
+  } while(ignore);
 
   // Copy payload to return array
   for (i=0; i < size; i++) {
@@ -252,9 +267,6 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   }
 
   (*mem_free)((char *)frame_ptr);
-  
-  // Disable reception
-  eth_receive(0);
 
   return ETH_DATA_RCV;
 }
