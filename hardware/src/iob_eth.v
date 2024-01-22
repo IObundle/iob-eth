@@ -17,6 +17,20 @@ module iob_eth # (
    //BLOCK Register File & Configuration control and status register file.
    `include "iob_eth_swreg_inst.vs"
 
+   // BD rvalid is iob_valid registered
+   wire BD_rvalid_nxt;
+   assign BD_rvalid_nxt = iob_valid_i & BD_ren_rd;
+   iob_reg #(
+      .DATA_W (1),
+      .RST_VAL(1'd0)
+   ) iob_reg_BD_rvalid (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(BD_rvalid_nxt),
+      .data_o(BD_rvalid_rd)
+   );
+
    // Connect write outputs to read
    assign MODER_rd = MODER_wr;
    assign INT_SOURCE_rd = INT_SOURCE_wr;
