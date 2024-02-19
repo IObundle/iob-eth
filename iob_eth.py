@@ -49,7 +49,7 @@ class iob_eth(iob_module):
     def _post_setup(cls):
         super()._post_setup()
 
-        # Copy CYCLONEV-GT-DK files
+        # Copy python script files
         dst = f"{cls.build_dir}/scripts"
         os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/scripts"
@@ -68,6 +68,13 @@ class iob_eth(iob_module):
             src_file = os.path.join(src, fname)
             if os.path.isfile(src_file):
                 shutil.copy2(src_file, dst)
+
+        # Copy simulation testbench utility files
+        dst = f"{cls.build_dir}/hardware/simulation/src"
+        os.makedirs(dst, exist_ok=True)
+        src = f"{__class__.setup_dir}/hardware/simulation/src"
+        src_file = os.path.join(src, "iob_eth_driver_tb.v")
+        shutil.copy2(src_file, dst)
 
     @classmethod
     def _setup_confs(cls):
