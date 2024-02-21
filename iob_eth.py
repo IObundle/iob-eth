@@ -75,6 +75,8 @@ class iob_eth(iob_module):
         src = f"{__class__.setup_dir}/hardware/simulation/src"
         src_file = os.path.join(src, "iob_eth_driver_tb.v")
         shutil.copy2(src_file, dst)
+        src_file = os.path.join(src, "iob_eth_defines.vh")
+        shutil.copy2(src_file, dst)
 
     @classmethod
     def _setup_confs(cls):

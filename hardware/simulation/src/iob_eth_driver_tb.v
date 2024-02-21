@@ -1,4 +1,4 @@
-`include "iob_eth_swreg_def.vh"
+`include "iob_eth_defines.vh"
 
 module iob_eth_driver_tb (
 `include "iob_m_port.vs"
@@ -86,89 +86,109 @@ module iob_eth_driver_tb (
 
    task cpu_initeth;
       begin
+         /**** Configure receiver *****/
+         // Mark empty; Set as last descriptor; Enable interrupt.
+         eth_set_empty(64, 1);
+         eth_set_wr(64, 1);
+         eth_set_interrupt(64, 1);
+
          // Enable reception
+         eth_receive(1);
+
+         /**** Configure transmitter *****/
+         // Set ready bit; Enable CRC and PAD; Set as last descriptor; Enable interrupt.
+         eth_set_ready(0, 1);
+         eth_set_crc(0, 1);
+         eth_set_pad(0, 1);
+         eth_set_wr(0, 1);
+         eth_set_interrupt(0, 1);
       end
    endtask
 
-   // Macros based on iob-eth-defines.h
+   // Tasks based on macros from iob-eth-defines.h
 
-   `define ETH_SET_PTR(idx,ptr) ({\
-        IOB_ETH_SET_BD(ptr, (idx<<1)+1);\
-        })
-
-   `define ETH_SET_READY(idx, enable) ({\
-           IOB_ETH_GET_BD(idx<<1, rvalue);\
-           IOB_ETH_SET_BD(rvalue & ~TX_BD_READY | (enable ? TX_BD_READY : 0), idx<<1);\
-           })
-   `define ETH_SET_EMPTY(idx, enable) ETH_SET_READY(idx, enable)
-
-   `define ETH_SET_WR(idx, enable) ({\
-           IOB_ETH_GET_BD(idx<<1, rvalue);\
-           IOB_ETH_SET_BD(rvalue & ~TX_BD_WRAP | (enable ? TX_BD_WRAP : 0), idx<<1);\
-           })
-
-   `define ETH_SET_INTERRUPT(idx, enable) ({\
-           IOB_ETH_GET_BD(idx<<1, rvalue);\
-           IOB_ETH_SET_BD(rvalue & ~TX_BD_IRQ | (enable ? TX_BD_IRQ : 0), idx<<1);\
-           })
-   `define ETH_RECEIVE(enable) ({\
-           IOB_ETH_GET_MODER(rvalue);
-           IOB_ETH_SET_MODER(rvalue & ~MODER_RXEN | (enable ? MODER_RXEN : 0));\
-           })
-
-   task eth_rcv_frame;
+   task eth_tx_ready(input [ADDR_W-1:0] idx, output ready);
       begin
-         do {
-            // set frame pointer
-            ETH_SET_PTR(64, frame_ptr);
-
-            // Mark empty; Set as last descriptor; Enable interrupt.
-            ETH_SET_EMPTY(64, 1);
-            ETH_SET_WR(64, 1);
-            ETH_SET_INTERRUPT(64, 1);
-
-            // Enable reception
-            ETH_RECEIVE(1);
-
-            // wait until data received
-            while (!eth_rx_ready(64)) {
-               timeout--;
-               if (!timeout) {
-                 ETH_RECEIVE(0);
-                (*mem_free)((char *)frame_ptr);
-                 return ETH_NO_DATA;
-               }
-            }
-
-            if(eth_bad_crc(64)) {
-              ETH_RECEIVE(0);
-              (*mem_free)((char *)frame_ptr);
-              printf("Bad CRC\n");
-              return ETH_INVALID_CRC;
-            }
-            
-            
-            // Disable reception
-            ETH_RECEIVE(0);
-
-            // Check destination MAC address to see if should ignore frame
-            ignore = 0;
-            for (i=0; i < IOB_ETH_MAC_ADDR_LEN; i++)
-              if (TEMPLATE[MAC_SRC_PTR+i] != frame_ptr[MAC_DEST_PTR+i]){
-                ignore = 1;
-                break;  
-              }
-
-         } while(ignore);
-
-         // Copy payload to return array
-         for (i=0; i < size; i++) {
-          data_rcv[i] = frame_ptr[i+TEMPLATE_LEN];
-         }
-
-         return ETH_DATA_RCV;
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1, rvalue);
+         ready=!((rvalue & `TX_BD_READY) || 0);
       end
    endtask
+   task eth_rx_ready(input [ADDR_W-1:0] idx, output ready);
+      eth_tx_ready(idx, ready);
+   endtask
+
+   task eth_bad_crc(input [ADDR_W-1:0] idx, output bad_crc);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1, rvalue);
+         bad_crc=((rvalue & `RX_BD_CRC) || 0);
+      end
+   endtask
+
+   task eth_send(input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_MODER(rvalue);
+         IOB_ETH_SET_MODER(rvalue & ~`MODER_TXEN | (enable ? `MODER_TXEN : 0));
+      end
+   endtask
+
+   task eth_receive(input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_MODER(rvalue);
+         IOB_ETH_SET_MODER(rvalue & ~`MODER_RXEN | (enable ? `MODER_RXEN : 0));
+      end
+   endtask
+
+   task eth_set_ready(input [ADDR_W-1:0] idx, input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1,rvalue);
+         IOB_ETH_SET_BD(rvalue & ~`TX_BD_READY | (enable ? `TX_BD_READY : 0), idx<<1);
+      end
+   endtask
+   task eth_set_empty(input [ADDR_W-1:0] idx, input enable);
+      eth_set_ready(idx, enable);
+   endtask
+
+   task eth_set_interrupt(input [ADDR_W-1:0] idx, input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1,rvalue);
+         IOB_ETH_SET_BD(rvalue & ~`TX_BD_IRQ | (enable ? `TX_BD_IRQ : 0), idx<<1);
+      end
+   endtask
+
+   task eth_set_wr(input [ADDR_W-1:0] idx, input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1,rvalue);
+         IOB_ETH_SET_BD(rvalue & ~`TX_BD_WRAP | (enable ? `TX_BD_WRAP : 0), idx<<1);
+      end
+   endtask
+
+   task eth_set_crc(input [ADDR_W-1:0] idx, input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1,rvalue);
+         IOB_ETH_SET_BD(rvalue & ~`TX_BD_CRC | (enable ? `TX_BD_CRC : 0), idx<<1);
+      end
+   endtask
+
+   task eth_set_pad(input [ADDR_W-1:0] idx, input enable);
+      begin
+         rvalue=0;
+         IOB_ETH_GET_BD(idx<<1,rvalue);
+         IOB_ETH_SET_BD(rvalue & ~`TX_BD_PAD | (enable ? `TX_BD_PAD : 0), idx<<1);
+      end
+   endtask
+
+   task eth_set_ptr(input [ADDR_W-1:0] idx, input [ADDR_W-1:0] ptr);
+      IOB_ETH_SET_BD(ptr, (idx<<1)+1);
+   endtask
+
 
    `include "iob_eth_swreg_emb_tb.vs"
 
