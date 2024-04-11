@@ -593,7 +593,7 @@ class iob_eth(iob_module):
                     {
                         "name": "FRAME_WORD",
                         "type": "RW",
-                        "n_bits": 32,
+                        "n_bits": 8,
                         "rst_val": 0,
                         "addr": 100,
                         "log2n_items": 0,
