@@ -3,31 +3,41 @@
 # vice-versa. This allows ethernet access for the simulation tesbench.
 
 import socket
-import binascii
+import os
 
 
-def write_to_file(hex_data, output_file):
-    with open(output_file, "ab") as file:
-        file.write(hex_data)
+def file_2_eth(socket_object, file_object):
+    while True:
+        # Get frame size
+        frame_size = int.from_bytes(file_object.read(2), byteorder="little")
+        # Send frame to socket
+        socket_object.send(file_object.read(frame_size))
 
 
-def capture_frames(interface, input_file, output_file):
+def eth_2_file(socket_object, file_object):
+    while True:
+        frame_data, _ = socket_object.recvfrom(65536)
+        # Write two bytes with size of frame_data
+        frame_size = len(frame_data).to_bytes(2, byteorder="little")
+        file_object.write(frame_size + frame_data)
+
+
+def relay_frames(interface, input_file, output_file):
+    """Relay frames from network device to file and vice-versa.
+    param interface: name of network device
+    param input_file: path to the generated input file. Will be a named pipe.
+    param output_file: path to the generated output file
+    """
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3)) as s:
         s.bind((interface, 0))
 
-        # try:
-        #    with open(input_file, 'rb') as input_file:
-        #        hex_data = input_file.read()
-        #        s.sendall(binascii.unhexlify(hex_data))
-        # except FileNotFoundError:
-        #    print(f"Error: File {input_file} not found.")
+        # With a name pipe, we don't need keep polling and deleting chars from the file
+        os.mkfifo(input_file)
+        with open(input_file, "rb") as input_file:
+            file_2_eth(s, input_file)
 
-        while True:
-            data, _ = s.recvfrom(65536)
-            hex_representation = binascii.hexlify(data)
-            write_to_file(hex_representation, output_file)
-            # End line with 2 chars, to match a hex byte
-            write_to_file(b"0\n", output_file)
+        with open(output_file, "ab") as output_file:
+            eth_2_file(s, output_file)
 
 
 if __name__ == "__main__":
@@ -41,8 +51,14 @@ if __name__ == "__main__":
     input_file = sys.argv[2]
     output_file = sys.argv[3]
 
+    # Delete old files
+    if os.path.exists(input_file):
+        os.remove(input_file)
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
     try:
-        capture_frames(interface, input_file, output_file)
+        relay_frames(interface, input_file, output_file)
     except PermissionError as e:
         print(e)
         print(
