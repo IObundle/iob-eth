@@ -67,6 +67,7 @@ module iob_eth_driver_tb (
         // TODO: Use the non-DMA interface to read frame from core and
         // write to file
 
+        relay_frame_eth_2_file(soc2eth_fd);
         rxread_reg = 0;
       end
       // Relay ethernet frames from file to core
@@ -82,25 +83,63 @@ module iob_eth_driver_tb (
           end
         end
         // Read file contents
-        // TODO: Fix this to read whole frame
-        n = $fscanf(eth2soc_fd, "%c", cpu_char);
-        if (n > 0) begin
-          // TODO: Use non-DMA interface to write to core
-          iob_write(`IOB_UART_TXDATA_ADDR, cpu_char, `IOB_UART_TXDATA_W);
-          $fclose(eth2soc_fd);
-          eth2soc_fd = $fopen("./eth2soc", "w");
-        end
-        $fclose(eth2soc_fd);
+        // // TODO: Fix this to read whole frame
+        // n = $fscanf(eth2soc_fd, "%c", cpu_char);
+        // if (n > 0) begin
+        //   // TODO: Use non-DMA interface to write to core
+        //   iob_write(`IOB_UART_TXDATA_ADDR, cpu_char, `IOB_UART_TXDATA_W);
+        //   $fclose(eth2soc_fd);
+        //   eth2soc_fd = $fopen("./eth2soc", "w");
+        // end
+        // $fclose(eth2soc_fd);
 
+        relay_frame_file_2_eth(eth2soc_fd);
         txread_reg = 0;
       end
     end
   end
 
-  task relay_frame_file_2_eth();
+  task relay_frame_file_2_eth(input eth2soc_fd);
     begin
-      // TODO: Read frame size (2 bytes)
+      size_l = 0;
+      size_h = 0;
+      frame_byte;
+      // Read frame size (2 bytes)
+      n = $fscanf(eth2soc_fd, "%c%c", size_l, size_h);
+      if (n == 0) return;
+      frame_size = (size_h << 8) | size_l;
+      // wait for ready
+      while (!eth_tx_ready(0));
+      // set frame size
+      eth_set_payload_size(0, frame_size);
+      // Set ready bit
+      eth_set_ready(0, 1);
+      // enable transmitter
+      eth_send(1);
+
       // Read RAW frame from binary encoded file, byte by byte
+      for (i = 0; i < frame_size;) begin
+        n = $fscanf(eth2soc_fd, "%c", frame_byte);
+        if (n == 0) continue;
+        IOB_ETH_SET_FRAME_WORD(frame_byte);
+        i = i + 1;
+      end
+      // wait for ready
+      while (!eth_tx_ready(0));
+      // Disable transmitter
+      eth_send(0);
+    end
+  endtask
+
+  task relay_frame_eth_2_file(output soc2eth_fd);
+    begin
+      // TODO: Use non-DMA interface to write to file
+      return;  // DEBUG
+
+      $fwrite(soc2eth_fd, "%c%c", size_l, size_h);
+      // For each byte in frame
+      $fwrite(soc2eth_fd, "%c", cpu_char);
+      $fflush(soc2eth_fd);
     end
   endtask
 
@@ -109,7 +148,7 @@ module iob_eth_driver_tb (
     begin
       /**** Configure receiver *****/
       // Mark empty; Set as last descriptor; Enable interrupt.
-      eth_set_empty(64, 1);
+      eth_set_empty(64, 1);  // Move to realy_frame_eth_2_file
       eth_set_wr(64, 1);
       eth_set_interrupt(64, 1);
 
@@ -117,8 +156,7 @@ module iob_eth_driver_tb (
       eth_receive(1);
 
       /**** Configure transmitter *****/
-      // Set ready bit; Enable CRC and PAD; Set as last descriptor; Enable interrupt.
-      eth_set_ready(0, 1);
+      // Enable CRC and PAD; Set as last descriptor; Enable interrupt.
       eth_set_crc(0, 1);
       eth_set_pad(0, 1);
       eth_set_wr(0, 1);
