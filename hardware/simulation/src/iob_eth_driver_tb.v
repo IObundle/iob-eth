@@ -36,7 +36,7 @@ module iob_eth_driver_tb (
     // configure eth
     cpu_initeth();
 
-    frame_word[1521:0];
+    frame_bytes[1521:0];
     rxread_reg = 0;
     txread_reg = 0;
     // TODO: Update below to drive ethernet
@@ -104,6 +104,7 @@ module iob_eth_driver_tb (
       size_l = 0;
       size_h = 0;
       frame_byte;
+
       // Read frame size (2 bytes)
       n = $fscanf(eth2soc_fd, "%c%c", size_l, size_h);
       if (n == 0) return;
@@ -114,8 +115,6 @@ module iob_eth_driver_tb (
       eth_set_payload_size(0, frame_size);
       // Set ready bit
       eth_set_ready(0, 1);
-      // enable transmitter
-      eth_send(1);
 
       // Read RAW frame from binary encoded file, byte by byte
       for (i = 0; i < frame_size;) begin
@@ -124,21 +123,32 @@ module iob_eth_driver_tb (
         IOB_ETH_SET_FRAME_WORD(frame_byte);
         i = i + 1;
       end
-      // wait for ready
-      while (!eth_tx_ready(0));
-      // Disable transmitter
-      eth_send(0);
     end
   endtask
 
   task relay_frame_eth_2_file(output soc2eth_fd);
     begin
-      // TODO: Use non-DMA interface to write to file
-      return;  // DEBUG
+      frame_byte;
 
-      $fwrite(soc2eth_fd, "%c%c", size_l, size_h);
-      // For each byte in frame
-      $fwrite(soc2eth_fd, "%c", cpu_char);
+      // Check if data received
+      if (!eth_rx_ready(64)) return;
+      if eth_bad_crc(64) begin
+        $display("Bad CRC");
+        return;
+      end
+
+      // Read frame bytes
+      for(i = 0; eth_rx_ready(64); i = i + 1) begin
+        IOB_ETH_GET_FRAME_WORD(frame_byte);
+        frame_bytes[i] = frame_byte;
+      end
+
+      // Write two bytes with frame size
+      $fwrite(soc2eth_fd, "%c%c", i[7:0], i[15:8]);
+      // Write frame bytes
+      for(i = 0; i < frame_size; i = i + 1) begin
+        $fwrite(soc2eth_fd, "%c", frame_bytes[i]);
+      end
       $fflush(soc2eth_fd);
     end
   endtask
@@ -148,7 +158,7 @@ module iob_eth_driver_tb (
     begin
       /**** Configure receiver *****/
       // Mark empty; Set as last descriptor; Enable interrupt.
-      eth_set_empty(64, 1);  // Move to realy_frame_eth_2_file
+      eth_set_empty(64, 1);
       eth_set_wr(64, 1);
       eth_set_interrupt(64, 1);
 
@@ -161,6 +171,9 @@ module iob_eth_driver_tb (
       eth_set_pad(0, 1);
       eth_set_wr(0, 1);
       eth_set_interrupt(0, 1);
+
+      // enable transmission
+      eth_send(1);
     end
   endtask
 
