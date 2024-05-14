@@ -4,6 +4,7 @@
 
 import socket
 import os
+from threading import Thread
 
 
 def file_2_eth(socket_object, file_object):
@@ -22,6 +23,13 @@ def eth_2_file(socket_object, file_object):
         file_object.write(frame_size + frame_data)
 
 
+def file_2_eth_thread(socket_object, fifo_file_path):
+    # With a name pipe, we don't need keep polling and deleting chars from the file
+    os.mkfifo(fifo_file_path)
+    with open(fifo_file_path, "rb") as input_file:
+        file_2_eth(socket_object, input_file)
+
+
 def relay_frames(interface, input_file, output_file):
     """Relay frames from network device to file and vice-versa.
     param interface: name of network device
@@ -31,10 +39,8 @@ def relay_frames(interface, input_file, output_file):
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3)) as s:
         s.bind((interface, 0))
 
-        # With a name pipe, we don't need keep polling and deleting chars from the file
-        os.mkfifo(input_file)
-        with open(input_file, "rb") as input_file:
-            file_2_eth(s, input_file)
+        f2e_thread = Thread(target=file_2_eth_thread, args=(s, input_file), daemon=True)
+        f2e_thread.start()
 
         with open(output_file, "ab") as output_file:
             eth_2_file(s, output_file)

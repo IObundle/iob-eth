@@ -1,6 +1,11 @@
+`timescale 1ns / 1ps
+
+`include "iob_utils.vh"
 `include "iob_eth_defines.vh"
 
-module iob_eth_driver_tb (
+module iob_eth_driver_tb #(
+    `include "iob_eth_params.vs"
+) (
     `include "iob_m_port.vs"
     input clk_i
 );
@@ -10,9 +15,9 @@ module iob_eth_driver_tb (
   //IOb-SoC ethernet
   reg                              iob_valid_i;
   reg  [`IOB_ETH_SWREG_ADDR_W-1:0] iob_addr_i;
-  reg  [      `IOB_SOC_DATA_W-1:0] iob_wdata_i;
+  reg  [               DATA_W-1:0] iob_wdata_i;
   reg  [                      3:0] iob_wstrb_i;
-  wire [      `IOB_SOC_DATA_W-1:0] iob_rdata_o;
+  wire [               DATA_W-1:0] iob_rdata_o;
   wire                             iob_ready_o;
   wire                             iob_rvalid_o;
 
@@ -27,6 +32,14 @@ module iob_eth_driver_tb (
   assign iob_ready_o  = iob_ready_i;
   assign iob_rvalid_o = iob_valid_i;
 
+  reg [7:0] frame_bytes[1521:0];
+  reg rxread_reg;
+  reg txread_reg;
+  reg [7:0] cpu_char;
+  integer eth2soc_fd;
+  integer soc2eth_fd;
+
+
   // Main program
   initial begin
     //init cpu bus signals
@@ -36,10 +49,8 @@ module iob_eth_driver_tb (
     // configure eth
     cpu_initeth();
 
-    frame_bytes[1521:0];
     rxread_reg = 0;
     txread_reg = 0;
-    // TODO: Update below to drive ethernet
     cpu_char   = 0;
 
 
@@ -99,62 +110,73 @@ module iob_eth_driver_tb (
     end
   end
 
-  task relay_frame_file_2_eth(input eth2soc_fd);
+  task static relay_frame_file_2_eth(input integer eth2soc_fd);
     begin
-      size_l = 0;
-      size_h = 0;
-      frame_byte;
+      reg [7:0] size_l, size_h, frame_byte;
+      reg [15:0] frame_size;
+      integer i, n;
+      reg tx_ready_reg;
+      tx_ready_reg = 0;
 
       // Read frame size (2 bytes)
       n = $fscanf(eth2soc_fd, "%c%c", size_l, size_h);
-      if (n == 0) return;
-      frame_size = (size_h << 8) | size_l;
-      // wait for ready
-      while (!eth_tx_ready(0));
-      // set frame size
-      eth_set_payload_size(0, frame_size);
-      // Set ready bit
-      eth_set_ready(0, 1);
+      // Exit if no bytes were read
+      if (n != 0) begin
+        frame_size = (size_h << 8) | size_l;
+        // wait for ready
+        while (!tx_ready_reg) eth_tx_ready(0, tx_ready_reg);
+        // set frame size
+        eth_set_payload_size(0, frame_size);
+        // Set ready bit
+        eth_set_ready(0, 1);
 
-      // Read RAW frame from binary encoded file, byte by byte
-      for (i = 0; i < frame_size;) begin
-        n = $fscanf(eth2soc_fd, "%c", frame_byte);
-        if (n == 0) continue;
-        IOB_ETH_SET_FRAME_WORD(frame_byte);
-        i = i + 1;
-      end
+        // Read RAW frame from binary encoded file, byte by byte
+        for (i = 0; i < frame_size; i = i) begin
+          n = $fscanf(eth2soc_fd, "%c", frame_byte);
+          if (n != 0) begin
+            IOB_ETH_SET_FRAME_WORD(frame_byte);
+            i = i + 1;
+          end
+        end
+      end // n != 0
     end
   endtask
 
-  task relay_frame_eth_2_file(output soc2eth_fd);
+  task static relay_frame_eth_2_file(input integer soc2eth_fd);
     begin
-      frame_byte;
+      reg [7:0] frame_byte;
+      reg [15:0] frame_size;
+      integer i;
+      reg rx_ready_reg;
+      reg bad_crc;
+      bad_crc = 0;
 
       // Check if data received
-      if (!eth_rx_ready(64)) return;
-      if eth_bad_crc(64) begin
-        $display("Bad CRC");
-        return;
-      end
+      eth_rx_ready(64, rx_ready_reg);
+      eth_bad_crc(64, bad_crc);
+      // Exit if not ready or bad CRC
+      if (rx_ready_reg || !bad_crc) begin
+        // Read frame bytes
+        for (i = 0; rx_ready_reg; i = i + 1) begin
+          IOB_ETH_GET_FRAME_WORD(frame_byte);
+          frame_bytes[i] = frame_byte;
+          eth_rx_ready(64, rx_ready_reg);
+        end
 
-      // Read frame bytes
-      for(i = 0; eth_rx_ready(64); i = i + 1) begin
-        IOB_ETH_GET_FRAME_WORD(frame_byte);
-        frame_bytes[i] = frame_byte;
-      end
-
-      // Write two bytes with frame size
-      $fwrite(soc2eth_fd, "%c%c", i[7:0], i[15:8]);
-      // Write frame bytes
-      for(i = 0; i < frame_size; i = i + 1) begin
-        $fwrite(soc2eth_fd, "%c", frame_bytes[i]);
-      end
-      $fflush(soc2eth_fd);
+        // Write two bytes with frame size
+        $fwrite(soc2eth_fd, "%c%c", i[7:0], i[15:8]);
+        frame_size = i;
+        // Write frame bytes
+        for (i = 0; i < frame_size; i = i + 1) begin
+          $fwrite(soc2eth_fd, "%c", frame_bytes[i]);
+        end
+        $fflush(soc2eth_fd);
+      end // rx_ready_reg || !eth_bad_crc
     end
   endtask
 
 
-  task cpu_initeth;
+  task static cpu_initeth;
     begin
       /**** Configure receiver *****/
       // Mark empty; Set as last descriptor; Enable interrupt.
@@ -179,86 +201,94 @@ module iob_eth_driver_tb (
 
   // Tasks based on macros from iob-eth-defines.h
 
-  task eth_tx_ready(input [ADDR_W-1:0] idx, output ready);
+  task static eth_tx_ready(input reg [ADDR_W-1:0] idx, output reg ready);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       ready = !((rvalue & `TX_BD_READY) || 0);
     end
   endtask
-  task eth_rx_ready(input [ADDR_W-1:0] idx, output ready);
+  task static eth_rx_ready(input reg [ADDR_W-1:0] idx, output reg ready);
     eth_tx_ready(idx, ready);
   endtask
 
-  task eth_bad_crc(input [ADDR_W-1:0] idx, output bad_crc);
+  task static eth_bad_crc(input reg [ADDR_W-1:0] idx, output reg bad_crc);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       bad_crc = ((rvalue & `RX_BD_CRC) || 0);
     end
   endtask
 
-  task eth_send(input enable);
+  task static eth_send(input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_MODER(rvalue);
       IOB_ETH_SET_MODER(rvalue & ~`MODER_TXEN | (enable ? `MODER_TXEN : 0));
     end
   endtask
 
-  task eth_receive(input enable);
+  task static eth_receive(input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_MODER(rvalue);
       IOB_ETH_SET_MODER(rvalue & ~`MODER_RXEN | (enable ? `MODER_RXEN : 0));
     end
   endtask
 
-  task eth_set_ready(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_ready(input reg [ADDR_W-1:0] idx, input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       IOB_ETH_SET_BD(rvalue & ~`TX_BD_READY | (enable ? `TX_BD_READY : 0), idx << 1);
     end
   endtask
-  task eth_set_empty(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_empty(input reg [ADDR_W-1:0] idx, input reg enable);
     eth_set_ready(idx, enable);
   endtask
 
-  task eth_set_interrupt(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_interrupt(input reg [ADDR_W-1:0] idx, input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       IOB_ETH_SET_BD(rvalue & ~`TX_BD_IRQ | (enable ? `TX_BD_IRQ : 0), idx << 1);
     end
   endtask
 
-  task eth_set_wr(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_wr(input reg [ADDR_W-1:0] idx, input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       IOB_ETH_SET_BD(rvalue & ~`TX_BD_WRAP | (enable ? `TX_BD_WRAP : 0), idx << 1);
     end
   endtask
 
-  task eth_set_crc(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_crc(input reg [ADDR_W-1:0] idx, input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       IOB_ETH_SET_BD(rvalue & ~`TX_BD_CRC | (enable ? `TX_BD_CRC : 0), idx << 1);
     end
   endtask
 
-  task eth_set_pad(input [ADDR_W-1:0] idx, input enable);
+  task static eth_set_pad(input reg [ADDR_W-1:0] idx, input reg enable);
     begin
-      rvalue = 0;
+      reg [ADDR_W-1:0] rvalue;
       IOB_ETH_GET_BD(idx << 1, rvalue);
       IOB_ETH_SET_BD(rvalue & ~`TX_BD_PAD | (enable ? `TX_BD_PAD : 0), idx << 1);
     end
   endtask
 
-  task eth_set_ptr(input [ADDR_W-1:0] idx, input [ADDR_W-1:0] ptr);
+  task static eth_set_ptr(input reg [ADDR_W-1:0] idx, input reg [ADDR_W-1:0] ptr);
     IOB_ETH_SET_BD(ptr, (idx << 1) + 1);
+  endtask
+
+  task static eth_set_payload_size(input reg [ADDR_W-1:0] idx, input reg [ADDR_W-1:0] size);
+    begin
+      reg [ADDR_W-1:0] rvalue;
+      IOB_ETH_GET_BD(idx << 1, rvalue);
+      IOB_ETH_SET_BD((rvalue & 32'h0000ffff) | size<<16, idx << 1);
+    end
   endtask
 
 

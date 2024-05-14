@@ -151,9 +151,9 @@
 
 `define ETH_DEBUG_PRINT 1
 
-#ifndef ETH_RMAC_ADDR
+`ifndef ETH_RMAC_ADDR
 `define ETH_RMAC_ADDR `ETH_MAC_ADDR
-#endif
+`endif
 
 `define eth_tx_ready(idx) !((IOB_ETH_GET_BD(idx<<1) & `TX_BD_READY) || 0)
 `define eth_rx_ready(idx) eth_tx_ready(idx)
