@@ -68,9 +68,7 @@ if __name__ == "__main__":
     except PermissionError as e:
         print(e)
         print(
-            "Error: This script requires privileges to capture and relay raw Ethernet frames."
+            "Error: This script requires CAP_NET_RAW privileges to capture and relay raw Ethernet frames."
         )
-        print("Use the following command to set the necessary capabilities:")
-        print(f"setcap cap_net_raw,cap_net_admin=eip {sys.argv[0]}")
     except KeyboardInterrupt:
         print("\nRelaying stopped.")
