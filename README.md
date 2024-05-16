@@ -284,6 +284,7 @@ class iob_soc_sut(iob_soc):
                 export RMAC_ADDR
                 # Path to custom python interpreter with `CAP_NET_RAW` capability
                 IOB_CONSOLE_PYTHON_ENV ?= /opt/pyeth3/bin/python
+                # IOB_CONSOLE_PYTHON_ENV ?= submodules/ETHERNET/scripts/pyRawWrapper/pyRawWrapper
                 """,
                 cls.build_dir,
             )
@@ -307,6 +308,7 @@ class iob_soc_sut(iob_soc):
 - Running raw sockets requires elevated privileges. This is solved by 
 configuring a dedicated python3 virtual environment where the interpreter has 
 raw socket capabilities.
+Alternatively you can use the python wrapper mentioned in the [python wrapper section](#python-wrapper-with-cap_net_raw).
 ### No data transferred between the Host Machine and FPGA Board:
 - Make sure that the interface is configured with `speed = 100Mb/s` and `duplex = full`
   - check interface status with: `ethtool $RMAC_INTERFACE`
@@ -400,6 +402,22 @@ ddio_out_clkbuf.v
 
 More info: https://cdrdv2-public.intel.com/705131/ug_intro_to_megafunctions_131-683102-705131.pdf
 
+## Python wrappper with CAP_NET_RAW
+
+This repository includes a python wrapper located in `scripts/pyRawWrapper/` directory, that can be used to provide the `CAP_NET_RAW` capability to the python scripts.
+
+To build the python wrapper, run the following command (sudo password required):
+```Python
+make -C scripts/pyRawWrapper
+```
+
+We can then use that python wrapper to launch scripts that need the `CAP_NET_RAW` capability:
+```Python
+./scripts/pyRawWrapper/pyRawWrapper <python_script>
+```
+
+For multi-user installations, it is recommended to move the wrapper to a system-wide location and set the user/group permissions accordingly.
+Note that any user with execute permissions for this wrapper will be able to run any program with the `CAP_NET_RAW` capability, allowing the user to sniff and manipulate all network traffic.
 
 # Acknowledgement
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
