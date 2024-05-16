@@ -1,5 +1,6 @@
 /*
 * Python wrapper for CAP_NET_RAW capability
+* Based on solution from here: https://stackoverflow.com/a/67733220/11442904
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,14 +9,16 @@
 #include <sys/capability.h>
 
 int main(int argc, char *argv[]) {
-    // Set CAP_NET_RAW capability
-    cap_t caps = cap_get_proc();
-    cap_set_flag(caps, CAP_EFFECTIVE, 1, (cap_value_t []){CAP_NET_RAW}, CAP_SET);
-    if (cap_set_proc(caps) == -1) {
-        perror("cap_set_proc");
-        return 1;
+    cap_iab_t iab = cap_iab_from_text("^cap_net_raw");
+    if (iab == NULL) {
+        perror("iab not parsed");
+        exit(1);
     }
-    cap_free(caps);
+    if (cap_iab_set_proc(iab)) {
+        perror("unable to set iab");
+        exit(1);
+    }
+    cap_free(iab);
 
     // CAP_NET_RAW capability is already set, proceed to execute 'python' with provided arguments
     execvp("python", argv);
