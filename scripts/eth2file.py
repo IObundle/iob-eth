@@ -36,6 +36,13 @@ def relay_frames(interface, input_file, output_file):
     param input_file: path to the generated input file. Will be a named pipe.
     param output_file: path to the generated output file
     """
+
+    # Delete old files
+    if os.path.exists(input_file):
+        os.remove(input_file)
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3)) as s:
         s.bind((interface, 0))
 
@@ -56,12 +63,6 @@ if __name__ == "__main__":
     interface = sys.argv[1]
     input_file = sys.argv[2]
     output_file = sys.argv[3]
-
-    # Delete old files
-    if os.path.exists(input_file):
-        os.remove(input_file)
-    if os.path.exists(output_file):
-        os.remove(output_file)
 
     try:
         relay_frames(interface, input_file, output_file)
