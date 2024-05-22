@@ -11,8 +11,8 @@ def file_2_eth(socket_object, file_object):
     while True:
         # Get frame size
         frame_size = int.from_bytes(file_object.read(2), byteorder="little")
-        # Send frame to socket
-        socket_object.send(file_object.read(frame_size))
+        # Send frame to socket (ignore last 4 CRC bytes)
+        socket_object.send(file_object.read(frame_size)[:-4])
 
 
 def eth_2_file(socket_object, file_object):

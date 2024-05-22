@@ -65,12 +65,12 @@ static void print_buffer(char *buffer, int size){
 
 void eth_init(int base_address, void (*clear_cache_func)(void)) {
         eth_init_clear_cache(clear_cache_func);
-        eth_reset_bd_memory();
 #ifdef LOOPBACK
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
 #else
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_RMAC_ADDR);
 #endif
+        eth_reset_bd_memory();
 }
 
 void eth_init_clear_cache( void (*clear_cache_func)(void) ) {
