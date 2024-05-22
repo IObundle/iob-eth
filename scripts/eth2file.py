@@ -18,6 +18,9 @@ def file_2_eth(socket_object, file_object):
 def eth_2_file(socket_object, file_object):
     while True:
         frame_data, _ = socket_object.recvfrom(65536)
+        # Ensure soc has read the previous frame by checking file size
+        while file_object.tell() > 0:
+            file_object.seek(0, os.SEEK_END)
         # Write two bytes with size of frame_data
         frame_size = len(frame_data).to_bytes(2, byteorder="little")
         file_object.write(frame_size + frame_data)

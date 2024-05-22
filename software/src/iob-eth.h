@@ -8,6 +8,8 @@ void eth_init_mem_alloc( void* (*mem_alloc_func)(size_t), void (*mem_free_func)(
 
 void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr);
 
+void eth_reset_bd_memory();
+
 unsigned short int eth_get_payload_size(unsigned int idx);
 
 void eth_set_payload_size(unsigned int idx, unsigned int size);

@@ -65,6 +65,7 @@ static void print_buffer(char *buffer, int size){
 
 void eth_init(int base_address, void (*clear_cache_func)(void)) {
         eth_init_clear_cache(clear_cache_func);
+        eth_reset_bd_memory();
 #ifdef LOOPBACK
 	eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
 #else
@@ -147,6 +148,14 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   //} else {
   //  printf("Ethernet Core Initialized\n");
   //}
+}
+
+// Reset buffer descriptor memory
+void eth_reset_bd_memory(){
+  // Reset 128 buffer descriptors (64 bits each)
+  for(int i = 0; i < 256; i++){
+    IOB_ETH_SET_BD(0x00000000, i);
+  }
 }
 
 // Get payload size from given buffer descriptor
