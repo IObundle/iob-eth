@@ -310,9 +310,7 @@ module iob_eth #(
   wire rx_irq;
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
-  // Wires to control buffer descriptor access
-  wire rx_bd_ready;
-  wire tx_bd_ready;
+
   // DMA module
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
@@ -335,8 +333,6 @@ module iob_eth #(
       .bd_wen_o(dma_bd_wen),
       .bd_i(dma_bd_i),
       .bd_o(dma_bd_o),
-      .rx_bd_ready_o(rx_bd_ready),
-      .tx_bd_ready_o(tx_bd_ready),
 
       // TX Front-End
       .eth_data_wr_wen_o(iob_eth_tx_buffer_enA),  // |ETH_DATA_WR_wstrb
@@ -435,9 +431,8 @@ module iob_eth #(
 
   wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2;
 
-  wire is_rx_bd = (buffer_addr>>1) >= TX_BD_NUM_wr;
-  assign BD_wready_wr = is_rx_bd ? rx_bd_ready : tx_bd_ready;
-  assign BD_rready_rd = is_rx_bd ? rx_bd_ready : tx_bd_ready;
+  assign BD_wready_wr = 1'b1;
+  assign BD_rready_rd = 1'b1;
 
   // Buffer descriptors memory
   iob_ram_dp #(

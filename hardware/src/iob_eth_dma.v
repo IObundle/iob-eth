@@ -28,8 +28,6 @@ module iob_eth_dma #(
     output                 bd_wen_o,
     input  [       32-1:0] bd_i,
     output [       32-1:0] bd_o,
-    output reg             tx_bd_ready_o,
-    output reg             rx_bd_ready_o,
 
     // TX Front-End
     output reg                eth_data_wr_wen_o,
@@ -281,7 +279,6 @@ module iob_eth_dma #(
     eth_data_wr_addr_o         = 1'b0;
     tx_frame_word_ready_o      = 1'b0;
     tx_irq_o                   = 1'b0;
-    tx_bd_ready_o                = 1'b0;
     // No-DMA interface
     tx_bd_cnt_o                = 1'b0;
     tx_word_cnt_o              = 1'b0;
@@ -307,7 +304,6 @@ module iob_eth_dma #(
       eth_data_wr_wen_o = 1'b0;
       tx_frame_word_ready_o = 1'b0;
       tx_irq_o          = 1'b0;
-      tx_bd_ready_o       = 1'b0;
       // No-DMA interface
       tx_bd_cnt_o       = 1'b0;
       tx_word_cnt_o     = 1'b0;
@@ -322,7 +318,6 @@ module iob_eth_dma #(
           send_nxt = 1'b0;
           tx_irq_o = 1'b0;
           tx_bd_wen_o = 1'b0;
-	  tx_bd_ready_o = 1'b1;
 
           // Wait for arbiter
           if (!bd_mem_arbiter_grant[0] || !bd_mem_arbiter_grant_valid) tx_state_nxt = tx_state;
@@ -359,7 +354,6 @@ module iob_eth_dma #(
           axi_arvalid_o_reg = 1'b1;
           axi_rready_o_reg = 1'b0;
           eth_data_wr_wen_o = 1'b0;
-	  tx_bd_ready_o = 1'b0;
 
           // Wait for address ready
           if (!axi_arready_i) tx_state_nxt = tx_state;
@@ -598,7 +592,6 @@ module iob_eth_dma #(
     axi_wvalid_o_reg           = 1'b0;
     axi_wlast_o_reg            = 1'b0;
     rx_irq_o                   = 1'b0;
-    rx_bd_ready_o                = 1'b0;
     // No-DMA interface
     rx_bd_cnt_o                = 1'b0;
     rx_word_cnt_o              = 1'b0;
@@ -628,7 +621,6 @@ module iob_eth_dma #(
       axi_wvalid_o_reg       = 1'b0;
       axi_wlast_o_reg        = 1'b0;
       rx_irq_o               = 1'b0;
-      rx_bd_ready_o            = 1'b0;
       // No-DMA interface
       rx_bd_cnt_o            = 1'b0;
       rx_word_cnt_o          = 1'b0;
@@ -645,7 +637,6 @@ module iob_eth_dma #(
           rcv_ack_nxt = 1'b0;
           rx_irq_o = 1'b0;
           rx_bd_wen_o = 1'b0;
-          rx_bd_ready_o = 1'b1;
 
           // Wait for arbiter
           if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid) rx_state_nxt = rx_state;
@@ -686,7 +677,6 @@ module iob_eth_dma #(
           // Get word from buffer
           eth_data_rd_addr_o = rx_buffer_byte_counter;
           rx_burst_word_num_nxt = 1'b0;
-          rx_bd_ready_o = 1'b0;
 
           // Wait for address ready
           if (!axi_awready_i) rx_state_nxt = rx_state;

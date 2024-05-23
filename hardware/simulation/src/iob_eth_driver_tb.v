@@ -38,12 +38,6 @@ module iob_eth_driver_tb #(
   integer eth2soc_fd;
   integer soc2eth_fd;
 
-  //initial begin
-  //    #10000000 $dumpfile("uut_eth.vcd");
-  //    $dumpvars();
-  //end
-
-
   // Main program
   initial begin
     //init cpu bus signals
@@ -159,8 +153,7 @@ module iob_eth_driver_tb #(
     begin
       reg [7:0] frame_byte;
       integer i;
-      reg bad_crc;
-      bad_crc = 0;
+      reg rval;
 
       // Write two bytes with frame size
       $fwrite(soc2eth_fd, "%c%c", frame_size[7:0], frame_size[10:8]);
@@ -172,12 +165,17 @@ module iob_eth_driver_tb #(
       end
       $fflush(soc2eth_fd);
       
+      // Wait for BD status update (via ready/empty bit)
+      rval=0;
+      while (!rval)
+	eth_rx_ready(64, rval);
+
       // Check bad CRC
-      eth_bad_crc(64, bad_crc);
-      if (bad_crc)
+      eth_bad_crc(64, rval);
+      if (rval)
         $display("Bad CRC!");
-      
-      //Mark buffer descriptor as empty
+
+      // Mark empty to allow receive next frame
       eth_set_empty(64, 1);
     end
   endtask
