@@ -38,6 +38,11 @@ module iob_eth_driver_tb #(
   integer eth2soc_fd;
   integer soc2eth_fd;
 
+  //initial begin
+  //    #10000000 $dumpfile("uut_eth.vcd");
+  //    $dumpvars();
+  //end
+
 
   // Main program
   initial begin
@@ -72,6 +77,7 @@ module iob_eth_driver_tb #(
       end
       // Relay ethernet frames from core to file
       if (|rx_nbytes_reg) begin
+	$display("$e2f %0t", $time);  // DEBUG
         //iob_read(`IOB_UART_RXDATA_ADDR, cpu_char, `IOB_UART_RXDATA_W);
         //$fwriteh(soc2eth_fd, "%c", cpu_char);
         //$fflush(soc2eth_fd);
@@ -80,6 +86,7 @@ module iob_eth_driver_tb #(
 
         relay_frame_eth_2_file(soc2eth_fd, rx_nbytes_reg);
         rx_nbytes_reg = 0;
+	$display("$e2f_done");  // DEBUG
       end
       // Relay ethernet frames from file to core
       if (txread_reg) begin
@@ -123,7 +130,7 @@ module iob_eth_driver_tb #(
       // Continue if size read successfully
       if (n == 2) begin
         frame_size = (size_h << 8) | size_l;
-        $display("Received %d bytes from file", frame_size);  // DEBUG
+        $display("Received %d bytes from file %0t", frame_size, $time);  // DEBUG
         // wait for ready
         while (!tx_ready_reg) eth_tx_ready(0, tx_ready_reg);
         // set frame size
@@ -142,6 +149,7 @@ module iob_eth_driver_tb #(
         $fclose(eth2soc_fd);
         // Delete frame from file
         eth2soc_fd = $fopen("./eth2soc", "wb");
+        $display("$f2e_done");  // DEBUG
       end  // n != 0
       $fclose(eth2soc_fd);
     end
@@ -154,19 +162,23 @@ module iob_eth_driver_tb #(
       reg bad_crc;
       bad_crc = 0;
 
-      // Exit if bad CRC
-      eth_bad_crc(64, bad_crc);
-      if (!bad_crc) begin
-        // Write two bytes with frame size
-        $fwrite(soc2eth_fd, "%c%c", frame_size[7:0], frame_size[10:8]);
+      // Write two bytes with frame size
+      $fwrite(soc2eth_fd, "%c%c", frame_size[7:0], frame_size[10:8]);
 
-        // Read frame bytes from core and write to file
-        for (i = 0; i < frame_size; i = i + 1) begin
-          IOB_ETH_GET_FRAME_WORD(frame_byte);
-          $fwrite(soc2eth_fd, "%c", frame_byte);
-        end
-        $fflush(soc2eth_fd);
-      end  // !eth_bad_crc
+      // Read frame bytes from core and write to file
+      for (i = 0; i < frame_size; i = i + 1) begin
+        IOB_ETH_GET_FRAME_WORD(frame_byte);
+        $fwrite(soc2eth_fd, "%c", frame_byte);
+      end
+      $fflush(soc2eth_fd);
+      
+      // Check bad CRC
+      eth_bad_crc(64, bad_crc);
+      if (bad_crc)
+        $display("Bad CRC!");
+      
+      //Mark buffer descriptor as empty
+      eth_set_empty(64, 1);
     end
   endtask
 

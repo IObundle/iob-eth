@@ -28,6 +28,8 @@ module iob_eth_dma #(
     output                 bd_wen_o,
     input  [       32-1:0] bd_i,
     output [       32-1:0] bd_o,
+    output reg             tx_bd_ready_o,
+    output reg             rx_bd_ready_o,
 
     // TX Front-End
     output reg                eth_data_wr_wen_o,
@@ -64,7 +66,7 @@ module iob_eth_dma #(
     output reg [11-1:0] rx_word_cnt_o,
     input rx_frame_word_ren_i,
     output reg [8-1:0] rx_frame_word_rdata_o,
-    output reg rx_frame_word_rvalid_o,
+    output reg rx_frame_word_ready_o,
 
     input clk_i,
     input cke_i,
@@ -279,6 +281,7 @@ module iob_eth_dma #(
     eth_data_wr_addr_o         = 1'b0;
     tx_frame_word_ready_o      = 1'b0;
     tx_irq_o                   = 1'b0;
+    tx_bd_ready_o                = 1'b0;
     // No-DMA interface
     tx_bd_cnt_o                = 1'b0;
     tx_word_cnt_o              = 1'b0;
@@ -304,6 +307,7 @@ module iob_eth_dma #(
       eth_data_wr_wen_o = 1'b0;
       tx_frame_word_ready_o = 1'b0;
       tx_irq_o          = 1'b0;
+      tx_bd_ready_o       = 1'b0;
       // No-DMA interface
       tx_bd_cnt_o       = 1'b0;
       tx_word_cnt_o     = 1'b0;
@@ -318,6 +322,7 @@ module iob_eth_dma #(
           send_nxt = 1'b0;
           tx_irq_o = 1'b0;
           tx_bd_wen_o = 1'b0;
+	  tx_bd_ready_o = 1'b1;
 
           // Wait for arbiter
           if (!bd_mem_arbiter_grant[0] || !bd_mem_arbiter_grant_valid) tx_state_nxt = tx_state;
@@ -354,6 +359,7 @@ module iob_eth_dma #(
           axi_arvalid_o_reg = 1'b1;
           axi_rready_o_reg = 1'b0;
           eth_data_wr_wen_o = 1'b0;
+	  tx_bd_ready_o = 1'b0;
 
           // Wait for address ready
           if (!axi_arready_i) tx_state_nxt = tx_state;
@@ -592,11 +598,12 @@ module iob_eth_dma #(
     axi_wvalid_o_reg           = 1'b0;
     axi_wlast_o_reg            = 1'b0;
     rx_irq_o                   = 1'b0;
+    rx_bd_ready_o                = 1'b0;
     // No-DMA interface
     rx_bd_cnt_o                = 1'b0;
     rx_word_cnt_o              = 1'b0;
     rx_frame_word_rdata_o      = 1'b0;
-    rx_frame_word_rvalid_o     = 1'b0;
+    rx_frame_word_ready_o      = 1'b0;
 
     axi_awaddr_o_reg           = 1'b0;
     axi_wstrb_o_reg            = 1'b0;
@@ -621,11 +628,12 @@ module iob_eth_dma #(
       axi_wvalid_o_reg       = 1'b0;
       axi_wlast_o_reg        = 1'b0;
       rx_irq_o               = 1'b0;
+      rx_bd_ready_o            = 1'b0;
       // No-DMA interface
       rx_bd_cnt_o            = 1'b0;
       rx_word_cnt_o          = 1'b0;
       rx_frame_word_rdata_o  = 1'b0;
-      rx_frame_word_rvalid_o = 1'b0;
+      rx_frame_word_ready_o  = 1'b0;
 
     end else begin
 
@@ -637,6 +645,7 @@ module iob_eth_dma #(
           rcv_ack_nxt = 1'b0;
           rx_irq_o = 1'b0;
           rx_bd_wen_o = 1'b0;
+          rx_bd_ready_o = 1'b1;
 
           // Wait for arbiter
           if (!bd_mem_arbiter_grant[1] || !bd_mem_arbiter_grant_valid) rx_state_nxt = rx_state;
@@ -677,6 +686,7 @@ module iob_eth_dma #(
           // Get word from buffer
           eth_data_rd_addr_o = rx_buffer_byte_counter;
           rx_burst_word_num_nxt = 1'b0;
+          rx_bd_ready_o = 1'b0;
 
           // Wait for address ready
           if (!axi_awready_i) rx_state_nxt = rx_state;
@@ -702,13 +712,12 @@ module iob_eth_dma #(
           // No-DMA interface
           rx_bd_cnt_o            = rx_bd_num;
           rx_word_cnt_o          = rx_buffer_byte_counter;
-          rx_frame_word_rvalid_o = 1'b0;
+    	  rx_frame_word_ready_o  = 1'b1;
           if (rx_frame_word_ren_i) begin
             rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
             eth_data_rd_addr_o         = rx_buffer_byte_counter + 1'b1;  // Update next word addr
             // Send word from buffer to CPU
             rx_frame_word_rdata_o      = eth_data_rd_rdata_i;
-            rx_frame_word_rvalid_o     = 1'b1;
           end
 
         end
@@ -745,6 +754,7 @@ module iob_eth_dma #(
 
         6: begin  // Wait for rcv_ack to be read by receiver
           rx_state_nxt = rx_state;
+	  rx_frame_word_ready_o = 1'b0;
           if (!rx_data_rcvd_i) begin
             rcv_ack_nxt  = 1'b0;
             rx_state_nxt = rx_state + 1'b1;
