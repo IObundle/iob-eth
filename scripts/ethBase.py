@@ -50,7 +50,8 @@ ETH_MINIMUM_NBYTES = 64 - 18
 # Frame header
 ETH_HEADER = dst_addr + src_addr + eth_type
 
-TIMEOUT = 0.1
+#TIMEOUT = 0.1
+TIMEOUT = 60
 
 # Open socket and bind
 def CreateSocket():
@@ -93,6 +94,15 @@ def FormPacket(payload):
 
     return ETH_HEADER + payload
 
+def RecvFrame(socket):
+    """ Receive a frame, ensuring it has our mac as destination addr """
+    while True:
+        rcv = socket.recv(4096)
+        # Ensure destination mac addr matches ours
+        if rcv[0:6] == src_addr:
+            break
+    return rcv
+
 
 def SendAndAck(socket, payload):
     """
@@ -107,18 +117,20 @@ def SendAndAck(socket, payload):
     prev_timeout = socket.gettimeout()
     socket.settimeout(TIMEOUT)
 
+    errors = 0
     while True:
         bytes_sent = socket.send(packet)
 
         try:
-            rcv = socket.recv(4096)
+            rcv = RecvFrame(socket)
             break
         except timeout:
+            print("Timeout") # DEBUG
+            errors += len(payload)
             pass
 
     socket.settimeout(prev_timeout)
 
-    errors = 0
     for sent_byte, rcv_byte in zip(payload, rcv[len(ETH_HEADER) :]):
         if sent_byte != rcv_byte:
             errors += 1
@@ -133,7 +145,7 @@ def RcvAndAck(socket):
     socket: socket for communication
     return: received payload data (bytes)
     """
-    rcv = socket.recv(4096)
+    rcv = RecvFrame(socket)
 
     payload = rcv[len(ETH_HEADER) :]
 
@@ -156,7 +168,7 @@ def SyncAckFirst(socket):
         socket.send(FormPacket(bytes("", encoding="ascii")))
 
         try:
-            rcv = socket.recv(4096)
+            rcv = RecvFrame(socket)
             break
         except timeout:
             pass

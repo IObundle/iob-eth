@@ -15,15 +15,24 @@ def file_2_eth(socket_object, file_object):
         socket_object.send(file_object.read(frame_size)[:-4])
 
 
-def eth_2_file(socket_object, file_object):
+def eth_2_file(socket_object, file_object, mac_filter=None):
+    # Convert mac_filter (str) to bytes
+    if type(mac_filter) == str:
+        mac_filter = int(mac_filter,16).to_bytes(6, 'big')
     while True:
-        frame_data, _ = socket_object.recvfrom(65536)
+        # Capture frames and check their destination mac
+        while True:
+            frame_data, _ = socket_object.recvfrom(65536)
+            print(f"*Capture {len(frame_data)} bytes") # DEBUG
+            if frame_data[0:6] == mac_filter:
+                break
         # Ensure soc has read the previous frame by checking file size
         while file_object.tell() > 0:
             file_object.seek(0, os.SEEK_END)
         # Write two bytes with size of frame_data
         frame_size = len(frame_data).to_bytes(2, byteorder="little")
         file_object.write(frame_size + frame_data)
+        print(f"*Sent frame {len(frame_data)} bytes") # DEBUG
 
 
 def file_2_eth_thread(socket_object, fifo_file_path):
@@ -33,11 +42,12 @@ def file_2_eth_thread(socket_object, fifo_file_path):
         file_2_eth(socket_object, input_file)
 
 
-def relay_frames(interface, input_file, output_file):
+def relay_frames(interface, input_file, output_file, mac_filter=None):
     """Relay frames from network device to file and vice-versa.
     param interface: name of network device
     param input_file: path to the generated input file. Will be a named pipe.
     param output_file: path to the generated output file
+    param mac_filter: Filter out frames that do not have specified MAC addr as destination
     """
 
     # Delete old files
@@ -53,22 +63,23 @@ def relay_frames(interface, input_file, output_file):
         f2e_thread.start()
 
         with open(output_file, "ab") as output_file:
-            eth_2_file(s, output_file)
+            eth_2_file(s, output_file, mac_filter)
 
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} <interface> <input_file> <output_file>")
+        print(f"Usage: {sys.argv[0]} <interface> <input_file> <output_file> [-f <dest_mac_addr>]")
         sys.exit(1)
 
     interface = sys.argv[1]
     input_file = sys.argv[2]
     output_file = sys.argv[3]
+    dest_mac_addr = sys.argv[sys.argv.index("-f") + 1] if "-f" in sys.argv else None,
 
     try:
-        relay_frames(interface, input_file, output_file)
+        relay_frames(interface, input_file, output_file, dest_mac_addr)
     except PermissionError as e:
         print(e)
         print(
