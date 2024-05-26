@@ -105,7 +105,7 @@ def RecvFrame(socket):
         # Ensure destination mac addr matches ours
         if rcv[0:6] == src_addr:
             break
-    print(f"#rcvd {len(rcv)} bytes")  # DEBUG
+    # print(f"#rcvd {len(rcv)} bytes")  # DEBUG
     return rcv
 
 

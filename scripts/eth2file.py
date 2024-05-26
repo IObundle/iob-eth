@@ -37,7 +37,7 @@ def eth_2_file(socket_object, file_object, mac_filter=None):
         # Not sure why but we need to move the cursor to make the Icarus testbench read
         # the file correctly.
         file_object.seek(0, os.SEEK_END)
-        print(f"*rcvd frame {len(frame_data)} bytes")  # DEBUG
+        # print(f"*rcvd frame {len(frame_data)} bytes")  # DEBUG
 
 
 def file_2_eth_thread(socket_object, fifo_file_path):

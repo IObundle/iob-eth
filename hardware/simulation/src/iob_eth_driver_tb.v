@@ -60,7 +60,7 @@ module iob_eth_driver_tb #(
     end
     $fclose(eth2soc_fd);
     soc2eth_fd = $fopen("soc2eth", "wb");
-    $display("Opened eth2soc and soc2eth");  // DEBUG
+    //$display("Opened eth2soc and soc2eth");  // DEBUG
 
     // Relay frames between files and ethernet core
     while (1) begin
@@ -71,16 +71,10 @@ module iob_eth_driver_tb #(
       end
       // Relay ethernet frames from core to file
       if (|rx_nbytes_reg) begin
-	$display("$e2f %0t", $time);  // DEBUG
-        //iob_read(`IOB_UART_RXDATA_ADDR, cpu_char, `IOB_UART_RXDATA_W);
-        //$fwriteh(soc2eth_fd, "%c", cpu_char);
-        //$fflush(soc2eth_fd);
-        // TODO: Use the non-DMA interface to read frame from core and
-        // write to file
-
+        //$display("$eth2file. %0t", $time);  // DEBUG
         relay_frame_eth_2_file(soc2eth_fd, rx_nbytes_reg);
         rx_nbytes_reg = 0;
-	$display("$e2f_done");  // DEBUG
+        //$display("$eth2file_done");  // DEBUG
       end
       // Relay ethernet frames from file to core
       if (txread_reg) begin
@@ -95,16 +89,6 @@ module iob_eth_driver_tb #(
           end
         end
         // Read file contents
-        // // TODO: Fix this to read whole frame
-        // n = $fscanf(eth2soc_fd, "%c", cpu_char);
-        // if (n > 0) begin
-        //   // TODO: Use non-DMA interface to write to core
-        //   iob_write(`IOB_UART_TXDATA_ADDR, cpu_char, `IOB_UART_TXDATA_W);
-        //   $fclose(eth2soc_fd);
-        //   eth2soc_fd = $fopen("./eth2soc", "w");
-        // end
-        // $fclose(eth2soc_fd);
-
         relay_frame_file_2_eth(eth2soc_fd);
         txread_reg = 0;
       end
@@ -124,7 +108,7 @@ module iob_eth_driver_tb #(
       // Continue if size read successfully
       if (n == 2) begin
         frame_size = (size_h << 8) | size_l;
-        $display("Received %d bytes from file %0t", frame_size, $time);  // DEBUG
+        //$display("file2eth received %d bytes. %0t", frame_size, $time);  // DEBUG
         // wait for ready
         while (!tx_ready_reg) eth_tx_ready(0, tx_ready_reg);
         // set frame size
@@ -143,7 +127,7 @@ module iob_eth_driver_tb #(
         $fclose(eth2soc_fd);
         // Delete frame from file
         eth2soc_fd = $fopen("./eth2soc", "wb");
-        $display("$f2e_done");  // DEBUG
+        //$display("$file2eth_done");  // DEBUG
       end  // n != 0
       $fclose(eth2soc_fd);
     end
@@ -164,16 +148,14 @@ module iob_eth_driver_tb #(
         $fwrite(soc2eth_fd, "%c", frame_byte);
       end
       $fflush(soc2eth_fd);
-      
+
       // Wait for BD status update (via ready/empty bit)
-      rval=0;
-      while (!rval)
-	eth_rx_ready(64, rval);
+      rval = 0;
+      while (!rval) eth_rx_ready(64, rval);
 
       // Check bad CRC
       eth_bad_crc(64, rval);
-      if (rval)
-        $display("Bad CRC!");
+      if (rval) $display("Bad CRC!");
 
       // Mark empty to allow receive next frame
       eth_set_empty(64, 1);

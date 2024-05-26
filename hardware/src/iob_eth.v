@@ -393,7 +393,7 @@ module iob_eth #(
       .axi_rvalid_i(axi_rvalid_i),  //Read channel valid.
       .axi_rready_o(axi_rready_o),  //Read channel ready.
 
-      // No-DMA interface TODO
+      // No-DMA interface
       .tx_bd_cnt_o(TX_BD_CNT_rdata_rd),
       .tx_word_cnt_o(TX_WORD_CNT_rdata_rd),
       .tx_frame_word_wen_i(FRAME_WORD_wen_wr),
@@ -426,7 +426,7 @@ module iob_eth #(
   assign RX_WORD_CNT_rvalid_rd = 1'b1;
   assign RX_WORD_CNT_rready_rd = 1'b1;
   assign RX_NBYTES_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
-  assign RX_NBYTES_rvalid_rd = ~rcv_ack; // Wait for ack complete
+  assign RX_NBYTES_rvalid_rd = ~rcv_ack;  // Wait for ack complete
   assign RX_NBYTES_rready_rd = 1'b1;
 
   wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2;
