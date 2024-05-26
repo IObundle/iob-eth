@@ -2,6 +2,7 @@
 
 Base functions for socket communication with board.
 """
+
 from socket import socket, AF_PACKET, AF_UNIX, SOCK_RAW, SOCK_SEQPACKET, htons, timeout
 import time
 import sys
@@ -9,7 +10,7 @@ import os
 
 
 def PrintBaseUsage():
-    print("<usage>: python eth_comm.py <RMAC>")
+    print("<usage>: python eth_comm.py <RMAC> <eth_interface> <timeout>")
 
 
 # Get interface name based on given MAC address
@@ -28,20 +29,20 @@ def get_eth_interface(mac_addr):
 
 
 # Check arguments common to all scripts
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     PrintBaseUsage()
     sys.exit()
 
 addr = "/tmp/tmpLocalSocket"
 
 # Ethernet parameters
-interface = get_eth_interface(sys.argv[1])
+interface = sys.argv[2]
 print(f"Using ethernet interface '{interface}'.")
 # use byte arrays by default
 src_addr = bytes.fromhex(sys.argv[1])  # sender MAC address
 dst_addr = bytes.fromhex("01606e11020f")  # receiver MAC address
 eth_type = bytes.fromhex("6000")  # ethernet frame type
-ETH_P_ALL = 0x6000
+ETH_P_ALL = 0x0003
 
 # Frame parameters
 ETH_NBYTES = 1500
@@ -50,8 +51,9 @@ ETH_MINIMUM_NBYTES = 64 - 18
 # Frame header
 ETH_HEADER = dst_addr + src_addr + eth_type
 
-#TIMEOUT = 0.1
-TIMEOUT = 60
+# TIMEOUT = 0.1
+TIMEOUT = int(sys.argv[3])
+
 
 # Open socket and bind
 def CreateSocket():
@@ -94,13 +96,16 @@ def FormPacket(payload):
 
     return ETH_HEADER + payload
 
+
 def RecvFrame(socket):
-    """ Receive a frame, ensuring it has our mac as destination addr """
+    """Receive a frame, ensuring it has our mac as destination addr"""
     while True:
-        rcv = socket.recv(4096)
+        rcv, _ = socket.recvfrom(4096)
+        # print(f"#detected frame {len(rcv)} bytes")  # DEBUG
         # Ensure destination mac addr matches ours
         if rcv[0:6] == src_addr:
             break
+    print(f"#rcvd {len(rcv)} bytes")  # DEBUG
     return rcv
 
 
@@ -125,7 +130,7 @@ def SendAndAck(socket, payload):
             rcv = RecvFrame(socket)
             break
         except timeout:
-            print("Timeout") # DEBUG
+            print("Eth send timeout!")
             errors += len(payload)
             pass
 
@@ -188,7 +193,7 @@ def SyncAckLast(socket):
 
     while True:
         try:
-            recv = socket.recv(4096)
+            rcv = RecvFrame(socket)
             break
         except timeout:
             pass

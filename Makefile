@@ -26,6 +26,8 @@ $(BUILD_DIR):
 
 setup: $(BUILD_DIR)
 
+.PHONY: setup
+
 
 #------------------------------------------------------------
 # SIMULATION
@@ -97,4 +99,15 @@ doc-build: clean
 	nix-shell --run "make setup && make -C $(BUILD_DIR)/ doc-build"
 	evince $(BUILD_DIR)/document/ug.pdf &
 
+.PHONY: doc-build
 
+# Create a virtual network interface
+virtual-network-if:
+	sudo modprobe dummy
+	sudo ip link add eth10 type dummy
+
+remove-virtual-network-if:
+	sudo ip link del eth10
+	sudo rmmod dummy
+
+.PHONY: virtual-network-if remove-virtual-network-if

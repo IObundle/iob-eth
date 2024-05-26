@@ -26,6 +26,18 @@ The following steps describe the process of creating an Ethernet peripheral in a
   3) Write the firmware to run in the system, including the `iob-eth.h` C header, and use its driver functions to control this core.
 5) Set the `RMAC_ADDR` and `IOB_CONSOLE_PYTHON_ENV` environment variables, as described [here](https://github.com/IObundle/iob-soc#ethernet).
 
+### Create a virtual network interface
+
+For simulation, we can use almost any network interface to connect the console script to the simulator's tesbench (via the eth2file script).
+You can select the network interface to use with the `ETH_IF` environment variable.
+
+For debugging purposes, we can use a virtual network interface dedicated to the project.
+Use the following command to create a virtual network interface named 'eth10':
+```Make
+make virtual-network-if
+```
+
+
 ## Example configuration
 
 The `iob_soc_sut.py` script of the [IOb-SoC-SUT](https://github.com/IObundle/iob-soc-sut) system, uses the following lines of code to instantiate an Ethernet peripheral with the instance name `ETH0`:
