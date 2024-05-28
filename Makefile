@@ -39,7 +39,7 @@ sim-build: clean
 
 sim-run: clean
 	nix-shell --run 'make clean setup'
-	nix-shell --run "make setup && make -C $(BUILD_DIR)/ sim-run"
+	nix-shell --run "make -C $(BUILD_DIR)/ sim-run"
 
 sim-waves:
 	nix-shell --run "make -C $(BUILD_DIR)/ sim-waves"

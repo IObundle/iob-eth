@@ -15,6 +15,10 @@ from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 from iob_ram_t2p import iob_ram_t2p
 from iob_ram_dp import iob_ram_dp
 from iob_acc import iob_acc
+from iob_tasks import iob_tasks
+from arbiter import arbiter
+from axi_ram import axi_ram
+from axi_interconnect import axi_interconnect
 
 
 class iob_eth(iob_module):
@@ -42,11 +46,42 @@ class iob_eth(iob_module):
                 iob_ram_t2p,
                 iob_ram_dp,
                 iob_acc,
+                arbiter,
+                ({"interface": "iob_m_port"}, {"purpose": "simulation"}),
+                (iob_tasks, {"purpose": "simulation"}),
+                (
+                    {
+                        "file_prefix": "bus2_",
+                        "interface": "axi_wire",
+                        "bus_size": 2,
+                    },
+                    {"purpose": "simulation"},
+                ),
+                (
+                    {
+                        "file_prefix": "memory_",
+                        "interface": "axi_wire",
+                        "wire_prefix": "memory_",
+                    },
+                    {"purpose": "simulation"},
+                ),
+                ({"interface": "clk_en_rst_s_portmap"}, {"purpose": "simulation"}),
+                (axi_ram, {"purpose": "simulation"}),
+                (axi_interconnect, {"purpose": "simulation"}),
             ]
         )
 
     @classmethod
     def _post_setup(cls):
+        # Copy simulation testbench utility files
+        dst = f"{cls.build_dir}/hardware/simulation/src"
+        os.makedirs(dst, exist_ok=True)
+        src = f"{__class__.setup_dir}/hardware/simulation/src"
+        src_file = os.path.join(src, "iob_eth_driver_tb.v")
+        shutil.copy2(src_file, dst)
+        src_file = os.path.join(src, "iob_eth_defines.vh")
+        shutil.copy2(src_file, dst)
+
         super()._post_setup()
 
         # Copy python script files
@@ -68,15 +103,6 @@ class iob_eth(iob_module):
             src_file = os.path.join(src, fname)
             if os.path.isfile(src_file):
                 shutil.copy2(src_file, dst)
-
-        # Copy simulation testbench utility files
-        dst = f"{cls.build_dir}/hardware/simulation/src"
-        os.makedirs(dst, exist_ok=True)
-        src = f"{__class__.setup_dir}/hardware/simulation/src"
-        src_file = os.path.join(src, "iob_eth_driver_tb.v")
-        shutil.copy2(src_file, dst)
-        src_file = os.path.join(src, "iob_eth_defines.vh")
-        shutil.copy2(src_file, dst)
 
     @classmethod
     def _setup_confs(cls):
