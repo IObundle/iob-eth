@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+`include "bsp.vh"
 `include "iob_utils.vh"
 `include "iob_eth_conf.vh"
 `include "iob_eth_swreg_def.vh"

@@ -98,3 +98,9 @@ task static eth_set_payload_size(input reg [ADDR_W-1:0] idx, input reg [ADDR_W-1
     IOB_ETH_SET_BD((rvalue & 32'h0000ffff) | size << 16, idx << 1);
   end
 endtask
+
+task static wait_phy_rst;
+  reg [DATA_W-1:0] rvalue=1;
+  while(rvalue)
+    IOB_ETH_GET_PHY_RST_VAL(rvalue);
+endtask

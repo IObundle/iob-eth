@@ -104,6 +104,10 @@ class iob_eth(iob_module):
             if os.path.isfile(src_file):
                 shutil.copy2(src_file, dst)
 
+        # Remove console eth simulation driver if this core is top
+        if cls.is_top_module:
+            os.remove(f"{cls.build_dir}/hardware/simulation/src/iob_eth_driver_tb.v")
+
     @classmethod
     def _setup_confs(cls):
         super()._setup_confs(

@@ -282,13 +282,13 @@ module iob_eth_mem_wrapper #(
   assign tb_awready = axi_awready[1*(1)+:1];  //output
   assign axi_wdata[1*(AXI_DATA_W)+:AXI_DATA_W] = tb_wdata;  //input
   assign axi_wstrb[1*((AXI_DATA_W/8))+:(AXI_DATA_W/8)] = {(AXI_DATA_W / 8) {1'b1}};  //input
-  assign axi_wlast[1*(1)+:1] = 1'b0;  //input
+  assign axi_wlast[1*(1)+:1] = 1'b1;  //input
   assign axi_wvalid[1*(1)+:1] = tb_wvalid;  //input
   assign tb_wready = axi_wready[1*(1)+:1];  //output
   //assign              axi_bid[1*(AXI_ID_W)+:AXI_ID_W];  //output
   //assign                            axi_bresp[1*(2)+:2];  //output
   //assign                            axi_bvalid[1*(1)+:1];  //output
-  assign axi_bready[1*(1)+:1] = 1'b0;  //input
+  assign axi_bready[1*(1)+:1] = 1'b1;  //input
   assign axi_arid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
   assign axi_araddr[1*(AXI_ADDR_W)+:AXI_ADDR_W] = tb_addr;  //input
   assign axi_arlen[1*(AXI_LEN_W)+:AXI_LEN_W] = {AXI_LEN_W{1'b0}};  //input

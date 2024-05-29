@@ -94,17 +94,18 @@ module iob_eth_tb;
 
     //Frame header
     frame_data = 'h66_55_44_33_22_11;
-    frame_data = frame_data + ('h66_55_44_33_22_11) << (6 * 8);
-    frame_data = frame_data + ('h06_00) << (12 * 8);
+    frame_data = frame_data | ('hFF_EE_DD_CC_BB_AA) << (6 * 8);
+    frame_data = frame_data | ('h06_00) << (12 * 8);
 
     // Frame payload
-    frame_data = frame_data + ('h16_15_14_13_12_11_10_09_08_07_06_05_04_03_02_01) << (14 * 8);
-    frame_data = frame_data + ('h32_31_30_29_28_27_26_25_24_23_22_21_20_19_18_17) << (30 * 8);
-    frame_data = frame_data + ('h48_47_46_45_44_43_42_41_40_39_38_37_36_35_34_33) << (46 * 8);
-    frame_data = frame_data + ('h64_63_62_61_60_59_58_57_56_55_54_53_52_51_50_49) << (62 * 8);
+    frame_data = frame_data | ('h16_15_14_13_12_11_10_09_08_07_06_05_04_03_02_01) << (14 * 8);
+    frame_data = frame_data | ('h32_31_30_29_28_27_26_25_24_23_22_21_20_19_18_17) << (30 * 8);
+    frame_data = frame_data | ('h48_47_46_45_44_43_42_41_40_39_38_37_36_35_34_33) << (46 * 8);
+    frame_data = frame_data | ('h64_63_62_61_60_59_58_57_56_55_54_53_52_51_50_49) << (62 * 8);
+    frame_data = frame_data | ('h66_65) << (78 * 8);
 
     // Frame size (header + payload)
-    frame_size = 14 + 64;
+    frame_size = 14 + 66;
 
 `ifdef VCD
     $dumpfile("iob_eth.vcd");
@@ -128,12 +129,16 @@ module iob_eth_tb;
     cpu_initeth();
 
     $display("Writing test frame to memory...");
-    $write("Frame data: ");
-    for (i = 0; i < frame_size >> 2; i = i + 1) begin
-      tb_mem_write(i, frame_data[i*32+:32]);
-      $write("%08x ", frame_data[i*32+:32]);
-      if (i % 08 == 4) $display("");
+    $write("\nTest frame data: ");
+    for (i = 0; i < frame_size; i = i + 4) begin
+      if (i % 16 == 0) $display("");
+      tb_mem_write(i, frame_data[i*8+:32]);
+      $write("%02x %02x %02x %02x ", frame_data[i*8+:8], frame_data[i*8+8+:8],
+             frame_data[i*8+16+:8], frame_data[i*8+24+:8]);
     end
+
+    $display("\n\nWaiting for PHY reset...");
+    wait_phy_rst();
 
     $display("Starting ethernet frame transmission via DMA...");
 
@@ -152,23 +157,25 @@ module iob_eth_tb;
     eth_bad_crc(64, rval);
     if (rval) $display("Bad CRC!");
 
-    $write("Received frame data: ");
-    for (i = 0; i < frame_size >> 2; i = i + 1) begin
+    $write("\nReceived frame data: ");
+    for (i = 0; i < frame_size; i = i + 4) begin
+      if (i % 16 == 0) $display("");
       tb_mem_read(i, frame_word);
-      $write("%08x ", frame_word);
-      if (i % 08 == 4) $display("");
-      if (frame_word != frame_data[i*32+:32]) begin
+      $write("%02x %02x %02x %02x ", frame_data[i*8+:8], frame_data[i*8+8+:8],
+             frame_data[i*8+16+:8], frame_data[i*8+24+:8]);
+      if (frame_word != frame_data[i*8+:32]) begin
         $display("\nERROR: Received frame data mismatch!");
         $finish;
       end
     end
 
-    $display("%c[1;34m", 27);
+    $display("\n%c[1;34m", 27);
     $display("Test completed successfully.");
     $display("%c[0m", 27);
     fd = $fopen("test.log", "w");
     $fdisplay(fd, "Test passed!");
     $fclose(fd);
+    $finish;
   end
 
   task static cpu_initeth;
@@ -223,12 +230,14 @@ module iob_eth_tb;
       @(posedge clk) #1 tb_awvalid = 1;  //sync and assign
       tb_addr = addr;
       #1 while (!tb_awready) #1;
+      @(posedge clk) #1;
       tb_awvalid = 0;
       tb_addr = 0;
 
       tb_wvalid = 1;
       tb_wdata = data;
       #1 while (!tb_wready) #1;
+      @(posedge clk) #1;
       tb_wvalid = 0;
       tb_wdata  = 0;
 
