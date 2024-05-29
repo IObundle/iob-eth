@@ -1,4 +1,4 @@
-export SIMULATOR ?= xcelium
+export SIMULATOR ?= icarus
 export BOARD ?= AES-KU040-DB-G
 export NODE ?= umc130
 
@@ -103,6 +103,7 @@ doc-build: clean
 virtual-network-if:
 	sudo modprobe dummy
 	sudo ip link add eth10 type dummy
+	sudo ifconfig eth10 up
 
 remove-virtual-network-if:
 	sudo ip link del eth10
