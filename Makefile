@@ -95,7 +95,7 @@ fpga-run:
 #------------------------------------------------------------
 doc-build: clean
 	nix-shell --run "make setup && make -C $(BUILD_DIR)/ doc-build"
-	evince $(BUILD_DIR)/document/ug.pdf &
+	xdg-open $(BUILD_DIR)/document/ug.pdf &
 
 .PHONY: doc-build
 

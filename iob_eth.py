@@ -121,7 +121,7 @@ class iob_eth(iob_module):
                     "val": "8'h55",
                     "min": "NA",
                     "max": "NA",
-                    "descr": "",
+                    "descr": "Ethernet packet preamble value",
                 },
                 {
                     "name": "PREAMBLE_LEN",
@@ -129,7 +129,7 @@ class iob_eth(iob_module):
                     "val": "7",  # Should it be 7 + 2 bytes to align data transfers?
                     "max": "NA",
                     "min": "NA",
-                    "descr": "",
+                    "descr": "Ethernet packet preamble length",
                 },
                 {
                     "name": "SFD",
@@ -145,7 +145,7 @@ class iob_eth(iob_module):
                     "val": "6",
                     "min": "NA",
                     "max": "NA",
-                    "descr": "",
+                    "descr": "Ethernet MAC address length",
                 },
                 # Parameters
                 {
@@ -212,7 +212,7 @@ class iob_eth(iob_module):
                     "val": "20'hFFFFF",
                     "min": "NA",
                     "max": "NA",
-                    "descr": "PHY reset counter value. Sets the duration of the PHY reset signal.",
+                    "descr": "PHY reset counter value. Sets the duration of the PHY reset signal",
                 },
                 {
                     "name": "BD_NUM_LOG2",
@@ -239,7 +239,7 @@ class iob_eth(iob_module):
             {"name": "iob_s_port", "descr": "CPU native interface", "ports": []},
             {
                 "name": "axi_m_port",
-                "descr": "AXI master interface for external memory.",
+                "descr": "AXI master interface for external memory",
                 "ports": [],
             },
             {
@@ -250,19 +250,19 @@ class iob_eth(iob_module):
                         "name": "clk_i",
                         "type": "I",
                         "n_bits": "1",
-                        "descr": "System clock input",
+                        "descr": "Clock input",
                     },
                     {
                         "name": "arst_i",
                         "type": "I",
                         "n_bits": "1",
-                        "descr": "System reset, asynchronous and active high",
+                        "descr": "Reset, asynchronous and active high",
                     },
                     {
                         "name": "cke_i",
                         "type": "I",
                         "n_bits": "1",
-                        "descr": "System clock enable signal",
+                        "descr": "Clock enable signal",
                     },
                     {
                         "name": "inta_o",
@@ -352,7 +352,7 @@ class iob_eth(iob_module):
                         "name": "phy_rstn_o",
                         "type": "O",
                         "n_bits": "1",
-                        "descr": "Reset signal for PHY.Duration configurable via PHY_RST_CNT parameter.",
+                        "descr": "Reset signal for PHY. Duration configurable via PHY_RST_CNT parameter.",
                     },
                 ],
             },
@@ -364,7 +364,7 @@ class iob_eth(iob_module):
         cls.regs += [
             {
                 "name": "iob_eth",
-                "descr": "IOb-Eth Software Accessible Registers.",
+                "descr": "IOb-Eth Software Accessible Registers",
                 "regs": [
                     {
                         "name": "MODER",
@@ -590,7 +590,7 @@ class iob_eth(iob_module):
                         "addr": 84,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Buffer descriptor number of current TX frame.",
+                        "descr": "Buffer descriptor number of current TX frame",
                     },
                     {
                         "name": "RX_BD_CNT",
@@ -600,7 +600,7 @@ class iob_eth(iob_module):
                         "addr": 88,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Buffer descriptor number of current RX frame.",
+                        "descr": "Buffer descriptor number of current RX frame",
                     },
                     {
                         "name": "TX_WORD_CNT",
@@ -610,7 +610,7 @@ class iob_eth(iob_module):
                         "addr": 92,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Word number of current TX frame.",
+                        "descr": "Word number of current TX frame",
                     },
                     {
                         "name": "RX_WORD_CNT",
@@ -620,7 +620,7 @@ class iob_eth(iob_module):
                         "addr": 96,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Word number of current RX frame.",
+                        "descr": "Word number of current RX frame",
                     },
                     {
                         "name": "RX_NBYTES",
@@ -630,7 +630,7 @@ class iob_eth(iob_module):
                         "addr": 100,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Number of received bytes.",
+                        "descr": "Number of received bytes",
                     },
                     {
                         "name": "FRAME_WORD",
@@ -640,7 +640,7 @@ class iob_eth(iob_module):
                         "addr": 104,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Frame word to transfer to/from buffer.",
+                        "descr": "Frame word to transfer to/from buffer",
                     },
                 ],
             },
@@ -662,7 +662,7 @@ class iob_eth(iob_module):
             },
             {
                 "name": "iob_eth_bd",
-                "descr": "IOb-Eth Buffer Descriptors.",
+                "descr": "IOb-Eth Buffer Descriptors",
                 "regs": [
                     {
                         "name": "BD",
@@ -672,7 +672,7 @@ class iob_eth(iob_module):
                         "addr": 1024,
                         "log2n_items": "BD_NUM_LOG2+1",
                         "autoreg": False,
-                        "descr": "Buffer descriptors.",
+                        "descr": "Buffer descriptors",
                     },
                 ],
             },
@@ -703,7 +703,7 @@ class iob_eth(iob_module):
                     ),
                     iob_module(
                         name="DMA",
-                        description="Direct Memory Access module. Writes received frames to memory and reads frames for transfer.",
+                        description="Direct Memory Access module. Writes received frames to memory and reads frames for transfer",
                     ),
                 ],
             ),
