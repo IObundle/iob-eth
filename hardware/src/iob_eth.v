@@ -312,7 +312,7 @@ module iob_eth #(
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
 
-  // DMA module
+  // Data transfer module (includes DMA)
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W),

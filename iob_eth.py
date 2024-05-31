@@ -580,7 +580,7 @@ class iob_eth(iob_module):
             },
             {
                 "name": "no_dma",
-                "descr": "Interface for use without DMA",
+                "descr": "Data transfer/status registers for use without DMA",
                 "regs": [
                     {
                         "name": "TX_BD_CNT",
@@ -630,7 +630,7 @@ class iob_eth(iob_module):
                         "addr": 100,
                         "log2n_items": 0,
                         "autoreg": False,
-                        "descr": "Number of received bytes",
+                        "descr": "Size of received frame in bytes. Will be zero if no frame has been received. Will reset to zero when cpu completes reading the frame.",
                     },
                     {
                         "name": "FRAME_WORD",
@@ -702,8 +702,8 @@ class iob_eth(iob_module):
                         description="Internal storage for immediate frame reception",
                     ),
                     iob_module(
-                        name="DMA",
-                        description="Direct Memory Access module. Writes received frames to memory and reads frames for transfer",
+                        name="Data Transfer",
+                        description="Data transfer module. Provides a Direct Memory Access (DMA) interface and an IOb-Native interface for frame data transfer. It writes received frames to CPU/memory and reads frames for transmission.",
                     ),
                 ],
             ),
