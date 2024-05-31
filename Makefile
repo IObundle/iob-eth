@@ -1,4 +1,4 @@
-export SIMULATOR ?= xcelium
+export SIMULATOR ?= icarus
 export BOARD ?= AES-KU040-DB-G
 export NODE ?= umc130
 
@@ -26,6 +26,8 @@ $(BUILD_DIR):
 
 setup: $(BUILD_DIR)
 
+.PHONY: setup
+
 
 #------------------------------------------------------------
 # SIMULATION
@@ -37,14 +39,12 @@ sim-build: clean
 
 sim-run: clean
 	nix-shell --run 'make clean setup'
-	nix-shell --run "make setup && make -C $(BUILD_DIR)/ sim-run"
+	nix-shell --run "make -C $(BUILD_DIR)/ sim-run"
 
 sim-waves:
 	nix-shell --run "make -C $(BUILD_DIR)/ sim-waves"
 
-sim-test: clean
-	nix-shell --run 'make clean setup'
-	nix-shell --run "make -C $(BUILD_DIR) sim-test"
+sim-test: sim-run
 
 .PNONY: sim-build sim-run sim-waves sim-test
 
@@ -95,6 +95,18 @@ fpga-run:
 #------------------------------------------------------------
 doc-build: clean
 	nix-shell --run "make setup && make -C $(BUILD_DIR)/ doc-build"
-	evince $(BUILD_DIR)/document/ug.pdf &
+	xdg-open $(BUILD_DIR)/document/ug.pdf &
 
+.PHONY: doc-build
 
+# Create a virtual network interface
+virtual-network-if:
+	sudo modprobe dummy
+	sudo ip link add eth10 type dummy
+	sudo ifconfig eth10 up
+
+remove-virtual-network-if:
+	sudo ip link del eth10
+	sudo rmmod dummy
+
+.PHONY: virtual-network-if remove-virtual-network-if
