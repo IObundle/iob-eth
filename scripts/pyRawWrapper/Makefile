@@ -2,7 +2,7 @@
 all: compile set-capabilities
 
 compile:
-	gcc -Wall -lcap pyRawWrapper.c -o pyRawWrapper
+	gcc -Wall pyRawWrapper.c -o pyRawWrapper -lcap
 	chmod 750 pyRawWrapper
 
 set-capabilities:
