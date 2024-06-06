@@ -52,7 +52,7 @@ ETH_MINIMUM_NBYTES = 64 - 18
 ETH_HEADER = dst_addr + src_addr + eth_type
 
 # TIMEOUT = 0.1
-TIMEOUT = int(sys.argv[3])
+TIMEOUT = float(sys.argv[3])
 
 
 # Open socket and bind
