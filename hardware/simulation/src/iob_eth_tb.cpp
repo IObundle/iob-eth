@@ -43,6 +43,14 @@ void call_eval(){
   dut->eval();
 }
 
+#if (VM_TRACE == 1)
+VerilatedVcdC *tfp = new VerilatedVcdC; // Create tracing object
+
+void call_dump(vluint64_t time){
+  tfp->dump(time);
+}
+#endif
+
 //
 // Main program
 //
@@ -52,6 +60,9 @@ int main(int argc, char **argv) {
   Verilated::commandArgs(argc, argv); // Init verilator context
   task_timer_settings.clk = &dut->clk_i;
   task_timer_settings.eval = call_eval;
+#if (VM_TRACE == 1)
+  task_timer_settings.dump = call_dump;
+#endif
 
   iob_native_t eth_if = {
     &dut->iob_valid_i,
@@ -96,7 +107,6 @@ int main(int argc, char **argv) {
 
 #if (VM_TRACE == 1)
   Verilated::traceEverOn(true);           // Enable tracing
-  VerilatedVcdC *tfp = new VerilatedVcdC; // Create tracing object
   dut->trace(tfp, 99);                    // Trace 99 levels of hierarchy
   tfp->open("uut.vcd");                   // Open tracing file
 #endif
@@ -104,6 +114,8 @@ int main(int argc, char **argv) {
   //init cpu bus signals
   *(eth_if.iob_valid) = 0;
   *(eth_if.iob_wstrb) = 0;
+
+  dut->cke_i = 1;
 
   // Reset signal
   dut->arst_i = 0;
@@ -168,6 +180,7 @@ int main(int argc, char **argv) {
       exit(EXIT_FAILURE);
     }
   }
+  VL_PRINTF("\n");
 
   dut->final();
 
@@ -179,6 +192,10 @@ int main(int argc, char **argv) {
 #endif
 
   delete dut;
+
+  std::cout << "\x1b[1;34m" << std::endl;
+  std::cout << "Test completed successfully." << std::endl;
+  std::cout << "\x1b[0m" << std::endl;
 
   std::ofstream log_file;
   log_file.open("test.log");
@@ -231,41 +248,40 @@ void reset_tb_memory(tb_mem_if_t *mem_if) {
 }
 
 void tb_mem_write(unsigned int addr, unsigned int data, tb_mem_if_t *mem_if) {
-  Timer(CLK_PERIOD);
+  Timer(1);
   *(mem_if->tb_awvalid) = 1;  //sync and assign
   *(mem_if->tb_addr) = addr;
-  Timer(CLK_PERIOD);
   while (!*(mem_if->tb_awready))
     Timer(CLK_PERIOD);
+  Timer(CLK_PERIOD); // Sync with next clk posedge + 1ns
   *(mem_if->tb_awvalid) = 0;
   *(mem_if->tb_addr) = 0;
 
   *(mem_if->tb_wvalid) = 1;
   *(mem_if->tb_wdata) = data;
-  Timer(CLK_PERIOD);
   while (!*(mem_if->tb_wready))
     Timer(CLK_PERIOD);
+  Timer(CLK_PERIOD); // Sync with next clk posedge + 1ns
   *(mem_if->tb_wvalid) = 0;
   *(mem_if->tb_wdata)  = 0;
+  Timer(CLK_PERIOD-1); // Sync with next clk posedge
 }
 
 unsigned int tb_mem_read(unsigned int addr, tb_mem_if_t *mem_if){
   unsigned int data;
 
-  Timer(CLK_PERIOD);
+  Timer(1);
   *(mem_if->tb_arvalid) = 1;  //sync and assign
   *(mem_if->tb_addr) = addr;
-  Timer(CLK_PERIOD);
   while (!*(mem_if->tb_arready))
     Timer(CLK_PERIOD);
   *(mem_if->tb_arvalid) = 0;
   *(mem_if->tb_addr) = 0;
 
-  Timer(CLK_PERIOD);
   while (!*(mem_if->tb_rvalid))
     Timer(CLK_PERIOD);
   data = *(mem_if->tb_rdata);
   *(mem_if->tb_rready) = 1;
-  Timer(CLK_PERIOD);
+  Timer(CLK_PERIOD-1); // Sync with next clk posedge
   return data;
 }
