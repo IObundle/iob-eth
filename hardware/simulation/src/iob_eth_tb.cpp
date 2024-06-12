@@ -14,10 +14,6 @@
 extern vluint64_t main_time;
 extern timer_settings_t task_timer_settings;
 
-double sc_time_stamp() { // Called by $time in Verilog
-  return main_time;
-}
-
 typedef struct {
   short unsigned int *tb_addr;
   unsigned char *tb_awvalid;
@@ -51,6 +47,11 @@ void call_dump(vluint64_t time){
 }
 #endif
 
+double sc_time_stamp() { // Called by $time in Verilog
+  return main_time;
+}
+
+
 //
 // Main program
 //
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
   iob_native_t eth_if = {
     &dut->iob_valid_i,
     &dut->iob_addr_i,
+    USINT,
     &dut->iob_wdata_i,
     &dut->iob_wstrb_i,
     &dut->iob_rdata_o,

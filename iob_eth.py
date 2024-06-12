@@ -81,6 +81,8 @@ class iob_eth(iob_module):
         shutil.copy2(src_file, dst)
         src_file = os.path.join(src, "iob_eth_defines.vh")
         shutil.copy2(src_file, dst)
+        src_file = os.path.join(src, "iob_eth_defines_verilator.h")
+        shutil.copy2(src_file, dst)
         src_file = os.path.join(src, "iob_eth_defines_tasks.vs")
         shutil.copy2(src_file, dst)
 
