@@ -1,5 +1,5 @@
-#include "iob_eth_driver_tb.h"
 #include "iob_eth_defines_verilator.h"
+#include "iob_eth_driver_tb.h"
 
 static FILE *eth2soc_fd;
 static FILE *soc2eth_fd;
