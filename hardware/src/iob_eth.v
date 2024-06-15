@@ -417,14 +417,14 @@ module iob_eth #(
   );
 
   // No-DMA interface signals
-  assign FRAME_WORD_rvalid_rd = 1'b1;
-  assign TX_BD_CNT_rvalid_rd = 1'b1;
+  assign FRAME_WORD_rvalid_rd = FRAME_WORD_ren_rd;
+  assign TX_BD_CNT_rvalid_rd = TX_BD_CNT_ren_rd;
   assign TX_BD_CNT_rready_rd = 1'b1;
-  assign RX_BD_CNT_rvalid_rd = 1'b1;
+  assign RX_BD_CNT_rvalid_rd = RX_BD_CNT_ren_rd;
   assign RX_BD_CNT_rready_rd = 1'b1;
-  assign TX_WORD_CNT_rvalid_rd = 1'b1;
+  assign TX_WORD_CNT_rvalid_rd = TX_WORD_CNT_ren_rd;
   assign TX_WORD_CNT_rready_rd = 1'b1;
-  assign RX_WORD_CNT_rvalid_rd = 1'b1;
+  assign RX_WORD_CNT_rvalid_rd = RX_WORD_CNT_ren_rd;
   assign RX_WORD_CNT_rready_rd = 1'b1;
   assign RX_NBYTES_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
   assign RX_NBYTES_rvalid_rd = ~rcv_ack;  // Wait for ack complete
