@@ -34,7 +34,12 @@ You can select the network interface to use with the `ETH_IF` environment variab
 For debugging purposes, we can use a virtual network interface dedicated to the project.
 Use the following command to create a virtual network interface named 'eth10':
 ```Make
-make virtual-network-if
+make virtual-network-if ETH_IF=eth10
+```
+
+We can later remove it by running the following command:
+```Make
+make remove-virtual-network-if ETH_IF=eth10
 ```
 
 
