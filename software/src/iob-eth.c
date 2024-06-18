@@ -218,7 +218,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int ignore;
 
   // Alloc memory for frame
-  volatile char *frame_ptr = (volatile char *) (*mem_alloc)(ETH_NBYTES+HDR_LEN);
+  volatile char *frame_ptr = (volatile char *) (*mem_alloc)(HDR_LEN+ETH_NBYTES+4);
 
   // Copy template to frame
   //for (i=0; i < TEMPLATE_LEN; i++)
