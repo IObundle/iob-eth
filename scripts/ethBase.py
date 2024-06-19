@@ -225,4 +225,4 @@ def TimedPrintProgress(current, n_frames):
         TimedPrintProgress.storedMilli = milli
 
 
-TimedPrintProgress.storedMilli = 0
+TimedPrintProgress.storedMilli = 0  # type: ignore
