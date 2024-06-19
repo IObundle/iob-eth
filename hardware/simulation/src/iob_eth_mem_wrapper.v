@@ -4,7 +4,18 @@
 `include "iob_eth_defines.vh"
 
 module iob_eth_mem_wrapper #(
-    `include "iob_eth_params.vs"
+    parameter integer ADDR_W = `IOB_ETH_SWREG_ADDR_W,
+    parameter integer DATA_W = 32,
+    parameter integer AXI_ID_W = 1,
+    // Fit at least two frames in memory (2 * 2^9 words * 4 byte-word)
+    // 12 is the minimum supported by axi_interconnect
+    parameter integer AXI_ADDR_W = 12,
+    parameter integer AXI_DATA_W = 32,
+    parameter integer AXI_LEN_W = 8,
+    parameter integer MEM_ADDR_OFFSET = `IOB_ETH_MEM_ADDR_OFFSET,
+    parameter integer PHY_RST_CNT = `IOB_ETH_PHY_RST_CNT,
+    parameter integer BD_NUM_LOG2 = `IOB_ETH_BD_NUM_LOG2,
+    parameter integer BUFFER_W = `IOB_ETH_BUFFER_W
 ) (
     // Eth IOb SWreg interface
     `include "iob_s_port.vs"

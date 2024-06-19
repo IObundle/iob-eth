@@ -77,12 +77,15 @@ class iob_eth(iob_module):
         dst = f"{cls.build_dir}/hardware/simulation/src"
         os.makedirs(dst, exist_ok=True)
         src = f"{__class__.setup_dir}/hardware/simulation/src"
-        src_file = os.path.join(src, "iob_eth_driver_tb.v")
-        shutil.copy2(src_file, dst)
-        src_file = os.path.join(src, "iob_eth_defines.vh")
-        shutil.copy2(src_file, dst)
-        src_file = os.path.join(src, "iob_eth_defines_tasks.vs")
-        shutil.copy2(src_file, dst)
+        for src_file in [
+            "iob_eth_driver_tb.v",
+            "iob_eth_driver_tb.h",
+            "iob_eth_driver_tb.cpp",
+            "iob_eth_defines.vh",
+            "iob_eth_defines_verilator.h",
+            "iob_eth_defines_tasks.vs",
+        ]:
+            shutil.copy2(os.path.join(src, src_file), dst)
 
         super()._post_setup()
 

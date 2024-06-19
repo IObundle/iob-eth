@@ -34,7 +34,6 @@ module iob_eth_driver_tb #(
 
   reg [10:0] rx_nbytes_reg;
   reg txread_reg;
-  reg [7:0] cpu_char;
   integer eth2soc_fd;
   integer soc2eth_fd;
 
@@ -49,7 +48,6 @@ module iob_eth_driver_tb #(
 
     rx_nbytes_reg = 0;
     txread_reg = 0;
-    cpu_char = 0;
 
 
     // Init simulation/real ethernet relay files
