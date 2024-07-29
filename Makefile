@@ -102,12 +102,12 @@ doc-build: clean
 # Create a virtual network interface
 ETH_IF ?= eth10
 virtual-network-if:
-	sudo modprobe dummy
-	sudo ip link add $(ETH_IF) type dummy
-	sudo ifconfig $(ETH_IF) up
+	su root -c "modprobe dummy;\
+	ip link add $(ETH_IF) type dummy;\
+	ifconfig $(ETH_IF) up"
 
 remove-virtual-network-if:
-	sudo ip link del $(ETH_IF)
-	sudo rmmod dummy
+	su root -c "ip link del $(ETH_IF);\
+	rmmod dummy"
 
 .PHONY: virtual-network-if remove-virtual-network-if
