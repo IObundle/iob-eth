@@ -7,6 +7,6 @@ compile:
 
 set-capabilities:
 	@echo "Setting CAP_NET_RAW capability..."
-	sudo setcap cap_net_raw,cap_setpcap=p pyRawWrapper
+	su root -c "setcap cap_net_raw,cap_setpcap=p pyRawWrapper"
 
 .PHONY: all compile set-capabilities
