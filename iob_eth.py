@@ -14,6 +14,7 @@ from iob_sync import iob_sync
 from iob_f2s_1bit_sync import iob_f2s_1bit_sync
 from iob_ram_t2p import iob_ram_t2p
 from iob_ram_dp import iob_ram_dp
+from iob_ram_2p import iob_ram_2p
 from iob_acc import iob_acc
 from iob_tasks import iob_tasks
 from arbiter import arbiter
@@ -45,6 +46,7 @@ class iob_eth(iob_module):
                 iob_f2s_1bit_sync,
                 iob_ram_t2p,
                 iob_ram_dp,
+                iob_ram_2p,
                 iob_acc,
                 arbiter,
                 ({"interface": "iob_m_port"}, {"purpose": "simulation"}),
