@@ -1,5 +1,5 @@
-#include "iob_eth_defines_verilator.h"
 #include "iob_eth_driver_tb.h"
+#include "iob_eth_defines_verilator.h"
 
 static FILE *eth2soc_fd;
 static FILE *soc2eth_fd;
@@ -10,7 +10,7 @@ static void relay_frame_eth_2_file(int frame_size, iob_native_t *eth_if);
 
 // Call this function once at start up
 void eth_setup(iob_native_t *eth_if) {
-  //init cpu bus signals
+  // init cpu bus signals
   *(eth_if->iob_valid) = 0;
   *(eth_if->iob_wstrb) = 0;
 
@@ -23,23 +23,24 @@ void eth_setup(iob_native_t *eth_if) {
   soc2eth_fd = fopen("./soc2eth", "wb");
 }
 
-// Call this function in main loop to keep relaying frames form file to core and vice versa
-void eth_relay_frames(iob_native_t *eth_if){
+// Call this function in main loop to keep relaying frames form file to core and
+// vice versa
+void eth_relay_frames(iob_native_t *eth_if) {
   int rx_nbytes_reg = 0;
 
   // Relay ethernet frames from core to file
   rx_nbytes_reg = IOB_ETH_GET_RX_NBYTES(eth_if);
   if (rx_nbytes_reg) {
-    //VL_PRINTF("$eth2file\n");  // DEBUG
+    // VL_PRINTF("$eth2file\n");  // DEBUG
     relay_frame_eth_2_file(rx_nbytes_reg, eth_if);
-    //VL_PRINTF("$eth2file_done\n");  // DEBUG
+    // VL_PRINTF("$eth2file_done\n");  // DEBUG
   }
   // Relay ethernet frames from file to core
   if (eth_tx_ready(0, eth_if)) {
     // Try to open file
     eth2soc_fd = fopen("./eth2soc", "rb");
     if (!eth2soc_fd) {
-      //wait 1 ms and try again
+      // wait 1 ms and try again
       usleep(1000);
       eth2soc_fd = fopen("./eth2soc", "rb");
       if (!eth2soc_fd) {
@@ -62,9 +63,10 @@ static void relay_frame_file_2_eth(iob_native_t *eth_if) {
   // Continue if size read successfully
   if (n == 2) {
     frame_size = (size_h << 8) | size_l;
-    //VL_PRINTF("$file2eth received %d bytes.\n", frame_size);  // DEBUG
-    // wait for ready
-    while (!eth_tx_ready(0, eth_if));
+    // VL_PRINTF("$file2eth received %d bytes.\n", frame_size);  // DEBUG
+    //  wait for ready
+    while (!eth_tx_ready(0, eth_if))
+      ;
     // set frame size
     eth_set_payload_size(0, frame_size, eth_if);
     // Set ready bit
@@ -81,8 +83,8 @@ static void relay_frame_file_2_eth(iob_native_t *eth_if) {
     fclose(eth2soc_fd);
     // Delete frame from file
     eth2soc_fd = fopen("./eth2soc", "wb");
-    //VL_PRINTF("$file2eth_done\n");  // DEBUG
-  }  // n != 0
+    // VL_PRINTF("$file2eth_done\n");  // DEBUG
+  } // n != 0
   fclose(eth2soc_fd);
 }
 
@@ -91,7 +93,7 @@ static void relay_frame_eth_2_file(int frame_size, iob_native_t *eth_if) {
   unsigned int i;
 
   // Write two bytes with frame size
-  fprintf(soc2eth_fd, "%c%c", frame_size&0xff, (frame_size>>8)&0x07);
+  fprintf(soc2eth_fd, "%c%c", frame_size & 0xff, (frame_size >> 8) & 0x07);
 
   // Read frame bytes from core and write to file
   for (i = 0; i < frame_size; i = i + 1) {
@@ -101,15 +103,16 @@ static void relay_frame_eth_2_file(int frame_size, iob_native_t *eth_if) {
   fflush(soc2eth_fd);
 
   // Wait for BD status update (via ready/empty bit)
-  while (!eth_rx_ready(64, eth_if));
+  while (!eth_rx_ready(64, eth_if))
+    ;
 
   // Check bad CRC
-  if (eth_bad_crc(64, eth_if)) VL_PRINTF("Bad CRC!\n");
+  if (eth_bad_crc(64, eth_if))
+    VL_PRINTF("Bad CRC!\n");
 
   // Mark empty to allow receive next frame
   eth_set_empty(64, 1, eth_if);
 }
-
 
 static void cpu_initeth(iob_native_t *eth_if) {
   eth_reset_bd_memory(eth_if);
