@@ -1,8 +1,9 @@
 `timescale 1ns / 1ps
 
-`include "iob_utils.vh"
 `include "iob_eth_conf.vh"
-`include "iob_eth_swreg_def.vh"
+`include "iob_eth_csrs_def.vh"
+
+`define IOB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 module iob_eth_dma #(
     parameter AXI_ADDR_W = 0,
@@ -48,7 +49,7 @@ module iob_eth_dma #(
     output                    rcv_ack_o,
 
     // AXI master interface
-    `include "axi_m_port.vs"
+    `include "iob_eth_axi_m_port.vs"
 
     // Interrupts
     output reg tx_irq_o,
@@ -83,7 +84,7 @@ module iob_eth_dma #(
   wire [1:0] bd_mem_arbiter_grant;
   wire bd_mem_arbiter_grant_valid;
   wire [$clog2(2)-1:0] bd_mem_arbiter_grant_encoded;
-  arbiter #(
+  iob_arbiter #(
       .PORTS(2),
       // arbitration type: "PRIORITY" or "ROUND_ROBIN"
       .TYPE("ROUND_ROBIN"),
