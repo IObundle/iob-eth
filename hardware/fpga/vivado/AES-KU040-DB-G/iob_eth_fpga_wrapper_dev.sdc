@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# IOb-Eth Example Constrain File
+# IOb_Eth Example Constrain File
 #
 # This file contains the ethernet core constraints for the AES-KU040-DB-G board.
 # ----------------------------------------------------------------------------

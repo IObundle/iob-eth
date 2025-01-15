@@ -5,7 +5,7 @@
 
 module iob_eth_tb;
   parameter integer CLK_PER = 10;
-  parameter integer ADDR_W = `IOB_ETH_SWREG_ADDR_W;
+  parameter integer ADDR_W = `IOB_ETH_CSRS_ADDR_W;
   parameter integer DATA_W = 32;
   parameter integer AXI_ID_W = 1;
   // Fit at least two frames in memory (2 * 2^9 words * 4 byte-word)
@@ -57,7 +57,7 @@ module iob_eth_tb;
       .BD_NUM_LOG2(BD_NUM_LOG2),
       .BUFFER_W(BUFFER_W)
   ) mem_wrapper (
-      // Eth IOb SWreg interface
+      // Eth IOb csrs interface
       `include "iob_s_s_portmap.vs"
 
       // Testbench memory control
@@ -261,7 +261,7 @@ module iob_eth_tb;
 
   `include "iob_eth_defines_tasks.vs"
 
-  `include "iob_eth_swreg_emb_tb.vs"
+  `include "iob_eth_csrs_emb_tb.vs"
 
   `include "iob_tasks.vs"
 

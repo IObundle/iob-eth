@@ -4,7 +4,7 @@
 `include "iob_eth_defines.vh"
 
 module iob_eth_mem_wrapper #(
-    parameter integer ADDR_W = `IOB_ETH_SWREG_ADDR_W,
+    parameter integer ADDR_W = `IOB_ETH_CSRS_ADDR_W,
     parameter integer DATA_W = 32,
     parameter integer AXI_ID_W = 1,
     // Fit at least two frames in memory (2 * 2^9 words * 4 byte-word)
@@ -17,7 +17,7 @@ module iob_eth_mem_wrapper #(
     parameter integer BD_NUM_LOG2 = `IOB_ETH_BD_NUM_LOG2,
     parameter integer BUFFER_W = `IOB_ETH_BUFFER_W
 ) (
-    // Eth IOb SWreg interface
+    // Eth IOb csrs interface
     `include "iob_s_port.vs"
 
     // Testbench memory control

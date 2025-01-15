@@ -1,11 +1,11 @@
 `include "iob_eth_conf.vh"
-`include "iob_eth_swreg_def.vh"
+`include "iob_eth_csrs_def.vh"
 
 /**********************
  * eth_frame_struct.h  
  **********************/
-`define ETH_TYPE_H 0x60
-`define ETH_TYPE_L 0x00
+`define ETH_TYPE_H 8'h60
+`define ETH_TYPE_L 8'h00
 
 `define ETH_NBYTES 1500
 `define ETH_MINIMUM_NBYTES (64-18)
@@ -54,13 +54,13 @@
 	)
 
 /* packet length register */
-`define	PACKETLEN_MIN(min)		(((min) & 0xffff) << 16)
-`define	PACKETLEN_MAX(max)		(((max) & 0xffff) <<  0)
+`define	PACKETLEN_MIN(min)		(((min) & 16'hffff) << 16)
+`define	PACKETLEN_MAX(max)		(((max) & 16'hffff) <<  0)
 `define	PACKETLEN_MIN_MAX(min, max)	(`PACKETLEN_MIN(min) | \
 					`PACKETLEN_MAX(max))
 
 /* transmit buffer number register */
-`define	TX_BD_NUM_VAL(x)	(((x) <= 0x80) ? (x) : 0x80)
+`define	TX_BD_NUM_VAL(x)	(((x) <= 8'h80) ? (x) : 8'h80)
 
 /* control module mode register */
 `define	CTRLMODER_PASSALL	(1 << 0) /* pass all receive frames */
@@ -68,7 +68,7 @@
 `define	CTRLMODER_TXFLOW	(1 << 2) /* transmit control flow */
 
 /* MII mode register */
-`define	MIIMODER_CLKDIV(x)	((x) & 0xfe) /* needs to be an even number */
+`define	MIIMODER_CLKDIV(x)	((x) & 8'hfe) /* needs to be an even number */
 `define	MIIMODER_NOPRE		(1 << 8) /* no preamble */
 
 /* MII command register */
@@ -77,16 +77,16 @@
 `define	MIICOMMAND_WRITE	(1 << 2) /* write control data */
 
 /* MII address register */
-`define	MIIADDRESS_FIAD(x)		(((x) & 0x1f) << 0)
-`define	MIIADDRESS_RGAD(x)		(((x) & 0x1f) << 8)
+`define	MIIADDRESS_FIAD(x)		(((x) & 8'h1f) << 0)
+`define	MIIADDRESS_RGAD(x)		(((x) & 8'h1f) << 8)
 `define	MIIADDRESS_ADDR(phy, reg)	(`MIIADDRESS_FIAD(phy) | \
 					`MIIADDRESS_RGAD(reg))
 
 /* MII transmit data register */
-`define	MIITX_DATA_VAL(x)	((x) & 0xffff)
+`define	MIITX_DATA_VAL(x)	((x) & 16'hffff)
 
 /* MII receive data register */
-`define	MIIRX_DATA_VAL(x)	((x) & 0xffff)
+`define	MIIRX_DATA_VAL(x)	((x) & 16'hffff)
 
 /* MII status register */
 `define	MIISTATUS_LINKFAIL	(1 << 0)
@@ -98,16 +98,16 @@
 `define	TX_BD_DF		(1 <<  1) /* defer indication */
 `define	TX_BD_LC		(1 <<  2) /* late collision */
 `define	TX_BD_RL		(1 <<  3) /* retransmission limit */
-`define	TX_BD_RETRY_MASK	(0x00f0)
-`define	TX_BD_RETRY(x)		(((x) & 0x00f0) >>  4)
+`define	TX_BD_RETRY_MASK	(16'h00f0)
+`define	TX_BD_RETRY(x)		(((x) & 16'h00f0) >>  4)
 `define	TX_BD_UR		(1 <<  8) /* transmitter underrun */
 `define	TX_BD_CRC		(1 << 11) /* TX CRC enable */
 `define	TX_BD_PAD		(1 << 12) /* pad enable for short packets */
 `define	TX_BD_WRAP		(1 << 13)
 `define	TX_BD_IRQ		(1 << 14) /* interrupt request enable */
 `define	TX_BD_READY		(1 << 15) /* TX buffer ready */
-`define	TX_BD_LEN(x)		(((x) & 0xffff) << 16)
-`define	TX_BD_LEN_MASK		(0xffff << 16)
+`define	TX_BD_LEN(x)		(((x) & 16'hffff) << 16)
+`define	TX_BD_LEN_MASK		(16'hffff << 16)
 
 `define	TX_BD_STATS		(`TX_BD_CS | `TX_BD_DF | `TX_BD_LC | \
 				`TX_BD_RL | `TX_BD_RETRY_MASK | `TX_BD_UR)
@@ -125,13 +125,13 @@
 `define	RX_BD_WRAP	(1 << 13)
 `define	RX_BD_IRQ	(1 << 14) /* interrupt request enable */
 `define	RX_BD_EMPTY	(1 << 15)
-`define	RX_BD_LEN(x)	(((x) & 0xffff) << 16)
+`define	RX_BD_LEN(x)	(((x) & 16'hffff) << 16)
 
 `define	RX_BD_STATS	(`RX_BD_LC | `RX_BD_CRC | `RX_BD_SF | `RX_BD_TL | \
 			`RX_BD_DN | `RX_BD_IS | `RX_BD_OR | `RX_BD_MISS)
 
 // fields
-`define ETH_MAC_ADDR 0x01606e11020f
+`define ETH_MAC_ADDR 48'h01606e11020f
 
 // Rx return codes
 `define ETH_INVALID_CRC -2
@@ -147,7 +147,7 @@
 
 `define TEMPLATE_LEN     (`PAYLOAD_PTR)
 
-`define DWORD_ALIGN(val) ((val + 0x3) & ~0x3)
+`define DWORD_ALIGN(val) ((val + 4'h3) & ~4'h3)
 
 `define ETH_DEBUG_PRINT 1
 
