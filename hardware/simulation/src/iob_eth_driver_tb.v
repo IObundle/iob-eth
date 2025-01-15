@@ -1,12 +1,17 @@
 `timescale 1ns / 1ps
 
-`include "iob_utils.vh"
 `include "iob_eth_defines.vh"
 
 module iob_eth_driver_tb #(
     `include "iob_eth_params.vs"
 ) (
-    `include "iob_m_port.vs"
+    output [1-1:0] iob_valid_o,
+    output [ADDR_W-1:0] iob_addr_o,
+    output [DATA_W-1:0] iob_wdata_o,
+    output [(DATA_W/8)-1:0] iob_wstrb_o,
+    input [1-1:0] iob_rvalid_i,
+    input [DATA_W-1:0] iob_rdata_i,
+    input [1-1:0] iob_ready_i,
     input clk_i
 );
 
@@ -14,7 +19,7 @@ module iob_eth_driver_tb #(
 
   //IOb-SoC ethernet
   reg                              iob_valid_i;
-  reg  [`IOB_ETH_SWREG_ADDR_W-1:0] iob_addr_i;
+  reg  [`IOB_ETH_CSRS_ADDR_W-1:0] iob_addr_i;
   reg  [               DATA_W-1:0] iob_wdata_i;
   reg  [                      3:0] iob_wstrb_i;
   wire [               DATA_W-1:0] iob_rdata_o;
@@ -188,7 +193,7 @@ module iob_eth_driver_tb #(
 
   `include "iob_eth_defines_tasks.vs"
 
-  `include "iob_eth_swreg_emb_tb.vs"
+  `include "iob_eth_csrs_emb_tb.vs"
 
   `include "iob_tasks.vs"
 
