@@ -6,7 +6,6 @@ import shutil
 import sys
 import os
 import subprocess
-from iob_base import nix_permission_hack
 
 sys.path.append(f"{os.path.dirname(__file__)}/scripts/")
 from gen_custom_config_build import gen_custom_config_build
@@ -14,6 +13,34 @@ from gen_custom_config_build import gen_custom_config_build
 
 def setup(py_params_dict):
     gen_custom_config_build(py_params_dict)
+
+    pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
+    # Check if pyRawWrapper exists
+    if not os.path.exists(pyRawWrapper_path):
+        print("Create pyRawWrapper for RAW access to ethernet frames")
+
+        # Run make compile
+        subprocess.run(
+            [
+                "make",
+                "-C",
+                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+                "compile",
+            ],
+            check=True,
+        )
+
+        # Run sudo make set-capabilities
+        subprocess.run(
+            [
+                "sudo",
+                "make",
+                "-C",
+                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+                "set-capabilities",
+            ],
+            check=True,
+        )
 
     # Copy simulation testbench utility files
     dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
@@ -28,32 +55,12 @@ def setup(py_params_dict):
         "iob_eth_defines_tasks.vs",
     ]:
         shutil.copy2(os.path.join(src, src_file), dst)
-        nix_permission_hack(dst)
 
     shutil.copytree(
         f"{os.path.dirname(__file__)}/scripts",
         f"{py_params_dict['build_dir']}/scripts",
         dirs_exist_ok=True,
     )
-    nix_permission_hack(f"{py_params_dict['build_dir']}/scripts")
-
-     # Check if pyRawWrapper exists
-    pyRawWrapper_path = f"{py_params_dict['build_dir']}/scripts/pyRawWrapper/pyRawWrapper"
-
-    if not os.path.exists(pyRawWrapper_path):
-        print("Create pyRawWrapper for RAW access to ethernet frames")
-
-        # Run make compile
-        subprocess.run(
-            ["make", "-C", f"{py_params_dict['build_dir']}/scripts/pyRawWrapper", "compile"],
-            check=True
-        )
-
-        # Run sudo make set-capabilities
-        subprocess.run(
-            ["sudo", "make", "-C", f"{py_params_dict['build_dir']}/scripts/pyRawWrapper", "set-capabilities"],
-            check=True
-        )
 
     attributes_dict = {
         "generate_hw": True,
