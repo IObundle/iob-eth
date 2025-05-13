@@ -1,33 +1,20 @@
-export SIMULATOR ?= icarus
-export BOARD ?= AES-KU040-DB-G
-export NODE ?= umc130
+CORE := iob_eth
+
+SIMULATOR ?= icarus
+LINTER ?= spyglass
+BOARD ?= iob_ku040_db_g
+
+BUILD_DIR ?= $(shell nix-shell --run "py2hwsw $(CORE) print_build_dir")
+VERSION ?=$(shell cat $(CORE).py | grep version | cut -d '"' -f 4)
 
 #------------------------------------------------------------
 # SETUP
 #------------------------------------------------------------
-CORE := iob_eth
-LIB_DIR ?= ../IOBSOC/submodules/LIB
 
-DISABLE_LINT:=1
-
-PROJECT_ROOT := ..
-
-TOP_MODULE_NAME :=iob_eth
-
-include ../IOBSOC/submodules/LIB/setup.mk
-
-
-
-BUILD_DIR = ../$(CORE)_V*
-
-$(BUILD_DIR):
-	nix-shell --run 'make build-setup SETUP_ARGS="$(SETUP_ARGS)"'
-
-
-setup: $(BUILD_DIR)
+setup:
+	nix-shell --run "py2hwsw $(CORE) setup --no_verilog_lint $(EXTRA_ARGS)"
 
 .PHONY: setup
-
 
 #------------------------------------------------------------
 # SIMULATION
@@ -46,9 +33,10 @@ sim-waves:
 
 sim-test: sim-run
 
-.PNONY: sim-build sim-run sim-waves sim-test
+.PHONY: sim-build sim-run sim-waves sim-test
 
 
+# TODO: update targets below
 #------------------------------------------------------------
 # FPGA
 #------------------------------------------------------------
@@ -111,3 +99,10 @@ remove-virtual-network-if:
 	rmmod dummy"
 
 .PHONY: virtual-network-if remove-virtual-network-if
+
+clean:
+	nix-shell --run "py2hwsw $(CORE) clean --build_dir '$(BUILD_DIR)'"
+	@rm -rf ../*.summary ../*.rpt
+	@find . -name \*~ -delete
+
+.PHONY: clean

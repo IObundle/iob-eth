@@ -58,7 +58,7 @@ module iob_eth_tb;
       .BUFFER_W(BUFFER_W)
   ) mem_wrapper (
       // Eth IOb csrs interface
-      `include "iob_s_s_portmap.vs"
+      `include "iob_eth_iob_s_s_portmap.vs"
 
       // Testbench memory control
       .tb_addr(tb_addr),
@@ -73,7 +73,7 @@ module iob_eth_tb;
       .tb_rvalid(tb_rvalid),
       .tb_rready(tb_rready),
 
-      `include "clk_en_rst_s_portmap.vs"
+      `include "iob_eth_iob_clk_s_portmap.vs"
   );
 
   // Drive clock

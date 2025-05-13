@@ -18,7 +18,7 @@ module iob_eth_mem_wrapper #(
     parameter integer BUFFER_W = `IOB_ETH_BUFFER_W
 ) (
     // Eth IOb csrs interface
-    `include "iob_s_port.vs"
+    `include "iob_eth_iob_s_port.vs"
 
     // Testbench memory control
     input [AXI_ADDR_W-1:0] tb_addr,
@@ -33,7 +33,7 @@ module iob_eth_mem_wrapper #(
     output tb_rvalid,
     input tb_rready,
 
-    `include "clk_en_rst_s_port.vs"
+    `include "iob_eth_iob_clk_s_port.vs"
 );
 
   // ETH SIDE
@@ -42,10 +42,78 @@ module iob_eth_mem_wrapper #(
   wire       mii_en;
 
   // DMA wires
-  `include "bus2_axi_wire.vs"
+  wire [(2*AXI_ADDR_W)-1:0] axi_araddr;
+  wire [(2*1)-1:0] axi_arvalid;
+  wire [(2*1)-1:0] axi_arready;
+  wire [(2*AXI_DATA_W)-1:0] axi_rdata;
+  wire [(2*2)-1:0] axi_rresp;
+  wire [(2*1)-1:0] axi_rvalid;
+  wire [(2*1)-1:0] axi_rready;
+  wire [(2*AXI_ID_W)-1:0] axi_arid;
+  wire [(2*AXI_LEN_W)-1:0] axi_arlen;
+  wire [(2*3)-1:0] axi_arsize;
+  wire [(2*2)-1:0] axi_arburst;
+  wire [(2*2)-1:0] axi_arlock;
+  wire [(2*4)-1:0] axi_arcache;
+  wire [(2*4)-1:0] axi_arqos;
+  wire [(2*AXI_ID_W)-1:0] axi_rid;
+  wire [(2*1)-1:0] axi_rlast;
+  wire [(2*AXI_ADDR_W)-1:0] axi_awaddr;
+  wire [(2*1)-1:0] axi_awvalid;
+  wire [(2*1)-1:0] axi_awready;
+  wire [(2*AXI_DATA_W)-1:0] axi_wdata;
+  wire [(2*(AXI_DATA_W/8))-1:0] axi_wstrb;
+  wire [(2*1)-1:0] axi_wvalid;
+  wire [(2*1)-1:0] axi_wready;
+  wire [(2*2)-1:0] axi_bresp;
+  wire [(2*1)-1:0] axi_bvalid;
+  wire [(2*1)-1:0] axi_bready;
+  wire [(2*AXI_ID_W)-1:0] axi_awid;
+  wire [(2*AXI_LEN_W)-1:0] axi_awlen;
+  wire [(2*3)-1:0] axi_awsize;
+  wire [(2*2)-1:0] axi_awburst;
+  wire [(2*2)-1:0] axi_awlock;
+  wire [(2*4)-1:0] axi_awcache;
+  wire [(2*4)-1:0] axi_awqos;
+  wire [(2*1)-1:0] axi_wlast;
+  wire [(2*AXI_ID_W)-1:0] axi_bid;
 
   // Wires to connect the interconnect with the memory
-  `include "memory_axi_wire.vs"
+  wire [AXI_ADDR_W-1:0] memory_axi_araddr;
+  wire [1-1:0] memory_axi_arvalid;
+  wire [1-1:0] memory_axi_arready;
+  wire [AXI_DATA_W-1:0] memory_axi_rdata;
+  wire [2-1:0] memory_axi_rresp;
+  wire [1-1:0] memory_axi_rvalid;
+  wire [1-1:0] memory_axi_rready;
+  wire [AXI_ID_W-1:0] memory_axi_arid;
+  wire [AXI_LEN_W-1:0] memory_axi_arlen;
+  wire [3-1:0] memory_axi_arsize;
+  wire [2-1:0] memory_axi_arburst;
+  wire [2-1:0] memory_axi_arlock;
+  wire [4-1:0] memory_axi_arcache;
+  wire [4-1:0] memory_axi_arqos;
+  wire [AXI_ID_W-1:0] memory_axi_rid;
+  wire [1-1:0] memory_axi_rlast;
+  wire [AXI_ADDR_W-1:0] memory_axi_awaddr;
+  wire [1-1:0] memory_axi_awvalid;
+  wire [1-1:0] memory_axi_awready;
+  wire [AXI_DATA_W-1:0] memory_axi_wdata;
+  wire [(AXI_DATA_W/8)-1:0] memory_axi_wstrb;
+  wire [1-1:0] memory_axi_wvalid;
+  wire [1-1:0] memory_axi_wready;
+  wire [2-1:0] memory_axi_bresp;
+  wire [1-1:0] memory_axi_bvalid;
+  wire [1-1:0] memory_axi_bready;
+  wire [AXI_ID_W-1:0] memory_axi_awid;
+  wire [AXI_LEN_W-1:0] memory_axi_awlen;
+  wire [3-1:0] memory_axi_awsize;
+  wire [2-1:0] memory_axi_awburst;
+  wire [2-1:0] memory_axi_awlock;
+  wire [4-1:0] memory_axi_awcache;
+  wire [4-1:0] memory_axi_awqos;
+  wire [1-1:0] memory_axi_wlast;
+  wire [AXI_ID_W-1:0] memory_axi_bid;
 
   //ethernet clock: 4x slower than system clock
   reg [1:0] eth_cnt = 2'b0;
@@ -80,7 +148,7 @@ module iob_eth_mem_wrapper #(
 
       .phy_rstn_o(),
 
-      `include "iob_s_s_portmap.vs"
+      `include "iob_eth_iob_s_s_portmap.vs"
 
       // Connect DMA interface to interconnect (bus index 0)
       .axi_awid_o(axi_awid[0+:AXI_ID_W]),

@@ -43,24 +43,25 @@ def setup(py_params_dict):
         )
 
     # Copy simulation testbench utility files
-    dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
-    os.makedirs(dst, exist_ok=True)
-    src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
-    for src_file in [
-        "iob_eth_driver_tb.v",
-        "iob_eth_driver_tb.h",
-        "iob_eth_driver_tb.cpp",
-        "iob_eth_defines.vh",
-        "iob_eth_defines_verilator.h",
-        "iob_eth_defines_tasks.vs",
-    ]:
-        shutil.copy2(os.path.join(src, src_file), dst)
+    if py_params_dict["build_dir"]:
+        dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
+        os.makedirs(dst, exist_ok=True)
+        src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
+        for src_file in [
+            # "iob_eth_driver_tb.v",
+            # "iob_eth_driver_tb.h",
+            # "iob_eth_driver_tb.cpp",
+            "iob_eth_defines.vh",
+            "iob_eth_defines_verilator.h",
+            "iob_eth_defines_tasks.vs",
+        ]:
+            shutil.copy2(os.path.join(src, src_file), dst)
 
-    shutil.copytree(
-        f"{os.path.dirname(__file__)}/scripts",
-        f"{py_params_dict['build_dir']}/scripts",
-        dirs_exist_ok=True,
-    )
+        shutil.copytree(
+            f"{os.path.dirname(__file__)}/scripts",
+            f"{py_params_dict['build_dir']}/scripts",
+            dirs_exist_ok=True,
+        )
 
     attributes_dict = {
         "generate_hw": True,
@@ -180,7 +181,7 @@ def setup(py_params_dict):
                 "name": "clk_en_rst_s",
                 "descr": "Clock, clock enable and reset",
                 "signals": {
-                    "type": "clk_en_rst",
+                    "type": "iob_clk",
                 },
             },
             {
@@ -453,6 +454,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
                     {"name": "tx_bd_cnt_rvalid_rd", "width": 1},
+                    {"name": "tx_bd_cnt_rready_rd", "width": 1},
                     {"name": "tx_bd_cnt_ren_rd", "width": 1},
                     {"name": "tx_bd_cnt_rready_rd", "width": 1},
                 ],
@@ -463,6 +465,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
                     {"name": "rx_bd_cnt_rvalid_rd", "width": 1},
+                    {"name": "rx_bd_cnt_rready_rd", "width": 1},
                     {"name": "rx_bd_cnt_ren_rd", "width": 1},
                     {"name": "rx_bd_cnt_rready_rd", "width": 1},
                 ],
@@ -473,6 +476,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_word_cnt_rdata_rd", "width": "BUFFER_W"},
                     {"name": "tx_word_cnt_rvalid_rd", "width": 1},
+                    {"name": "tx_word_cnt_rready_rd", "width": 1},
                     {"name": "tx_word_cnt_ren_rd", "width": 1},
                     {"name": "tx_word_cnt_rready_rd", "width": 1},
                 ],
@@ -483,6 +487,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_word_cnt_rdata_rd", "width": "BUFFER_W"},
                     {"name": "rx_word_cnt_rvalid_rd", "width": 1},
+                    {"name": "rx_word_cnt_rready_rd", "width": 1},
                     {"name": "rx_word_cnt_ren_rd", "width": 1},
                     {"name": "rx_word_cnt_rready_rd", "width": 1},
                 ],
@@ -493,6 +498,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_nbytes_rdata_rd", "width": "BUFFER_W"},
                     {"name": "rx_nbytes_rvalid_rd", "width": 1},
+                    {"name": "rx_nbytes_rready_rd", "width": 1},
                     {"name": "rx_nbytes_ren_rd", "width": 1},
                     {"name": "rx_nbytes_rready_rd", "width": 1},
                 ],
@@ -506,6 +512,7 @@ def setup(py_params_dict):
                     {"name": "frame_word_wready_wr", "width": 1},
                     {"name": "frame_word_rdata_rd", "width": 8},
                     {"name": "frame_word_rvalid_rd", "width": 1},
+                    {"name": "frame_word_rready_rd", "width": 1},
                     {"name": "frame_word_ren_rd", "width": 1},
                     {"name": "frame_word_rready_rd", "width": 1},
                 ],
@@ -528,6 +535,7 @@ def setup(py_params_dict):
                     {"name": "bd_raddr_rd", "width": "BD_NUM_LOG2+1"},
                     {"name": "bd_rdata_rd", "width": 32},
                     {"name": "bd_rvalid_rd", "width": 1},
+                    {"name": "bd_rready_rd", "width": 1},
                     {"name": "bd_ren_rd", "width": 1},
                     {"name": "bd_rready_rd", "width": 1},
                 ],
@@ -920,14 +928,16 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
         ],
-        "superblocks": [
+    }
+
+    if py_params_dict["build_dir"]:
+        attributes_dict["superblocks"] = [
             # Simulation wrapper
             {
                 "core_name": "iob_sim",
                 "instance_name": "iob_sim",
                 "dest_dir": "hardware/simulation/src",
             },
-        ],
-    }
+        ]
 
     return attributes_dict

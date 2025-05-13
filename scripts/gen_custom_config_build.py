@@ -43,7 +43,8 @@ IOB_CONSOLE_PYTHON_ENV ?= {setup_dir}
 endif
 """
 
-    file_path = os.path.join(py_params_dict["build_dir"], "custom_config_build.mk")
-    with open(file_path, "w") as f:
-        f.write(content)
-        f.close()
+    if py_params_dict["build_dir"] and os.path.exists(py_params_dict["build_dir"]):
+        file_path = os.path.join(py_params_dict["build_dir"], "custom_config_build.mk")
+        with open(file_path, "w") as f:
+            f.write(content)
+            f.close()
