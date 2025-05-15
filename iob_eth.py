@@ -44,19 +44,19 @@ def setup(py_params_dict):
 
     # Copy simulation testbench utility files
     if py_params_dict["build_dir"]:
-        dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
-        os.makedirs(dst, exist_ok=True)
-        src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
-        for src_file in [
-            # "iob_eth_driver_tb.v",
-            # "iob_eth_driver_tb.h",
-            # "iob_eth_driver_tb.cpp",
-            "iob_eth_defines.vh",
-            "iob_eth_defines_verilator.h",
-            "iob_eth_defines_tasks.vs",
-        ]:
-            shutil.copy2(os.path.join(src, src_file), dst)
-
+        # dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
+        # os.makedirs(dst, exist_ok=True)
+        # src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
+        # for src_file in [
+        #     # "iob_eth_driver_tb.v",
+        #     # "iob_eth_driver_tb.h",
+        #     # "iob_eth_driver_tb.cpp",
+        #     "iob_eth_defines.vh",
+        #     "iob_eth_defines_verilator.h",
+        #     "iob_eth_defines_tasks.vs",
+        # ]:
+        #     shutil.copy2(os.path.join(src, src_file), dst)
+        #
         shutil.copytree(
             f"{os.path.dirname(__file__)}/scripts",
             f"{py_params_dict['build_dir']}/scripts",

@@ -2,7 +2,6 @@ import os
 
 
 def gen_custom_config_build(py_params_dict):
-
     setup_dir = f"{os.path.dirname(__file__)}/pyRawWrapper/pyRawWrapper"
 
     content = f"""
