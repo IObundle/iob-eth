@@ -185,15 +185,6 @@ def setup(py_params_dict):
                 },
             },
             {
-                "name": "cbus_s",
-                "descr": "CPU native interface",
-                "signals": {
-                    "type": "iob",
-                    "ADDR_W": 12 - 2,
-                    "DATA_W": "DATA_W",
-                },
-            },
-            {
                 "name": "axi_m",
                 "descr": "AXI master interface for external memory",
                 "signals": {
@@ -544,7 +535,7 @@ def setup(py_params_dict):
         "subblocks": [
             {
                 "core_name": "iob_csrs",
-                "instance_name": "csrs_inst",
+                "instance_name": "iob_csrs",
                 "instance_description": "Control/Status Registers",
                 "autoaddr": False,
                 "rw_overlap": True,
@@ -865,8 +856,8 @@ def setup(py_params_dict):
                     },
                 ],
                 "connect": {
+                    # iob_csrs 'control_if_s' port is connected automatically by py2hwsw
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "control_if_s": "cbus_s",
                     # Register interfaces
                     "moder_io": "moder",
                     "int_source_io": "int_source",
@@ -930,14 +921,12 @@ def setup(py_params_dict):
         ],
     }
 
-    if py_params_dict["build_dir"]:
-        attributes_dict["superblocks"] = [
-            # Simulation wrapper
-            {
-                "core_name": "iob_sim",
-                "instance_name": "iob_sim",
-                "dest_dir": "hardware/simulation/src",
-            },
-        ]
+    attributes_dict["superblocks"] = [
+        # Simulation wrapper
+        {
+            "core_name": "iob_eth_sim",
+            "dest_dir": "hardware/simulation/src",
+        },
+    ]
 
     return attributes_dict
