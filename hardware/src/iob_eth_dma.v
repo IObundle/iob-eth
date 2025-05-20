@@ -64,6 +64,7 @@ module iob_eth_dma #(
     output reg [11-1:0] rx_word_cnt_o,
     input rx_frame_word_ren_i,
     output reg [8-1:0] rx_frame_word_rdata_o,
+    output reg rx_frame_word_rready_o,
     output reg rx_frame_word_ready_o,
 
     input clk_i,
@@ -595,6 +596,7 @@ module iob_eth_dma #(
     rx_bd_cnt_o                = 1'b0;
     rx_word_cnt_o              = 1'b0;
     rx_frame_word_rdata_o      = 1'b0;
+    rx_frame_word_rready_o     = 1'b0;
     rx_frame_word_ready_o      = 1'b0;
 
     axi_awaddr_o_reg           = 1'b0;
@@ -624,6 +626,7 @@ module iob_eth_dma #(
       rx_bd_cnt_o            = 1'b0;
       rx_word_cnt_o          = 1'b0;
       rx_frame_word_rdata_o  = 1'b0;
+      rx_frame_word_rready_o = 1'b0;
       rx_frame_word_ready_o  = 1'b0;
 
     end else begin
@@ -707,6 +710,7 @@ module iob_eth_dma #(
             eth_data_rd_addr_o         = rx_buffer_byte_counter + 1'b1;  // Update next word addr
             // Send word from buffer to CPU
             rx_frame_word_rdata_o      = eth_data_rd_rdata_i;
+            rx_frame_word_rready_o     = 1'b1;
           end
 
         end

@@ -27,8 +27,8 @@ module iob_eth #(
   wire internal_bd_wen_wr;
   wire internal_bd_ren_rd;
 
-  wire frame_word_wready_wr;
-  wire frame_word_rready_rd;
+  wire frame_word_ready_write;
+  wire frame_word_ready_read;
 
   assign internal_frame_word_wen_wr = frame_word_wen_wr & iob_ready_o;
   assign internal_frame_word_ren_rd = frame_word_ren_rd & iob_ready_o;
@@ -327,8 +327,7 @@ module iob_eth #(
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
 
-  assign frame_word_ready_rd = internal_frame_word_wen_wr ? \
-                                frame_word_wready_wr : frame_word_rready_rd;
+  assign frame_word_ready_rd = internal_frame_word_wen_wr ? frame_word_ready_write : frame_word_ready_read;
   // Data transfer module (includes DMA)
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
@@ -414,12 +413,13 @@ module iob_eth #(
       .tx_word_cnt_o(tx_word_cnt_rdata_rd),
       .tx_frame_word_wen_i(internal_frame_word_wen_wr),
       .tx_frame_word_wdata_i(frame_word_wdata_wr),
-      .tx_frame_word_ready_o(frame_word_wready_wr),
+      .tx_frame_word_ready_o(frame_word_ready_write),
       .rx_bd_cnt_o(rx_bd_cnt_rdata_rd),
       .rx_word_cnt_o(rx_word_cnt_rdata_rd),
       .rx_frame_word_ren_i(internal_frame_word_ren_rd),
       .rx_frame_word_rdata_o(frame_word_rdata_rd),
-      .rx_frame_word_ready_o(frame_word_rready_rd),
+      .rx_frame_word_rready_o(frame_word_rready_rd),
+      .rx_frame_word_ready_o(frame_word_ready_read),
 
       // Interrupts
       .tx_irq_o(tx_irq),
