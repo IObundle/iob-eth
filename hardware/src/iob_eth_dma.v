@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
 `include "iob_eth_conf.vh"
-`include "iob_eth_csrs_def.vh"
 
 `define IOB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -467,7 +466,6 @@ module iob_eth_dma #(
   assign axi_arburst_o = 1;
   assign axi_arlock_o  = 0;
   assign axi_arcache_o = 2;
-  assign axi_arprot_o  = 2;
   assign axi_arqos_o   = 0;
   //axi_rid_i
   //axi_rresp_i
@@ -792,7 +790,6 @@ module iob_eth_dma #(
   assign axi_awburst_o = 1;
   assign axi_awlock_o  = 0;
   assign axi_awcache_o = 2;
-  assign axi_awprot_o  = 2;
   assign axi_awqos_o   = 0;
   assign axi_bready_o  = 1'b1;
   // axi_bid_i

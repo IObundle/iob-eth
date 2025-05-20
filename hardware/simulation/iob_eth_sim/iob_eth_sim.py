@@ -30,7 +30,7 @@ def setup(py_params_dict):
             {
                 "name": "ADDR_W",
                 "type": "P",
-                "val": "`IOB_ETH_CSRS_ADDR_W",
+                "val": "(12+2)",
                 "min": "NA",
                 "max": "128",
                 "descr": "Address bus width",
@@ -111,7 +111,7 @@ def setup(py_params_dict):
             "descr": "Testbench eth sim wrapper csrs interface",
             "signals": {
                 "type": "iob",
-                "ADDR_W": "(`IOB_ETH_CSRS_ADDR_W+2)",
+                "ADDR_W": "(12+2)",
             },
         },
     ]

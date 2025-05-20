@@ -1,8 +1,7 @@
 `timescale 1ns / 1ps
 
-`include "iob_bsp.vh"
+// `include "iob_bsp.vh"
 `include "iob_eth_conf.vh"
-`include "iob_eth_csrs_def.vh"
 
 /*
  Ethernet Core
@@ -27,6 +26,9 @@ module iob_eth #(
   wire internal_rx_word_cnt_ren_rd;
   wire internal_bd_wen_wr;
   wire internal_bd_ren_rd;
+
+  wire frame_word_wready_wr;
+  wire frame_word_rready_rd;
 
   assign internal_frame_word_wen_wr = frame_word_wen_wr & iob_ready_o;
   assign internal_frame_word_ren_rd = frame_word_ren_rd & iob_ready_o;
@@ -325,6 +327,8 @@ module iob_eth #(
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
 
+  assign frame_word_ready_rd = internal_frame_word_wen_wr ? \
+                                frame_word_wready_wr : frame_word_rready_rd;
   // Data transfer module (includes DMA)
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
@@ -376,7 +380,6 @@ module iob_eth #(
       .axi_awburst_o(axi_awburst_o),  //Address write channel burst type.
       .axi_awlock_o(axi_awlock_o),  //Address write channel lock type.
       .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
-      .axi_awprot_o(axi_awprot_o), //Address write channel protection type. Set to 000 if master output; ignored if slave input.
       .axi_awqos_o(axi_awqos_o),  //Address write channel quality of service.
       .axi_awvalid_o(axi_awvalid_o),  //Address write channel valid.
       .axi_awready_i(axi_awready_i),  //Address write channel ready.
@@ -396,7 +399,6 @@ module iob_eth #(
       .axi_arburst_o(axi_arburst_o),  //Address read channel burst type.
       .axi_arlock_o(axi_arlock_o),  //Address read channel lock type.
       .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
-      .axi_arprot_o(axi_arprot_o), //Address read channel protection type. Set to 000 if master output; ignored if slave input.
       .axi_arqos_o(axi_arqos_o),  //Address read channel quality of service.
       .axi_arvalid_o(axi_arvalid_o),  //Address read channel valid.
       .axi_arready_i(axi_arready_i),  //Address read channel ready.
@@ -460,7 +462,7 @@ module iob_eth #(
       .addrA_i(bd_waddr_wr[BD_NUM_LOG2:0]),
       .enA_i(internal_bd_wen_wr || internal_bd_ren_rd),
       .weA_i(internal_bd_wen_wr),
-      .dA_i(iob_wdata_i),
+      .dA_i(iob_csrs_iob_wdata_i),
       .dA_o(bd_rdata_rd),
 
       // Port B - DMA module
