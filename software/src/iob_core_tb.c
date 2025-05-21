@@ -14,7 +14,7 @@
 
 #define NWORDS 512
 #define RAM_ADDR 4000
-#define SPLIT_ADDR_W (12 - 2)
+#define SPLIT_ADDR_W (14 - 2)
 
 void print_version(unsigned int version) {
   unsigned int major = version >> 16;

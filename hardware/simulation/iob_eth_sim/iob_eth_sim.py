@@ -39,7 +39,7 @@ def setup(py_params_dict):
             {
                 "name": "AXI_ID_W",
                 "type": "P",
-                "val": "0",
+                "val": "1",
                 "min": "0",
                 "max": "32",
                 "descr": "AXI ID bus width",
@@ -184,7 +184,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "axistream_in_csrs_",
-                "ADDR_W": 10 - 2,
+                "ADDR_W": 12 - 2,
             },
         },
         # AXISTREAM OUT
@@ -245,7 +245,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "axistream_out_csrs_",
-                "ADDR_W": 10 - 2,
+                "ADDR_W": 12 - 2,
             },
         },
         # Ethernet
@@ -281,7 +281,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "eth_csrs_",
-                "ADDR_W": 10 - 2,
+                "ADDR_W": 12 - 2,
             },
         },
         # DMA
@@ -291,7 +291,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "dma_csrs_",
-                "ADDR_W": 10 - 2,
+                "ADDR_W": 12 - 2,
             },
         },
         # Other
@@ -326,6 +326,7 @@ def setup(py_params_dict):
                 "type": "axi",
                 "prefix": "eth_",
                 "ADDR_W": "AXI_ADDR_W",
+                "LEN_W": "AXI_LEN_W",
             },
         },
         {
@@ -397,7 +398,7 @@ def setup(py_params_dict):
                 "ID_W": "AXI_ID_W",
                 "ADDR_W": "AXI_ADDR_W",
                 "DATA_W": "AXI_DATA_W",
-                "LOCK_W": 1,
+                "LOCK_W": 2,
             },
         },
         {
@@ -478,14 +479,14 @@ def setup(py_params_dict):
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "reset_i": "split_reset",
-                "input_s": ("pbus_s", ["iob_addr_i[11:2]"]),  # Ignore 2 LSBs
+                "input_s": ("pbus_s", ["iob_addr_i[13:2]"]),  # Ignore 2 LSBs
                 "output_0_m": "axistream_in_csrs",
                 "output_1_m": "axistream_out_csrs",
                 "output_2_m": "dma_csrs",
                 "output_3_m": "eth_csrs",
             },
             "num_outputs": 4,
-            "addr_w": 12 - 2,
+            "addr_w": 14 - 2,
         },
         {
             "core_name": "iob_eth",
@@ -496,6 +497,8 @@ def setup(py_params_dict):
                 "ADDR_W": "(ADDR_W-2)",
                 "AXI_ADDR_W": "AXI_ADDR_W",
                 "AXI_DATA_W": "AXI_DATA_W",
+                "AXI_ID_W": "AXI_ID_W",
+                "AXI_LEN_W": "AXI_LEN_W",
             },
             "csr_if": "iob",
             "connect": {
@@ -541,8 +544,20 @@ def setup(py_params_dict):
             "connect": {
                 "clk_i": "interconnect_clk",
                 "rst_i": "interconnect_rst",
-                "s_axi_s": "interconnect_s_axi",
-                "m_axi_m": "interconnect_m_axi",
+                "s_axi_s": (
+                    "interconnect_s_axi",
+                    [
+                        "intercon_s_axi_awlock[1:0]",
+                        "intercon_s_axi_arlock[1:0]",
+                    ],
+                ),
+                "m_axi_m": (
+                    "interconnect_m_axi",
+                    [
+                        "intercon_m_axi_awlock[0]",
+                        "intercon_m_axi_arlock[0]",
+                    ],
+                ),
             },
         },
         {
@@ -650,7 +665,7 @@ def setup(py_params_dict):
             assign_str = f"{prefix}axi_{sig_name}, " + assign_str
         assign_str = assign_str[:-2]
         snippet_code += (
-            f"    assign intercon_m_axi_{sig_name} = {{" + assign_str + "};\n"
+            f"    assign intercon_s_axi_{sig_name} = {{" + assign_str + "};\n"
         )
 
     for sig_name, sig_size in AXI_IN_SIGNAL_NAMES:
@@ -661,7 +676,7 @@ def setup(py_params_dict):
                 bit_select = f"[{idx}*{sig_size}+:{sig_size}]"
             else:
                 bit_select = f"[{idx}]"
-            snippet_code += f"    assign {prefix}axi_{sig_name} = intercon_m_axi_{sig_name}{bit_select}; \n"
+            snippet_code += f"    assign {prefix}axi_{sig_name} = intercon_s_axi_{sig_name}{bit_select}; \n"
 
     attributes_dict["snippets"] += [
         {"verilog_code": snippet_code},

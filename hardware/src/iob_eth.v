@@ -30,18 +30,18 @@ module iob_eth #(
   wire frame_word_ready_write;
   wire frame_word_ready_read;
 
-  assign internal_frame_word_wen_wr = frame_word_wen_wr & iob_ready_o;
-  assign internal_frame_word_ren_rd = frame_word_ren_rd & iob_ready_o;
-  assign internal_tx_bd_cnt_ren_rd = tx_bd_cnt_ren_rd & iob_ready_o;
-  assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_ren_rd & iob_ready_o;
-  assign internal_tx_word_cnt_ren_rd = tx_word_cnt_ren_rd & iob_ready_o;
-  assign internal_rx_word_cnt_ren_rd = rx_word_cnt_ren_rd & iob_ready_o;
-  assign internal_bd_wen_wr = bd_wen_wr & iob_ready_o;
-  assign internal_bd_ren_rd = bd_ren_rd & iob_ready_o;
+  assign internal_frame_word_wen_wr = frame_word_wen_wr & iob_csrs_iob_ready_o;
+  assign internal_frame_word_ren_rd = frame_word_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_tx_bd_cnt_ren_rd = tx_bd_cnt_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_tx_word_cnt_ren_rd = tx_word_cnt_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_rx_word_cnt_ren_rd = rx_word_cnt_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_bd_wen_wr = bd_wen_wr & iob_csrs_iob_ready_o;
+  assign internal_bd_ren_rd = bd_ren_rd & iob_csrs_iob_ready_o;
 
   // BD rvalid is iob_valid registered
   wire bd_rvalid_nxt;
-  assign bd_rvalid_nxt = iob_valid_i & internal_bd_ren_rd;
+  assign bd_rvalid_nxt = iob_csrs_iob_valid_i & internal_bd_ren_rd;
   iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(1'd0)
