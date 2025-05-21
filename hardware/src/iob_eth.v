@@ -42,7 +42,7 @@ module iob_eth #(
   // BD rvalid is iob_valid registered
   wire bd_rvalid_nxt;
   assign bd_rvalid_nxt = iob_valid_i & internal_bd_ren_rd;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(1'd0)
   ) iob_reg_BD_rvalid (
@@ -447,7 +447,6 @@ module iob_eth #(
 
   // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
 
-  assign bd_wready_wr = 1'b1;
   assign bd_rready_rd = 1'b1;
 
   // Buffer descriptors memory

@@ -24,7 +24,7 @@ module iob_eth_rx (
    // Register MII inputs
 
    wire rx_dv;
-   iob_reg #(
+   iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(0)
    ) rx_dv_reg (
@@ -36,7 +36,7 @@ module iob_eth_rx (
    );
 
    wire [3:0] rx_data;
-   iob_reg #(
+   iob_reg_ca #(
       .DATA_W (4),
       .RST_VAL(0)
    ) rx_data_reg (
@@ -138,7 +138,7 @@ module iob_eth_rx (
    );
 
    wire crc_err = crc_sum != 32'hc704dd7b;
-   iob_reg #(
+   iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(0)
    ) crc_err_reg (
