@@ -10,6 +10,8 @@ import subprocess
 sys.path.append(f"{os.path.dirname(__file__)}/scripts/")
 from gen_custom_config_build import gen_custom_config_build
 
+ETH_VERSION = "0.1"
+
 
 def setup(py_params_dict):
     gen_custom_config_build(py_params_dict)
@@ -65,7 +67,7 @@ def setup(py_params_dict):
 
     attributes_dict = {
         "generate_hw": True,
-        "version": "0.1",
+        "version": ETH_VERSION,
         "confs": [
             # Macros
             {
@@ -539,6 +541,7 @@ def setup(py_params_dict):
                 "core_name": "iob_csrs",
                 "instance_name": "iob_csrs",
                 "instance_description": "Control/Status Registers",
+                "version": ETH_VERSION,
                 "autoaddr": False,
                 "rw_overlap": True,
                 "csrs": [
