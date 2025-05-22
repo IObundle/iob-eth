@@ -47,7 +47,7 @@ def setup(py_params_dict):
             {
                 "name": "AXI_ADDR_W",
                 "type": "P",
-                "val": "24",
+                "val": "14",
                 "min": "1",
                 "max": "32",
                 "descr": "AXI address bus width",
@@ -658,7 +658,7 @@ def setup(py_params_dict):
     MANAGERS = ["eth", "dma"]
 
     snippet_code += "    // Connect all manager AXI interfaces to interconnect\n"
-    for sig_name, _ in AXI_OUT_SIGNAL_NAMES:
+    for sig_name, _ in AXI_IN_SIGNAL_NAMES:
         assign_str = ""
         for manager_name in MANAGERS:
             prefix = f"{manager_name}_"
@@ -668,7 +668,7 @@ def setup(py_params_dict):
             f"    assign intercon_s_axi_{sig_name} = {{" + assign_str + "};\n"
         )
 
-    for sig_name, sig_size in AXI_IN_SIGNAL_NAMES:
+    for sig_name, sig_size in AXI_OUT_SIGNAL_NAMES:
         for idx, manager_name in enumerate(MANAGERS):
             prefix = f"{manager_name}_"
             bit_select = ""
