@@ -448,6 +448,7 @@ module iob_eth #(
   // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
 
   assign bd_rready_rd = 1'b1;
+  assign bd_ready_rd = 1'b1;
 
   // Buffer descriptors memory
   iob_ram_tdp #(
