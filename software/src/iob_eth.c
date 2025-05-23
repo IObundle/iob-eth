@@ -115,37 +115,35 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   TEMPLATE[ETH_TYPE_PTR] = ETH_TYPE_H;
   TEMPLATE[ETH_TYPE_PTR + 1] = ETH_TYPE_L;
 
-  // reset core
-  // IOB_ETH_SET_SOFTRST(1);
-  // IOB_ETH_SET_SOFTRST(0);
-
-  //// wait for PHY to produce rx clock
-  // while (!((IOB_ETH_GET_STATUS() >> 3) & 1));
-
-  //#ifdef ETH_DEBUG_PRINT
-  // printf("Ethernet RX clock detected\n");
-  //#endif
-
-  //// wait for PLL to lock and produce tx clock
-  // while (!((IOB_ETH_GET_STATUS() >> 15) & 1));
-
-  //#ifdef ETH_DEBUG_PRINT
-  // printf("Ethernet TX PLL locked\n");
-  //#endif
-
-  //// set initial payload size to Ethernet minimum excluding FCS
-  // IOB_ETH_SET_TX_NBYTES(46);
-
-  //// check processor interface
-  //// write dummy register
-  // IOB_ETH_SET_DUMMY_W(0xDEADBEEF);
-
-  //// read and check result
-  // if (IOB_ETH_GET_DUMMY_R() != 0xDEADBEEF) {
-  //   printf("Ethernet Init failed\n");
-  // } else {
-  //   printf("Ethernet Core Initialized\n");
-  // }
+  //   // wait for PHY to produce rx clock
+  //   while (!((iob_eth_csrs_get_status() >> 3) & 1))
+  //     ;
+  //
+  // #ifdef ETH_DEBUG_PRINT
+  //   printf("Ethernet RX clock detected\n");
+  // #endif
+  //
+  //   // wait for PLL to lock and produce tx clock
+  //   while (!((iob_eth_csrs_get_status() >> 15) & 1))
+  //     ;
+  //
+  // #ifdef ETH_DEBUG_PRINT
+  //   printf("Ethernet TX PLL locked\n");
+  // #endif
+  //
+  //   // set initial payload size to Ethernet minimum excluding FCS
+  //   iob_eth_csrs_set_tx_nbytes(46);
+  //
+  //   // check processor interface
+  //   // write dummy register
+  //   iob_eth_csrs_set_dummy_w(0xDEADBEEF);
+  //
+  //   // read and check result
+  //   if (iob_eth_csrs_get_dummy_r() != 0xDEADBEEF) {
+  //     printf("Ethernet Init failed\n");
+  //   } else {
+  //     printf("Ethernet Core Initialized\n");
+  //   }
 }
 
 // Reset buffer descriptor memory
@@ -170,6 +168,8 @@ void eth_set_payload_size(unsigned int idx, unsigned int size) {
 void eth_send_frame(char *data, unsigned int size) {
   int i;
 
+  printf("[DEBUG]: eth_send_frame\n");
+  printf("\t[DEBUG]: wait for txready\n");
   // wait for ready
   while (!eth_tx_ready(0))
     ;
@@ -177,6 +177,7 @@ void eth_send_frame(char *data, unsigned int size) {
   // Alloc memory for frame
   char *frame_ptr = (char *)(*mem_alloc)(TEMPLATE_LEN + size);
 
+  printf("\t[DEBUG]: setup frame\n");
   // Copy template to frame
   for (i = 0; i < TEMPLATE_LEN; i++)
     frame_ptr[i] = TEMPLATE[i];
@@ -184,6 +185,7 @@ void eth_send_frame(char *data, unsigned int size) {
   // Copy payload to frame
   for (i = 0; i < size; i++)
     frame_ptr[i + TEMPLATE_LEN] = data[i];
+  printf("\t[DEBUG]: setup frame complete\n");
 
   /* Buffer descriptor configuration */
 
@@ -199,17 +201,72 @@ void eth_send_frame(char *data, unsigned int size) {
   eth_set_pad(0, 1);
   eth_set_wr(0, 1);
   eth_set_interrupt(0, 1);
+  printf("\t[DEBUG]: buffer description configuration complete\n");
 
   // start sending
   eth_send(1);
+
+  printf("\t[DEBUG]: send! wait for tx ready\n");
 
   // wait for ready
   while (!eth_tx_ready(0))
     ;
 
+  printf("\t[DEBUG]: disable transmission and free memory\n");
   // Disable transmission and free memory
   eth_send(0);
   (*mem_free)(frame_ptr);
+
+  return;
+}
+
+// prepare frame with ethernet template header
+int eth_prepare_frame(char *external_frame) {
+  // Copy template to frame
+  for (int i = 0; i < TEMPLATE_LEN; i++)
+    external_frame[i] = TEMPLATE[i];
+  return TEMPLATE_LEN;
+}
+
+// eth_send_frame_addr()
+// implementation for sending an already prepared frame frame_address
+void eth_send_frame_addr(unsigned int size, uint32_t frame_addr) {
+  int i;
+
+  printf("[DEBUG]: eth_send_frame_addr\n");
+  printf("\t[DEBUG]: wait for txready\n");
+  // wait for ready
+  while (!eth_tx_ready(0))
+    ;
+
+  /* Buffer descriptor configuration */
+
+  // set frame pointer
+  eth_set_ptr(0, frame_addr);
+  // set frame size
+  eth_set_payload_size(0, TEMPLATE_LEN + size);
+
+  // Set ready bit; Enable CRC and PAD; Set as last descriptor; Enable
+  // interrupt.
+  eth_set_ready(0, 1);
+  eth_set_crc(0, 1);
+  eth_set_pad(0, 1);
+  eth_set_wr(0, 1);
+  eth_set_interrupt(0, 1);
+  printf("\t[DEBUG]: buffer description configuration complete\n");
+
+  // start sending
+  eth_send(1);
+
+  printf("\t[DEBUG]: send! wait for tx ready\n");
+
+  // wait for ready
+  while (!eth_tx_ready(0))
+    ;
+
+  printf("\t[DEBUG]: disable transmission\n");
+  // Disable transmission and free memory
+  eth_send(0);
 
   return;
 }

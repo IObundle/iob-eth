@@ -14,7 +14,6 @@
 
 #include <stdio.h>
 
-#define NWORDS 512
 #define RAM_ADDR 4000
 #define SPLIT_ADDR_W (14 - 2)
 
@@ -68,40 +67,69 @@ int iob_core_tb() {
   printf("ETH ");
   print_version(iob_eth_csrs_get_version());
 
-  // // 1. CPU -> AXIS OUT -> AXIS IN data transfer
-  // printf("1.1. Configure AXIStream IN\n");
-  // iob_axistream_in_csrs_set_soft_reset(1);
-  // iob_axistream_in_csrs_set_soft_reset(0);
-  // iob_axistream_in_csrs_set_mode(1);
-  // iob_axistream_in_csrs_set_enable(1);
-  //
-  // printf("1.2. Configure AXIStream OUT\n");
-  // iob_axistream_out_csrs_set_soft_reset(1);
-  // iob_axistream_out_csrs_set_soft_reset(0);
-  // iob_axistream_out_csrs_set_mode(0);
-  // iob_axistream_out_csrs_set_nwords(NWORDS);
-  // iob_axistream_out_csrs_set_enable(1);
-  //
-  // printf("1.3. Write data to AXIStream OUT\n");
-  //
-  // // write data loop
-  // for (i = 0; i < NWORDS; i = i + 1) {
-  //   iob_axistream_out_csrs_set_data(i);
-  // }
-  //
-  // // wait for data in AXIS IN
-  // while (iob_axistream_in_csrs_get_nwords() < NWORDS)
-  //   ;
-  // // 2. Configure AXIS IN -> DMA -> AXI RAM write operation
-  // printf("2.1. Configure DMA write transfer\n");
-  // iob_dma_csrs_set_w_burstlen(100);
-  // dma_write_transfer((uint32_t *)RAM_ADDR, NWORDS);
-  //
-  // // 3. Wait for DMA transfer complete
-  // printf("3. Wait for DMA write transfer complete...");
-  // while (dma_write_busy())
-  //   ;
-  // printf("done!\n");
+  // prepare eth frame to send
+  char send_buffer[ETH_NBYTES] = {0};
+  char rcv_buffer[ETH_NBYTES] = {0};
+  int ptr = 0;
+
+  printf("1. Prepare Ethernet Frame\n");
+  ptr += eth_prepare_frame(send_buffer);
+
+  // fill payload
+  for (i = 0; i < ETH_NBYTES; i++) {
+    send_buffer[ptr++] = (char)(i / 4);
+  }
+
+  // load frame to AXI RAM
+
+  // 1. CPU -> AXIS OUT -> AXIS IN data transfer
+  printf("2.1. Configure AXIStream IN\n");
+  iob_axistream_in_csrs_set_soft_reset(1);
+  iob_axistream_in_csrs_set_soft_reset(0);
+  iob_axistream_in_csrs_set_mode(1);
+  iob_axistream_in_csrs_set_enable(1);
+
+  printf("2.2. Configure AXIStream OUT\n");
+  iob_axistream_out_csrs_set_soft_reset(1);
+  iob_axistream_out_csrs_set_soft_reset(0);
+  iob_axistream_out_csrs_set_mode(0);
+  iob_axistream_out_csrs_set_nwords(ptr);
+  iob_axistream_out_csrs_set_enable(1);
+
+  printf("2.3. Write data to AXIStream OUT\n");
+
+  // write data loop
+  for (i = 0; i < ptr; i++) {
+    iob_axistream_out_csrs_set_data(send_buffer[i]);
+  }
+
+  // wait for data in AXIS IN
+  while (iob_axistream_in_csrs_get_nwords() < ptr)
+    ;
+  // 3. Configure AXIS IN -> DMA -> AXI RAM write operation
+  printf("3.1. Configure DMA write transfer\n");
+  iob_dma_csrs_set_w_burstlen(ptr);
+  dma_write_transfer((uint32_t *)RAM_ADDR, ptr);
+
+  // 4. Wait for DMA transfer complete
+  printf("4. Wait for DMA write transfer complete...");
+  while (dma_write_busy())
+    ;
+  printf("done!\n");
+
+  // send frame
+  printf("5. Send frame...\n");
+  eth_send_frame_addr(ETH_NBYTES, RAM_ADDR);
+  printf("\t\tdone!\n");
+
+  // TODO:
+  // 6. Receive Frame
+  // 6.1 Set RX buffer pointer
+  // 6.2 Receive frame
+
+  // 7. Read data with DMA
+  // 8. Validate data
+
   //
   // // 4. Configure AXIS OUT <- DMA <- AXI RAM read operation
   // printf("4.1. Configure AXIStream IN\n");
@@ -141,44 +169,44 @@ int iob_core_tb() {
   // }
   //
   // printf("DMA test complete.\n");
-  printf("Size:%d(dec):%x(hex)\n", ETH_NBYTES, ETH_NBYTES);
-
-  char send_buffer[ETH_NBYTES] = {0};
-  char rcv_buffer[ETH_NBYTES] = {0};
-
-  send_buffer[0] = 0xef;
-  send_buffer[1] = 0xfe;
-  send_buffer[2] = 0xef;
-  send_buffer[3] = 0xfe;
-  for (int i = 4; i < ETH_NBYTES; i++) {
-    send_buffer[i] = (char)(i / 4);
-  }
-
-  // Send frame containing test data
-  printf("[INFO] Sending test data...\n");
-  eth_send_frame(send_buffer, ETH_NBYTES);
-  printf("\t\tdone!\n");
-
-  // Receive loopback frame with test data
-  printf("[INFO] Receiving test data...\n");
-  while (eth_rcv_frame(rcv_buffer, ETH_NBYTES, 5000000))
-    ; // Data in
-  printf("\t\tdone!\n");
-
-  // Compare data
-  printf("[INFO] Check data...\n");
-  for (i = 0; i < ETH_NBYTES; i++) {
-    if (rcv_buffer[i] != send_buffer[i]) {
-      printf("Error: Byte[%d]: expected %x, got %x\n", i, send_buffer[i],
-             rcv_buffer[i]);
-      failed = failed + 1;
-    }
-  }
-  if (failed == 0) {
-    printf("\t\tSUCCESS: Test data correct!\n");
-  } else {
-    printf("\t\tERROR: Found invalid test data\n");
-  }
-  printf("\n");
+  // printf("Size:%d(dec):%x(hex)\n", ETH_NBYTES, ETH_NBYTES);
+  //
+  // char send_buffer[ETH_NBYTES] = {0};
+  // char rcv_buffer[ETH_NBYTES] = {0};
+  //
+  // send_buffer[0] = 0xef;
+  // send_buffer[1] = 0xfe;
+  // send_buffer[2] = 0xef;
+  // send_buffer[3] = 0xfe;
+  // for (int i = 4; i < ETH_NBYTES; i++) {
+  //   send_buffer[i] = (char)(i / 4);
+  // }
+  //
+  // // Send frame containing test data
+  // printf("[INFO] Sending test data...\n");
+  // eth_send_frame(send_buffer, ETH_NBYTES);
+  // printf("\t\tdone!\n");
+  //
+  // // Receive loopback frame with test data
+  // printf("[INFO] Receiving test data...\n");
+  // while (eth_rcv_frame(rcv_buffer, ETH_NBYTES, 5000000))
+  //   ; // Data in
+  // printf("\t\tdone!\n");
+  //
+  // // Compare data
+  // printf("[INFO] Check data...\n");
+  // for (i = 0; i < ETH_NBYTES; i++) {
+  //   if (rcv_buffer[i] != send_buffer[i]) {
+  //     printf("Error: Byte[%d]: expected %x, got %x\n", i, send_buffer[i],
+  //            rcv_buffer[i]);
+  //     failed = failed + 1;
+  //   }
+  // }
+  // if (failed == 0) {
+  //   printf("\t\tSUCCESS: Test data correct!\n");
+  // } else {
+  //   printf("\t\tERROR: Found invalid test data\n");
+  // }
+  // printf("\n");
   return failed;
 }

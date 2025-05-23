@@ -7,6 +7,8 @@
  Ethernet Core
 */
 
+`define SIMULATION
+
 module iob_eth #(
     `include "iob_eth_params.vs"
 ) (
