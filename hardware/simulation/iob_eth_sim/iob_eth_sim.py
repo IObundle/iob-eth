@@ -63,9 +63,9 @@ def setup(py_params_dict):
             {
                 "name": "AXI_LEN_W",
                 "type": "P",
-                "val": "4",
+                "val": "8",
                 "min": "1",
-                "max": "4",
+                "max": "8",
                 "descr": "AXI burst length width",
             },
             # Ethernet
