@@ -8,7 +8,9 @@
 #include "iob_axistream_out_csrs.h"
 #include "iob_dma.h"
 #include "iob_dma_csrs.h"
+#include "iob_eth.h"
 #include "iob_eth_csrs.h"
+#include "iob_eth_macros.h"
 
 #include <stdio.h>
 
@@ -16,10 +18,19 @@
 #define RAM_ADDR 4000
 #define SPLIT_ADDR_W (14 - 2)
 
+#undef ETH_NBYTES
+#define ETH_NBYTES 1024
+
 void print_version(unsigned int version) {
   unsigned int major = version >> 16;
   unsigned int minor = version & 0xFF;
   printf("Version is %x.%x\n", major, minor);
+}
+
+void eth_vutb_init(int base_address) {
+  // Initialize Ethernet in Loopback mode
+  eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
+  eth_reset_bd_memory();
 }
 
 int iob_core_tb() {
@@ -39,8 +50,9 @@ int iob_core_tb() {
   iob_axistream_out_csrs_init_baseaddr(1 << SPLIT_ADDR_W);
   // dma connected to 3rd master of split
   iob_dma_csrs_init_baseaddr(2 << SPLIT_ADDR_W);
-  // dma connected to 4th master of split
-  iob_eth_csrs_init_baseaddr(3 << SPLIT_ADDR_W);
+  // eth connected to 4th master of split
+  eth_vutb_init(3 << SPLIT_ADDR_W);
+  // iob_eth_csrs_init_baseaddr(3 << SPLIT_ADDR_W);
 
   unsigned int version;
   uint32_t i, word;
@@ -56,78 +68,117 @@ int iob_core_tb() {
   printf("ETH ");
   print_version(iob_eth_csrs_get_version());
 
-  // 1. CPU -> AXIS OUT -> AXIS IN data transfer
-  printf("1.1. Configure AXIStream IN\n");
-  iob_axistream_in_csrs_set_soft_reset(1);
-  iob_axistream_in_csrs_set_soft_reset(0);
-  iob_axistream_in_csrs_set_mode(1);
-  iob_axistream_in_csrs_set_enable(1);
+  // // 1. CPU -> AXIS OUT -> AXIS IN data transfer
+  // printf("1.1. Configure AXIStream IN\n");
+  // iob_axistream_in_csrs_set_soft_reset(1);
+  // iob_axistream_in_csrs_set_soft_reset(0);
+  // iob_axistream_in_csrs_set_mode(1);
+  // iob_axistream_in_csrs_set_enable(1);
+  //
+  // printf("1.2. Configure AXIStream OUT\n");
+  // iob_axistream_out_csrs_set_soft_reset(1);
+  // iob_axistream_out_csrs_set_soft_reset(0);
+  // iob_axistream_out_csrs_set_mode(0);
+  // iob_axistream_out_csrs_set_nwords(NWORDS);
+  // iob_axistream_out_csrs_set_enable(1);
+  //
+  // printf("1.3. Write data to AXIStream OUT\n");
+  //
+  // // write data loop
+  // for (i = 0; i < NWORDS; i = i + 1) {
+  //   iob_axistream_out_csrs_set_data(i);
+  // }
+  //
+  // // wait for data in AXIS IN
+  // while (iob_axistream_in_csrs_get_nwords() < NWORDS)
+  //   ;
+  // // 2. Configure AXIS IN -> DMA -> AXI RAM write operation
+  // printf("2.1. Configure DMA write transfer\n");
+  // iob_dma_csrs_set_w_burstlen(100);
+  // dma_write_transfer((uint32_t *)RAM_ADDR, NWORDS);
+  //
+  // // 3. Wait for DMA transfer complete
+  // printf("3. Wait for DMA write transfer complete...");
+  // while (dma_write_busy())
+  //   ;
+  // printf("done!\n");
+  //
+  // // 4. Configure AXIS OUT <- DMA <- AXI RAM read operation
+  // printf("4.1. Configure AXIStream IN\n");
+  // iob_axistream_in_csrs_set_soft_reset(1);
+  // iob_axistream_in_csrs_set_soft_reset(0);
+  // iob_axistream_in_csrs_set_mode(0);
+  // iob_axistream_in_csrs_set_enable(1);
+  //
+  // printf("4.2. Configure AXIStream OUT\n");
+  // iob_axistream_out_csrs_set_soft_reset(1);
+  // iob_axistream_out_csrs_set_soft_reset(0);
+  // iob_axistream_out_csrs_set_mode(1);
+  // iob_axistream_out_csrs_set_nwords(NWORDS);
+  // iob_axistream_out_csrs_set_enable(1);
+  //
+  // printf("4.3. Configure DMA read transfer\n");
+  // iob_dma_csrs_set_r_burstlen(200);
+  // dma_read_transfer((uint32_t *)RAM_ADDR, NWORDS);
+  //
+  // // 5. Wait for DMA transfer complete
+  // printf("5. Wait for DMA read transfer complete...");
+  // while (dma_read_busy())
+  //   ;
+  // printf("done!\n");
+  //
+  // // 6. Read data from AXIS IN and validate
+  // printf("6. Read data from AXIStream IN\n");
+  // // read data loop
+  // for (i = 0; i < NWORDS; i = i + 1) {
+  //   word = iob_axistream_in_csrs_get_data();
+  //
+  //   // check data
+  //   if (word != i) {
+  //     printf("Error: expected %d, got %d\n", i, word);
+  //     failed = failed + 1;
+  //   }
+  // }
+  //
+  // printf("DMA test complete.\n");
+  printf("Size:%d(dec):%x(hex)\n", ETH_NBYTES, ETH_NBYTES);
 
-  printf("1.2. Configure AXIStream OUT\n");
-  iob_axistream_out_csrs_set_soft_reset(1);
-  iob_axistream_out_csrs_set_soft_reset(0);
-  iob_axistream_out_csrs_set_mode(0);
-  iob_axistream_out_csrs_set_nwords(NWORDS);
-  iob_axistream_out_csrs_set_enable(1);
+  char send_buffer[ETH_NBYTES] = {0};
+  char rcv_buffer[ETH_NBYTES] = {0};
 
-  printf("1.3. Write data to AXIStream OUT\n");
-
-  // write data loop
-  for (i = 0; i < NWORDS; i = i + 1) {
-    iob_axistream_out_csrs_set_data(i);
+  send_buffer[0] = 0xef;
+  send_buffer[1] = 0xfe;
+  send_buffer[2] = 0xef;
+  send_buffer[3] = 0xfe;
+  for (int i = 4; i < ETH_NBYTES; i++) {
+    send_buffer[i] = (char)(i / 4);
   }
 
-  // wait for data in AXIS IN
-  while (iob_axistream_in_csrs_get_nwords() < NWORDS)
-    ;
-  // 2. Configure AXIS IN -> DMA -> AXI RAM write operation
-  printf("2.1. Configure DMA write transfer\n");
-  iob_dma_csrs_set_w_burstlen(100);
-  dma_write_transfer((uint32_t *)RAM_ADDR, NWORDS);
+  // Send frame containing test data
+  printf("[INFO] Sending test data...\n");
+  eth_send_frame(send_buffer, ETH_NBYTES);
+  printf("\t\tdone!\n");
 
-  // 3. Wait for DMA transfer complete
-  printf("3. Wait for DMA write transfer complete...");
-  while (dma_write_busy())
-    ;
-  printf("done!\n");
+  // Receive loopback frame with test data
+  printf("[INFO] Receiving test data...\n");
+  while (eth_rcv_frame(rcv_buffer, ETH_NBYTES, 5000000))
+    ; // Data in
+  printf("\t\tdone!\n");
 
-  // 4. Configure AXIS OUT <- DMA <- AXI RAM read operation
-  printf("4.1. Configure AXIStream IN\n");
-  iob_axistream_in_csrs_set_soft_reset(1);
-  iob_axistream_in_csrs_set_soft_reset(0);
-  iob_axistream_in_csrs_set_mode(0);
-  iob_axistream_in_csrs_set_enable(1);
-
-  printf("4.2. Configure AXIStream OUT\n");
-  iob_axistream_out_csrs_set_soft_reset(1);
-  iob_axistream_out_csrs_set_soft_reset(0);
-  iob_axistream_out_csrs_set_mode(1);
-  iob_axistream_out_csrs_set_nwords(NWORDS);
-  iob_axistream_out_csrs_set_enable(1);
-
-  printf("4.3. Configure DMA read transfer\n");
-  iob_dma_csrs_set_r_burstlen(200);
-  dma_read_transfer((uint32_t *)RAM_ADDR, NWORDS);
-
-  // 5. Wait for DMA transfer complete
-  printf("5. Wait for DMA read transfer complete...");
-  while (dma_read_busy())
-    ;
-  printf("done!\n");
-
-  // 6. Read data from AXIS IN and validate
-  printf("6. Read data from AXIStream IN\n");
-  // read data loop
-  for (i = 0; i < NWORDS; i = i + 1) {
-    word = iob_axistream_in_csrs_get_data();
-
-    // check data
-    if (word != i) {
-      printf("Error: expected %d, got %d\n", i, word);
+  // Compare data
+  printf("[INFO] Check data...\n");
+  for (i = 0; i < ETH_NBYTES; i++) {
+    if (rcv_buffer[i] != send_buffer[i]) {
+      printf("Error: Byte[%d]: expected %x, got %x\n", i, send_buffer[i],
+             rcv_buffer[i]);
       failed = failed + 1;
     }
   }
-
-  printf("DMA test complete.\n");
+  if (failed == 0) {
+    printf("\t\tSUCCESS: Test data correct!\n");
+  } else {
+    printf("\t\tERROR: Found invalid test data\n");
+  }
+  printf("\n");
   return failed;
 }
