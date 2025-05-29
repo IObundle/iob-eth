@@ -14,8 +14,10 @@
 
 #include <stdio.h>
 
-#define RAM_ADDR 4000
+#define SEND_RAM_ADDR 4000
+#define RCV_RAM_ADDR 2000
 #define SPLIT_ADDR_W (14 - 2)
+#define TIMEOUT (100000)
 
 #undef ETH_NBYTES
 #define ETH_NBYTES 1024
@@ -78,7 +80,7 @@ int iob_core_tb() {
 
   // fill payload
   for (i = 0; i < ETH_NBYTES; i++) {
-    send_buffer[ptr++] = (char)(i / 4);
+    send_buffer[ptr++] = (char)(i & 0xFF);
   }
 
   // load frame to AXI RAM
@@ -101,7 +103,7 @@ int iob_core_tb() {
 
   // write data loop
   for (i = 0; i < ptr; i++) {
-    iob_axistream_out_csrs_set_data(send_buffer[i]);
+    iob_axistream_out_csrs_set_data((int)(send_buffer[i] & 0xFF));
   }
 
   // wait for data in AXIS IN
@@ -110,7 +112,7 @@ int iob_core_tb() {
   // 3. Configure AXIS IN -> DMA -> AXI RAM write operation
   printf("3.1. Configure DMA write transfer\n");
   iob_dma_csrs_set_w_burstlen(ptr);
-  dma_write_transfer((uint32_t *)RAM_ADDR, ptr);
+  dma_write_transfer((uint32_t *)SEND_RAM_ADDR, ptr);
 
   // 4. Wait for DMA transfer complete
   printf("4. Wait for DMA write transfer complete...");
@@ -120,7 +122,12 @@ int iob_core_tb() {
 
   // send frame
   printf("5. Send frame...\n");
-  eth_send_frame_addr(ETH_NBYTES, RAM_ADDR);
+  eth_send_frame_addr(ETH_NBYTES, SEND_RAM_ADDR);
+  printf("\t\tdone!\n");
+
+  printf("6. Receive frame...\n");
+  // eth_rcv_frame_addr(data_rcv, size, timeout, frame_addr);
+  eth_rcv_frame_addr(ETH_NBYTES, TIMEOUT, RCV_RAM_ADDR);
   printf("\t\tdone!\n");
 
   // TODO:

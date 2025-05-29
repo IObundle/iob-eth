@@ -229,7 +229,7 @@ int eth_prepare_frame(char *external_frame) {
 }
 
 // eth_send_frame_addr()
-// implementation for sending an already prepared frame frame_address
+// implementation for sending an already prepared frame at frame_address
 void eth_send_frame_addr(unsigned int size, uint32_t frame_addr) {
   int i;
 
@@ -269,6 +269,70 @@ void eth_send_frame_addr(unsigned int size, uint32_t frame_addr) {
   eth_send(0);
 
   return;
+}
+
+// eth_check_frame()
+// Manual check for valid frame at frame_addr, copy data to data_rcv
+int eth_check_frame(char *data_rcv, char *frame_ptr, unsigned int size) {
+  int valid_frame = 1, i = 0;
+  // Check destination MAC address to see if should ignore frame
+  for (i = 0; i < IOB_ETH_MAC_ADDR_LEN; i++)
+    if (TEMPLATE[MAC_SRC_PTR + i] != frame_ptr[MAC_DEST_PTR + i]) {
+      valid_frame = 0;
+      break;
+    }
+
+  // Copy valid frame to data_rcv
+  for (i = 0; (i < size) & (valid_frame); i++) {
+    data_rcv[i] = frame_ptr[i + TEMPLATE_LEN];
+  }
+
+  return valid_frame;
+}
+
+// eth_receive_frame_addr()
+// implementation for receiving a frame into frame_address
+int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr) {
+  int i;
+  int ignore;
+
+  printf("[DEBUG]: eth_rcv_frame_addr\n");
+  printf("\t[DEBUG]: setup frame pointer\n");
+  // set frame pointer
+  eth_set_ptr(64, frame_addr);
+
+  // Mark empty; Set as last descriptor; Enable interrupt.
+  eth_set_empty(64, 1);
+  eth_set_wr(64, 1);
+  eth_set_interrupt(64, 1);
+
+  printf("\t[DEBUG]: enable reception\n");
+  // Enable reception
+  eth_receive(1);
+
+  printf("\t[DEBUG]: wait for data received...\n");
+  // wait until data received
+  while (!eth_rx_ready(64)) {
+    timeout--;
+    if (!timeout) {
+      eth_receive(0);
+      return ETH_NO_DATA;
+    }
+  }
+  printf("\t[DEBUG]: done! datad received\n");
+
+  printf("\t[DEBUG]: check CRC\n");
+  if (eth_bad_crc(64)) {
+    eth_receive(0);
+    printf("Bad CRC\n");
+    return ETH_INVALID_CRC;
+  }
+
+  printf("\t[DEBUG]: disable reception\n");
+  // Disable reception
+  eth_receive(0);
+
+  return ETH_DATA_RCV;
 }
 
 int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
