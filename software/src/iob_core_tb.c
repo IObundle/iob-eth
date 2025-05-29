@@ -19,6 +19,7 @@
 
 #undef ETH_NBYTES
 #define ETH_NBYTES 1024
+#define BUFF_SIZE (ETH_NBYTES + TEMPLATE_LEN)
 
 void print_version(unsigned int version) {
   unsigned int major = version >> 16;
@@ -68,8 +69,8 @@ int iob_core_tb() {
   print_version(iob_eth_csrs_get_version());
 
   // prepare eth frame to send
-  char send_buffer[ETH_NBYTES] = {0};
-  char rcv_buffer[ETH_NBYTES] = {0};
+  char send_buffer[BUFF_SIZE] = {0};
+  char rcv_buffer[BUFF_SIZE] = {0};
   int ptr = 0;
 
   printf("1. Prepare Ethernet Frame\n");
