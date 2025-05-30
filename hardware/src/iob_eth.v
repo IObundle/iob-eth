@@ -32,14 +32,16 @@ module iob_eth #(
   wire frame_word_ready_write;
   wire frame_word_ready_read;
 
-  assign internal_frame_word_wen_wr = frame_word_wen_wr & iob_csrs_iob_ready_o;
-  assign internal_frame_word_ren_rd = frame_word_ren_rd & iob_csrs_iob_ready_o;
-  assign internal_tx_bd_cnt_ren_rd = tx_bd_cnt_ren_rd & iob_csrs_iob_ready_o;
-  assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_ren_rd & iob_csrs_iob_ready_o;
-  assign internal_tx_word_cnt_ren_rd = tx_word_cnt_ren_rd & iob_csrs_iob_ready_o;
-  assign internal_rx_word_cnt_ren_rd = rx_word_cnt_ren_rd & iob_csrs_iob_ready_o;
-  assign internal_bd_wen_wr = bd_wen_wr & iob_csrs_iob_ready_o;
-  assign internal_bd_ren_rd = bd_ren_rd & iob_csrs_iob_ready_o;
+  assign internal_frame_word_wen_wr = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd) &
+                                    iob_csrs_iob_ready_o;
+  assign internal_frame_word_ren_rd = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd)) &
+                                    iob_csrs_iob_ready_o;
+  assign internal_tx_bd_cnt_ren_rd = tx_bd_cnt_valid_rd & iob_csrs_iob_ready_o;
+  assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_valid_rd & iob_csrs_iob_ready_o;
+  assign internal_tx_word_cnt_ren_rd = tx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
+  assign internal_rx_word_cnt_ren_rd = rx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
+  assign internal_bd_wen_wr = bd_valid_wrrd & (|bd_wstrb_wrrd) & & iob_csrs_iob_ready_o;
+  assign internal_bd_ren_rd = bd_valid_wrrd & (~(|bd_wstrb_wrrd)) & iob_csrs_iob_ready_o;
 
   // BD rvalid is iob_valid registered
   wire bd_rvalid_nxt;
@@ -52,7 +54,7 @@ module iob_eth #(
       .cke_i (cke_i),
       .arst_i(arst_i),
       .data_i(bd_rvalid_nxt),
-      .data_o(bd_rvalid_rd)
+      .data_o(bd_rvalid_wrrd)
   );
 
   // Connect write outputs to read
@@ -329,7 +331,7 @@ module iob_eth #(
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
 
-  assign frame_word_ready_rd = internal_frame_word_wen_wr ? frame_word_ready_write : frame_word_ready_read;
+  assign frame_word_ready_wrrd = internal_frame_word_wen_wr ? frame_word_ready_write : frame_word_ready_read;
   // Data transfer module (includes DMA)
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
@@ -414,13 +416,13 @@ module iob_eth #(
       .tx_bd_cnt_o(tx_bd_cnt_rdata_rd),
       .tx_word_cnt_o(tx_word_cnt_rdata_rd),
       .tx_frame_word_wen_i(internal_frame_word_wen_wr),
-      .tx_frame_word_wdata_i(frame_word_wdata_wr),
+      .tx_frame_word_wdata_i(frame_word_wdata_wrrd),
       .tx_frame_word_ready_o(frame_word_ready_write),
       .rx_bd_cnt_o(rx_bd_cnt_rdata_rd),
       .rx_word_cnt_o(rx_word_cnt_rdata_rd),
       .rx_frame_word_ren_i(internal_frame_word_ren_rd),
-      .rx_frame_word_rdata_o(frame_word_rdata_rd),
-      .rx_frame_word_rready_o(frame_word_rready_rd),
+      .rx_frame_word_rdata_o(frame_word_rdata_wrrd),
+      .rx_frame_word_rready_o(frame_word_rready_wrrd),
       .rx_frame_word_ready_o(frame_word_ready_read),
 
       // Interrupts
@@ -434,7 +436,7 @@ module iob_eth #(
   );
 
   // No-DMA interface signals
-  assign frame_word_rvalid_rd = internal_frame_word_ren_rd;
+  assign frame_word_rvalid_wrrd = internal_frame_word_ren_rd;
   assign tx_bd_cnt_rvalid_rd = internal_tx_bd_cnt_ren_rd;
   assign tx_bd_cnt_rready_rd = 1'b1;
   assign rx_bd_cnt_rvalid_rd = internal_rx_bd_cnt_ren_rd;
@@ -449,8 +451,8 @@ module iob_eth #(
 
   // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
 
-  assign bd_rready_rd = 1'b1;
-  assign bd_ready_rd = 1'b1;
+  assign bd_rready_wrrd = 1'b1;
+  assign bd_ready_wrrd = 1'b1;
 
   // Buffer descriptors memory
   iob_ram_tdp #(
@@ -461,11 +463,11 @@ module iob_eth #(
       .clk_i(clk_i),
 
       // Port A - csrss
-      .addrA_i(bd_waddr_wr[BD_NUM_LOG2:0]),
+      .addrA_i(bd_waddr_wrrd[BD_NUM_LOG2:0]),
       .enA_i(internal_bd_wen_wr || internal_bd_ren_rd),
       .weA_i(internal_bd_wen_wr),
       .dA_i(iob_csrs_iob_wdata_i),
-      .dA_o(bd_rdata_rd),
+      .dA_o(bd_rdata_wrrd),
 
       // Port B - DMA module
       .addrB_i(dma_bd_addr),
