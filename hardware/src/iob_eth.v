@@ -463,7 +463,7 @@ module iob_eth #(
       .clk_i(clk_i),
 
       // Port A - csrss
-      .addrA_i(bd_waddr_wrrd[BD_NUM_LOG2:0]),
+      .addrA_i(bd_addr_wrrd[2+:(BD_NUM_LOG2+1)]),
       .enA_i(internal_bd_wen_wr || internal_bd_ren_rd),
       .weA_i(internal_bd_wen_wr),
       .dA_i(iob_csrs_iob_wdata_i),

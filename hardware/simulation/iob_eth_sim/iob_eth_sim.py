@@ -184,7 +184,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "axistream_in_csrs_",
-                "ADDR_W": 12 - 2,
+                "ADDR_W": 12,
             },
         },
         # AXISTREAM OUT
@@ -245,7 +245,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "axistream_out_csrs_",
-                "ADDR_W": 12 - 2,
+                "ADDR_W": 12,
             },
         },
         # Ethernet
@@ -281,7 +281,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "eth_csrs_",
-                "ADDR_W": 12 - 2,
+                "ADDR_W": 12,
             },
         },
         # DMA
@@ -291,7 +291,7 @@ def setup(py_params_dict):
             "signals": {
                 "type": "iob",
                 "prefix": "dma_csrs_",
-                "ADDR_W": 12 - 2,
+                "ADDR_W": 12,
             },
         },
         # Other
@@ -446,7 +446,7 @@ def setup(py_params_dict):
                 "sys_axis_io": "dma_axis_in",
                 "iob_csrs_cbus_s": (
                     "axistream_in_csrs",
-                    ["axistream_in_csrs_iob_addr[2:0]"],
+                    ["axistream_in_csrs_iob_addr[4:0]"],
                 ),
             },
         },
@@ -467,7 +467,7 @@ def setup(py_params_dict):
                 "sys_axis_io": "dma_axis_out",
                 "iob_csrs_cbus_s": (
                     "axistream_out_csrs",
-                    ["axistream_out_csrs_iob_addr[2:0]"],
+                    ["axistream_out_csrs_iob_addr[4:0]"],
                 ),
             },
         },
@@ -479,14 +479,14 @@ def setup(py_params_dict):
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "reset_i": "split_reset",
-                "input_s": ("pbus_s", ["iob_addr_i[13:2]"]),  # Ignore 2 LSBs
+                "input_s": "pbus_s",
                 "output_0_m": "axistream_in_csrs",
                 "output_1_m": "axistream_out_csrs",
                 "output_2_m": "dma_csrs",
                 "output_3_m": "eth_csrs",
             },
             "num_outputs": 4,
-            "addr_w": 14 - 2,
+            "addr_w": 14,
         },
         {
             "core_name": "iob_eth",
@@ -523,7 +523,7 @@ def setup(py_params_dict):
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "rst_i": "rst",
-                "iob_csrs_cbus_s": ("dma_csrs", ["dma_csrs_iob_addr[2:0]"]),
+                "iob_csrs_cbus_s": ("dma_csrs", ["dma_csrs_iob_addr[4:0]"]),
                 "dma_input_io": "dma_axis_in",
                 "dma_output_io": "dma_axis_out",
                 "axi_m": "dma_axi",

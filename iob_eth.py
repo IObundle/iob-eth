@@ -544,9 +544,9 @@ def setup(py_params_dict):
                 "descr": "",
                 "signals": [
                     {"name": "bd_valid_wrrd", "width": 1},
-                    {"name": "bd_addr_wrrd", "width": "BD_NUM_LOG2+1"},
+                    {"name": "bd_addr_wrrd", "width": "BD_NUM_LOG2+1+2"},
                     {"name": "bd_wdata_wrrd", "width": 32},
-                    {"name": "bd_wstrb_wrrd", "width": 1},
+                    {"name": "bd_wstrb_wrrd", "width": 32 / 8},
                     {"name": "bd_ready_wrrd", "width": 1},
                     {"name": "bd_rdata_wrrd", "width": 32},
                     {"name": "bd_rready_wrrd", "width": 1},
