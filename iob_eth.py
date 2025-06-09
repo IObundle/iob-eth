@@ -895,6 +895,27 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
             {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a_e",
+                },
+            },
+            {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a",
+                },
+            },
+            {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a_r",
+                },
+            },
+            {
                 "core_name": "iob_acc",
                 "instantiate": False,
             },
