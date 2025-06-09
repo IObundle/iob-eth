@@ -40,7 +40,7 @@ module iob_eth #(
   assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_valid_rd & iob_csrs_iob_ready_o;
   assign internal_tx_word_cnt_ren_rd = tx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
   assign internal_rx_word_cnt_ren_rd = rx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
-  assign internal_bd_wen_wr = bd_valid_wrrd & (|bd_wstrb_wrrd) & & iob_csrs_iob_ready_o;
+  assign internal_bd_wen_wr = bd_valid_wrrd & (|bd_wstrb_wrrd) & iob_csrs_iob_ready_o;
   assign internal_bd_ren_rd = bd_valid_wrrd & (~(|bd_wstrb_wrrd)) & iob_csrs_iob_ready_o;
 
   // BD rvalid is iob_valid registered
