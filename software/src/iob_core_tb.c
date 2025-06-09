@@ -20,7 +20,7 @@
 #define TIMEOUT (100000)
 
 #undef ETH_NBYTES
-#define ETH_NBYTES 1024
+#define ETH_NBYTES 512
 #define BUFF_SIZE (ETH_NBYTES + TEMPLATE_LEN)
 
 void print_version(unsigned int version) {
@@ -74,6 +74,7 @@ int iob_core_tb() {
   char send_buffer[BUFF_SIZE] = {0};
   char rcv_buffer[BUFF_SIZE] = {0};
   int ptr = 0;
+  int axis_out_nwords = 0;
 
   printf("1. Prepare Ethernet Frame\n");
   ptr += eth_prepare_frame(send_buffer);
@@ -96,26 +97,32 @@ int iob_core_tb() {
   iob_axistream_out_csrs_set_soft_reset(1);
   iob_axistream_out_csrs_set_soft_reset(0);
   iob_axistream_out_csrs_set_mode(0);
-  iob_axistream_out_csrs_set_nwords(ptr);
+  axis_out_nwords = (ptr + 3) / 4; // round up to next 4-byte word
+  iob_axistream_out_csrs_set_nwords(axis_out_nwords);
   iob_axistream_out_csrs_set_enable(1);
 
   printf("2.3. Write data to AXIStream OUT\n");
 
   // write data loop
-  for (i = 0; i < ptr; i++) {
-    iob_axistream_out_csrs_set_data((int)(send_buffer[i] & 0xFF));
+  uint32_t d32 = 0;
+  for (i = 0; i < ptr; i += 4) {
+    d32 = (((uint32_t)send_buffer[i] & 0xFF) << 24) |
+          (((uint32_t)send_buffer[i + 1] & 0xFF) << 16) |
+          (((uint32_t)send_buffer[i + 2] & 0xFF) << 8) |
+          ((uint32_t)send_buffer[i + 3] & 0xFF);
+    iob_axistream_out_csrs_set_data(d32);
   }
 
   // wait for data in AXIS IN
-  while (iob_axistream_in_csrs_get_nwords() < ptr)
+  while (iob_axistream_in_csrs_get_nwords() < axis_out_nwords)
     ;
   // 3. Configure AXIS IN -> DMA -> AXI RAM write operation
   printf("3.1. Configure DMA write transfer\n");
-  iob_dma_csrs_set_w_burstlen(ptr);
-  dma_write_transfer((uint32_t *)SEND_RAM_ADDR, ptr);
+  iob_dma_csrs_set_w_burstlen(axis_out_nwords);
+  dma_write_transfer((uint32_t *)SEND_RAM_ADDR, axis_out_nwords);
 
   // 4. Wait for DMA transfer complete
-  printf("4. Wait for DMA write transfer complete...");
+  printf("4. Wait for DMA write transfer complete...\n");
   while (dma_write_busy())
     ;
   printf("done!\n");
