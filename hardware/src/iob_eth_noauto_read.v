@@ -9,10 +9,10 @@ module iob_eth_noauto_read #(
    input                   arst_i,
    // CSR interface
    input                   valid_i,
-   input                   rready_i,
    output     [DATA_W-1:0] rdata_o,
-   output                  rvalid_o,
+   input                   rready_i,
    output                  ready_o,
+   output                  rvalid_o,
    // internal core interface
    output                  int_ren_o,
    input      [DATA_W-1:0] int_rdata_i,
@@ -81,7 +81,7 @@ module iob_eth_noauto_read #(
     );
 
     // CSR outputs
-    assign ready_o = ready_i;
+    assign ready_o = int_ready_i;
     assign rvalid_o = (int_rvalid_i) ? int_rdata_i : rdata_r;
     assign rvalid_o = int_rvalid_i | rvalid_r;
 

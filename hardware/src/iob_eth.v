@@ -20,28 +20,158 @@ module iob_eth #(
    // configuration control and status register file.
    `include "iob_eth_subblocks.vs"
 
-  wire internal_frame_word_wen_wr;
-  wire internal_frame_word_ren_rd;
-  wire internal_tx_bd_cnt_ren_rd;
-  wire internal_rx_bd_cnt_ren_rd;
-  wire internal_tx_word_cnt_ren_rd;
-  wire internal_rx_word_cnt_ren_rd;
+  wire [BD_NUM_LOG2-1:0] internal_tx_bd_cnt_rdata_rd;
+  wire [BD_NUM_LOG2-1:0] internal_rx_bd_cnt_rdata_rd;
+  wire [BUFFER_W-1:0] internal_tx_word_cnt_rdata_rd;
+  wire [BUFFER_W-1:0] internal_rx_word_cnt_rdata_rd;
+  wire [BUFFER_W-1:0] internal_rx_nbytes_rdata_rd;
+  wire internal_rx_nbytes_rvalid_rd;
   wire internal_bd_wen_wr;
   wire internal_bd_ren_rd;
 
-  wire frame_word_ready_write;
-  wire frame_word_ready_read;
+  wire internal_frame_word_wen;
+  wire [8-1:0] internal_frame_word_wdata;
+  wire internal_frame_word_wstrb;
+  wire internal_frame_word_ready_wr;
+  wire internal_frame_word_ren;
+  wire [8-1:0] internal_frame_word_rdata;
+  wire internal_frame_word_rvalid;
+  wire internal_frame_word_ready_rd;
 
-  assign internal_frame_word_wen_wr = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd) &
-                                    iob_csrs_iob_ready_o;
-  assign internal_frame_word_ren_rd = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd)) &
-                                    iob_csrs_iob_ready_o;
-  assign internal_tx_bd_cnt_ren_rd = tx_bd_cnt_valid_rd & iob_csrs_iob_ready_o;
-  assign internal_rx_bd_cnt_ren_rd = rx_bd_cnt_valid_rd & iob_csrs_iob_ready_o;
-  assign internal_tx_word_cnt_ren_rd = tx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
-  assign internal_rx_word_cnt_ren_rd = rx_word_cnt_valid_rd & iob_csrs_iob_ready_o;
   assign internal_bd_wen_wr = bd_valid_wrrd & (|bd_wstrb_wrrd) & iob_csrs_iob_ready_o;
   assign internal_bd_ren_rd = bd_valid_wrrd & (~(|bd_wstrb_wrrd)) & iob_csrs_iob_ready_o;
+
+  // tx bd cnt logic
+   iob_eth_noauto_read #(
+      .DATA_W(BD_NUM_LOG2)
+   ) tx_bd_cnt_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(tx_bd_cnt_valid_rd),
+       .rdata_o(tx_bd_cnt_rdata_rd),
+       .rready_i(tx_bd_cnt_rready_rd),
+       .ready_o(tx_bd_cnt_ready_rd),
+       .rvalid_o(tx_bd_cnt_rvalid_rd),
+       // internal core interface
+       .int_ren_o(),
+       .int_rdata_i(internal_tx_bd_cnt_rdata_rd),
+       .int_rvalid_i(1'b1),
+       .int_ready_i(1'b1)
+   );
+
+  // rx bd cnt logic
+   iob_eth_noauto_read #(
+      .DATA_W(BD_NUM_LOG2)
+   ) rx_bd_cnt_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(rx_bd_cnt_valid_rd),
+       .rdata_o(rx_bd_cnt_rdata_rd),
+       .rready_i(rx_bd_cnt_rready_rd),
+       .ready_o(rx_bd_cnt_ready_rd),
+       .rvalid_o(rx_bd_cnt_rvalid_rd),
+       // internal core interface
+       .int_ren_o(),
+       .int_rdata_i(internal_rx_bd_cnt_rdata_rd),
+       .int_rvalid_i(1'b1),
+       .int_ready_i(1'b1)
+   );
+
+  // tx word cnt logic
+   iob_eth_noauto_read #(
+      .DATA_W(BUFFER_W)
+   ) tx_word_cnt_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(tx_word_cnt_valid_rd),
+       .rdata_o(tx_word_cnt_rdata_rd),
+       .rready_i(tx_word_cnt_rready_rd),
+       .ready_o(tx_word_cnt_ready_rd),
+       .rvalid_o(tx_word_cnt_rvalid_rd),
+       // internal core interface
+       .int_ren_o(),
+       .int_rdata_i(internal_tx_word_cnt_rdata_rd),
+       .int_rvalid_i(1'b1),
+       .int_ready_i(1'b1)
+   );
+
+  // rx word cnt logic
+   iob_eth_noauto_read #(
+      .DATA_W(BUFFER_W)
+   ) rx_word_cnt_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(rx_word_cnt_valid_rd),
+       .rdata_o(rx_word_cnt_rdata_rd),
+       .rready_i(rx_word_cnt_rready_rd),
+       .ready_o(rx_word_cnt_ready_rd),
+       .rvalid_o(rx_word_cnt_rvalid_rd),
+       // internal core interface
+       .int_ren_o(),
+       .int_rdata_i(internal_rx_word_cnt_rdata_rd),
+       .int_rvalid_i(1'b1),
+       .int_ready_i(1'b1)
+   );
+
+  // rx nbytes logic
+   iob_eth_noauto_read #(
+      .DATA_W(BUFFER_W)
+   ) rx_nbytes_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(rx_nbytes_valid_rd),
+       .rdata_o(rx_nbytes_rdata_rd),
+       .rready_i(rx_nbytes_rready_rd),
+       .ready_o(rx_nbytes_ready_rd),
+       .rvalid_o(rx_nbytes_rvalid_rd),
+       // internal core interface
+       .int_ren_o(),
+       .int_rdata_i(internal_rx_nbytes_rdata_rd),
+       .int_rvalid_i(internal_rx_nbytes_rvalid_rd),
+       .int_ready_i(1'b1)
+   );
+
+   // frame word logic
+
+   iob_eth_noauto_read_write #(
+      .DATA_W(8)
+   ) frame_word_noauto (
+       // clk_en_rst_s: Clock, clock enable and reset
+       .clk_i(clk_i),
+       .cke_i(cke_i),
+       .arst_i(arst_i),
+       // CSR interface
+       .valid_i(frame_word_valid_wrrd),
+       .wdata_i(frame_word_wdata_wrrd),
+       .wstrb_i(frame_word_wstrb_wrrd),
+       .ready_o(frame_word_ready_wrrd),
+       .rdata_o(frame_word_rdata_wrrd),
+       .rready_i(frame_word_rready_wrrd),
+       .rvalid_o(frame_word_rvalid_wrrd),
+       // internal core interface
+       .int_wen_o(internal_frame_word_wen),
+       .int_wdata_o(internal_frame_word_wdata),
+       .int_ready_wr_i(internal_frame_word_ready_wr),
+       .int_ren_o(internal_frame_word_ren),
+       .int_rdata_i(internal_frame_word_rdata),
+       .int_rvalid_i(internal_frame_word_rvalid),
+       .int_ready_rd_i(internal_frame_word_ready_rd)
+   );
 
   // BD rvalid is iob_valid registered
   wire bd_rvalid_nxt;
@@ -331,7 +461,6 @@ module iob_eth #(
   wire tx_irq;
   assign inta_o = rx_irq | tx_irq;
 
-  assign frame_word_ready_wrrd = internal_frame_word_wen_wr ? frame_word_ready_write : frame_word_ready_read;
   // Data transfer module (includes DMA)
   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
@@ -413,17 +542,17 @@ module iob_eth #(
       .axi_rready_o(axi_rready_o),  //Read channel ready.
 
       // No-DMA interface
-      .tx_bd_cnt_o(tx_bd_cnt_rdata_rd),
-      .tx_word_cnt_o(tx_word_cnt_rdata_rd),
-      .tx_frame_word_wen_i(internal_frame_word_wen_wr),
-      .tx_frame_word_wdata_i(frame_word_wdata_wrrd),
-      .tx_frame_word_ready_o(frame_word_ready_write),
-      .rx_bd_cnt_o(rx_bd_cnt_rdata_rd),
-      .rx_word_cnt_o(rx_word_cnt_rdata_rd),
-      .rx_frame_word_ren_i(internal_frame_word_ren_rd),
-      .rx_frame_word_rdata_o(frame_word_rdata_wrrd),
-      .rx_frame_word_rready_o(frame_word_rready_wrrd),
-      .rx_frame_word_ready_o(frame_word_ready_read),
+      .tx_bd_cnt_o(internal_tx_bd_cnt_rdata_rd),
+      .tx_word_cnt_o(internal_tx_word_cnt_rdata_rd),
+      .tx_frame_word_wen_i(internal_frame_word_wen),
+      .tx_frame_word_wdata_i(internal_frame_word_wdata),
+      .tx_frame_word_ready_o(internal_frame_word_ready_wr),
+      .rx_bd_cnt_o(internal_rx_bd_cnt_rdata_rd),
+      .rx_word_cnt_o(internal_rx_word_cnt_rdata_rd),
+      .rx_frame_word_ren_i(internal_frame_word_ren),
+      .rx_frame_word_rdata_o(internal_frame_word_rdata),
+      .rx_frame_word_rvalid_o(internal_frame_word_rvalid),
+      .rx_frame_word_ready_o(internal_frame_word_ready_rd),
 
       // Interrupts
       .tx_irq_o(tx_irq),
@@ -436,18 +565,8 @@ module iob_eth #(
   );
 
   // No-DMA interface signals
-  assign frame_word_rvalid_wrrd = internal_frame_word_ren_rd;
-  assign tx_bd_cnt_rvalid_rd = internal_tx_bd_cnt_ren_rd;
-  assign tx_bd_cnt_rready_rd = 1'b1;
-  assign rx_bd_cnt_rvalid_rd = internal_rx_bd_cnt_ren_rd;
-  assign rx_bd_cnt_rready_rd = 1'b1;
-  assign tx_word_cnt_rvalid_rd = internal_tx_word_cnt_ren_rd;
-  assign tx_word_cnt_rready_rd = 1'b1;
-  assign rx_word_cnt_rvalid_rd = internal_rx_word_cnt_ren_rd;
-  assign rx_word_cnt_rready_rd = 1'b1;
-  assign rx_nbytes_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
-  assign rx_nbytes_rvalid_rd = ~rcv_ack;  // Wait for ack complete
-  assign rx_nbytes_rready_rd = 1'b1;
+  assign internal_rx_nbytes_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
+  assign internal_rx_nbytes_rvalid_rd = ~rcv_ack;  // Wait for ack complete
 
   // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
 
