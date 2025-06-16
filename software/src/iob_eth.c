@@ -168,8 +168,6 @@ void eth_set_payload_size(unsigned int idx, unsigned int size) {
 void eth_send_frame(char *data, unsigned int size) {
   int i;
 
-  printf("[DEBUG]: eth_send_frame\n");
-  printf("\t[DEBUG]: wait for txready\n");
   // wait for ready
   while (!eth_tx_ready(0))
     ;
@@ -177,7 +175,6 @@ void eth_send_frame(char *data, unsigned int size) {
   // Alloc memory for frame
   char *frame_ptr = (char *)(*mem_alloc)(TEMPLATE_LEN + size);
 
-  printf("\t[DEBUG]: setup frame\n");
   // Copy template to frame
   for (i = 0; i < TEMPLATE_LEN; i++)
     frame_ptr[i] = TEMPLATE[i];
@@ -185,7 +182,6 @@ void eth_send_frame(char *data, unsigned int size) {
   // Copy payload to frame
   for (i = 0; i < size; i++)
     frame_ptr[i + TEMPLATE_LEN] = data[i];
-  printf("\t[DEBUG]: setup frame complete\n");
 
   /* Buffer descriptor configuration */
 
@@ -201,18 +197,14 @@ void eth_send_frame(char *data, unsigned int size) {
   eth_set_pad(0, 1);
   eth_set_wr(0, 1);
   eth_set_interrupt(0, 1);
-  printf("\t[DEBUG]: buffer description configuration complete\n");
 
   // start sending
   eth_send(1);
-
-  printf("\t[DEBUG]: send! wait for tx ready\n");
 
   // wait for ready
   while (!eth_tx_ready(0))
     ;
 
-  printf("\t[DEBUG]: disable transmission and free memory\n");
   // Disable transmission and free memory
   eth_send(0);
   (*mem_free)(frame_ptr);
@@ -233,8 +225,6 @@ int eth_prepare_frame(char *external_frame) {
 void eth_send_frame_addr(unsigned int size, uint32_t frame_addr) {
   int i;
 
-  printf("[DEBUG]: eth_send_frame_addr\n");
-  printf("\t[DEBUG]: wait for txready\n");
   // wait for ready
   while (!eth_tx_ready(0))
     ;
@@ -253,18 +243,14 @@ void eth_send_frame_addr(unsigned int size, uint32_t frame_addr) {
   eth_set_pad(0, 1);
   eth_set_wr(0, 1);
   eth_set_interrupt(0, 1);
-  printf("\t[DEBUG]: buffer description configuration complete\n");
 
   // start sending
   eth_send(1);
-
-  printf("\t[DEBUG]: send! wait for tx ready\n");
 
   // wait for ready
   while (!eth_tx_ready(0))
     ;
 
-  printf("\t[DEBUG]: disable transmission\n");
   // Disable transmission and free memory
   eth_send(0);
 
@@ -296,8 +282,6 @@ int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr) {
   int i;
   int ignore;
 
-  printf("[DEBUG]: eth_rcv_frame_addr\n");
-  printf("\t[DEBUG]: setup frame pointer\n");
   // set frame pointer
   eth_set_ptr(64, frame_addr);
 
@@ -306,11 +290,9 @@ int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr) {
   eth_set_wr(64, 1);
   eth_set_interrupt(64, 1);
 
-  printf("\t[DEBUG]: enable reception\n");
   // Enable reception
   eth_receive(1);
 
-  printf("\t[DEBUG]: wait for data received...\n");
   // wait until data received
   while (!eth_rx_ready(64)) {
     timeout--;
@@ -319,16 +301,13 @@ int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr) {
       return ETH_NO_DATA;
     }
   }
-  printf("\t[DEBUG]: done! datad received\n");
 
-  printf("\t[DEBUG]: check CRC\n");
   if (eth_bad_crc(64)) {
     eth_receive(0);
     printf("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
-  printf("\t[DEBUG]: disable reception\n");
   // Disable reception
   eth_receive(0);
 

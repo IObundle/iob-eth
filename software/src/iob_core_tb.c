@@ -20,7 +20,7 @@
 #define TIMEOUT (100000)
 
 #undef ETH_NBYTES
-#define ETH_NBYTES 512
+#define ETH_NBYTES 1500
 #define BUFF_SIZE (ETH_NBYTES + TEMPLATE_LEN)
 
 void print_version(unsigned int version) {
@@ -118,7 +118,12 @@ int iob_core_tb() {
     ;
   // 3. Configure AXIS IN -> DMA -> AXI RAM write operation
   printf("3.1. Configure DMA write transfer\n");
-  iob_dma_csrs_set_w_burstlen(axis_out_nwords);
+  // Limit burst length to max of 255 words
+  uint32_t burstlen = axis_out_nwords;
+  if (burstlen > 255) {
+    burstlen = 255;
+  }
+  iob_dma_csrs_set_w_burstlen(burstlen);
   dma_write_transfer((uint32_t *)SEND_RAM_ADDR, axis_out_nwords);
 
   // 4. Wait for DMA transfer complete
@@ -152,7 +157,7 @@ int iob_core_tb() {
   iob_axistream_out_csrs_set_enable(1);
 
   printf("7.3. Configure DMA read transfer\n");
-  iob_dma_csrs_set_r_burstlen(axis_out_nwords);
+  iob_dma_csrs_set_r_burstlen(burstlen);
   dma_read_transfer((uint32_t *)RCV_RAM_ADDR, axis_out_nwords);
 
   // 8. Wait for DMA transfer complete
