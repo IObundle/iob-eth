@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
 `include "iob_eth_conf.vh"
-`include "iob_eth_csrs_def.vh"
 
 `define IOB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -65,6 +64,7 @@ module iob_eth_dma #(
     output reg [11-1:0] rx_word_cnt_o,
     input rx_frame_word_ren_i,
     output reg [8-1:0] rx_frame_word_rdata_o,
+    output reg rx_frame_word_rvalid_o,
     output reg rx_frame_word_ready_o,
 
     input clk_i,
@@ -146,7 +146,7 @@ module iob_eth_dma #(
   //tx program
   reg  [4-1:0] tx_state_nxt;
   wire [4-1:0] tx_state;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (4),
       .RST_VAL(8)
   ) tx_state_reg (
@@ -159,7 +159,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] tx_buffer_byte_counter_nxt;
   wire [32-1:0] tx_buffer_byte_counter;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) tx_buffer_byte_counter_reg (
@@ -172,7 +172,7 @@ module iob_eth_dma #(
 
   reg  [BD_ADDR_W-2:0] tx_bd_num_nxt;
   wire [BD_ADDR_W-2:0] tx_bd_num;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (BD_ADDR_W - 1),
       .RST_VAL(0)
   ) tx_bd_num_reg (
@@ -185,7 +185,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] tx_buffer_descriptor_nxt;
   wire [32-1:0] tx_buffer_descriptor;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) tx_buffer_descriptor_reg (
@@ -198,7 +198,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] tx_buffer_ptr_nxt;
   wire [32-1:0] tx_buffer_ptr;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) tx_buffer_ptr_reg (
@@ -211,7 +211,7 @@ module iob_eth_dma #(
 
   reg  [AXI_LEN_W-1:0] axi_arlen_nxt;
   wire [AXI_LEN_W-1:0] axi_arlen;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (AXI_LEN_W),
       .RST_VAL(0)
   ) axi_arlen_reg (
@@ -225,7 +225,7 @@ module iob_eth_dma #(
 
   reg  [1-1:0] crc_en_nxt;
   wire [1-1:0] crc_en;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(0)
   ) crc_en_reg (
@@ -239,7 +239,7 @@ module iob_eth_dma #(
 
   reg  [11-1:0] tx_nbytes_nxt;
   wire [11-1:0] tx_nbytes;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (11),
       .RST_VAL(0)
   ) tx_nbytes_reg (
@@ -253,7 +253,7 @@ module iob_eth_dma #(
 
   reg  [1-1:0] send_nxt;
   wire [1-1:0] send;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(0)
   ) send_reg (
@@ -467,7 +467,6 @@ module iob_eth_dma #(
   assign axi_arburst_o = 1;
   assign axi_arlock_o  = 0;
   assign axi_arcache_o = 2;
-  assign axi_arprot_o  = 2;
   assign axi_arqos_o   = 0;
   //axi_rid_i
   //axi_rresp_i
@@ -477,7 +476,7 @@ module iob_eth_dma #(
   //rx program
   reg  [3-1:0] rx_state_nxt;
   wire [3-1:0] rx_state;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (3),
       .RST_VAL(0)
   ) rx_state_reg (
@@ -490,7 +489,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] rx_buffer_byte_counter_nxt;
   wire [32-1:0] rx_buffer_byte_counter;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) rx_buffer_byte_counter_reg (
@@ -503,7 +502,7 @@ module iob_eth_dma #(
 
   reg  [BD_ADDR_W-2:0] rx_bd_num_nxt;
   wire [BD_ADDR_W-2:0] rx_bd_num;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W(BD_ADDR_W - 1),
       .RST_VAL(32'd64)  // Same as default value of 'TX_BD_NUM' register
   ) rx_bd_num_reg (
@@ -516,7 +515,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] rx_burst_word_num_nxt;
   wire [32-1:0] rx_burst_word_num;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) rx_burst_word_num_reg (
@@ -529,7 +528,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] rx_buffer_descriptor_nxt;
   wire [32-1:0] rx_buffer_descriptor;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) rx_buffer_descriptor_reg (
@@ -542,7 +541,7 @@ module iob_eth_dma #(
 
   reg  [32-1:0] rx_buffer_ptr_nxt;
   wire [32-1:0] rx_buffer_ptr;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (32),
       .RST_VAL(0)
   ) rx_buffer_ptr_reg (
@@ -555,7 +554,7 @@ module iob_eth_dma #(
 
   reg  [AXI_LEN_W-1:0] axi_awlen_nxt;
   wire [AXI_LEN_W-1:0] axi_awlen;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (AXI_LEN_W),
       .RST_VAL(0)
   ) axi_awlen_reg (
@@ -569,7 +568,7 @@ module iob_eth_dma #(
 
   reg  [1-1:0] rcv_ack_nxt;
   wire [1-1:0] rcv_ack;
-  iob_reg #(
+  iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(0)
   ) rcv_ack_reg (
@@ -597,6 +596,7 @@ module iob_eth_dma #(
     rx_bd_cnt_o                = 1'b0;
     rx_word_cnt_o              = 1'b0;
     rx_frame_word_rdata_o      = 1'b0;
+    rx_frame_word_rvalid_o     = 1'b0;
     rx_frame_word_ready_o      = 1'b0;
 
     axi_awaddr_o_reg           = 1'b0;
@@ -626,6 +626,7 @@ module iob_eth_dma #(
       rx_bd_cnt_o            = 1'b0;
       rx_word_cnt_o          = 1'b0;
       rx_frame_word_rdata_o  = 1'b0;
+      rx_frame_word_rvalid_o = 1'b0;
       rx_frame_word_ready_o  = 1'b0;
 
     end else begin
@@ -709,6 +710,7 @@ module iob_eth_dma #(
             eth_data_rd_addr_o         = rx_buffer_byte_counter + 1'b1;  // Update next word addr
             // Send word from buffer to CPU
             rx_frame_word_rdata_o      = eth_data_rd_rdata_i;
+            rx_frame_word_rvalid_o     = 1'b1;
           end
 
         end
@@ -792,7 +794,6 @@ module iob_eth_dma #(
   assign axi_awburst_o = 1;
   assign axi_awlock_o  = 0;
   assign axi_awcache_o = 2;
-  assign axi_awprot_o  = 2;
   assign axi_awqos_o   = 0;
   assign axi_bready_o  = 1'b1;
   // axi_bid_i

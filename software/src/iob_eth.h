@@ -21,6 +21,21 @@ void eth_set_payload_size(unsigned int idx, unsigned int size);
 // not work (frame does not get sent)
 void eth_send_frame(char *data_to_send, unsigned int size);
 
+// prepare frame with ethernet template header
+// external_frame: should have at least TEMPLATE_LEN size
+int eth_prepare_frame(char *external_frame);
+
+// Send already prepared frame
+void eth_send_frame_addr(unsigned int size, uint32_t frame_addr);
+
+// eth_check_frame()
+// Manual check for valid frame at frame_addr, copy data to data_rcv
+int eth_check_frame(char *data_rcv, char *frame_ptr, unsigned int size);
+
+// eth_receive_frame_addr()
+// implementation for receiving a frame into frame_address
+int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr);
+
 /* Function name: eth_rcv_frame
  * Inputs:
  * 	- data_rcv: char array where data received will be saved

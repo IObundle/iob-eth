@@ -30,37 +30,38 @@ def setup(py_params_dict):
             check=True,
         )
 
-        # Run sudo make set-capabilities
-        subprocess.run(
-            [
-                "sudo",
-                "make",
-                "-C",
-                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-                "set-capabilities",
-            ],
-            check=True,
-        )
+        # # Run sudo make set-capabilities
+        # subprocess.run(
+        #     [
+        #         "sudo",
+        #         "make",
+        #         "-C",
+        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+        #         "set-capabilities",
+        #     ],
+        #     check=True,
+        # )
 
     # Copy simulation testbench utility files
-    dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
-    os.makedirs(dst, exist_ok=True)
-    src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
-    for src_file in [
-        "iob_eth_driver_tb.v",
-        "iob_eth_driver_tb.h",
-        "iob_eth_driver_tb.cpp",
-        "iob_eth_defines.vh",
-        "iob_eth_defines_verilator.h",
-        "iob_eth_defines_tasks.vs",
-    ]:
-        shutil.copy2(os.path.join(src, src_file), dst)
-
-    shutil.copytree(
-        f"{os.path.dirname(__file__)}/scripts",
-        f"{py_params_dict['build_dir']}/scripts",
-        dirs_exist_ok=True,
-    )
+    if py_params_dict["build_dir"]:
+        # dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
+        # os.makedirs(dst, exist_ok=True)
+        # src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
+        # for src_file in [
+        #     # "iob_eth_driver_tb.v",
+        #     # "iob_eth_driver_tb.h",
+        #     # "iob_eth_driver_tb.cpp",
+        #     "iob_eth_defines.vh",
+        #     "iob_eth_defines_verilator.h",
+        #     "iob_eth_defines_tasks.vs",
+        # ]:
+        #     shutil.copy2(os.path.join(src, src_file), dst)
+        #
+        shutil.copytree(
+            f"{os.path.dirname(__file__)}/scripts",
+            f"{py_params_dict['build_dir']}/scripts",
+            dirs_exist_ok=True,
+        )
 
     attributes_dict = {
         "generate_hw": True,
@@ -180,16 +181,7 @@ def setup(py_params_dict):
                 "name": "clk_en_rst_s",
                 "descr": "Clock, clock enable and reset",
                 "signals": {
-                    "type": "clk_en_rst",
-                },
-            },
-            {
-                "name": "cbus_s",
-                "descr": "CPU native interface",
-                "signals": {
-                    "type": "iob",
-                    "ADDR_W": 12 - 2,
-                    "DATA_W": "DATA_W",
+                    "type": "iob_clk",
                 },
             },
             {
@@ -197,6 +189,10 @@ def setup(py_params_dict):
                 "descr": "AXI master interface for external memory",
                 "signals": {
                     "type": "axi",
+                    "ID_W": "AXI_ID_W",
+                    "ADDR_W": "AXI_ADDR_W",
+                    "DATA_W": "AXI_DATA_W",
+                    "LEN_W": "AXI_LEN_W",
                 },
             },
             {
@@ -285,6 +281,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "moder_wr", "width": 32},
                     {"name": "moder_rd", "width": 32},
+                    {"name": "moder_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -293,6 +290,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_source_wr", "width": 32},
                     {"name": "int_source_rd", "width": 32},
+                    {"name": "int_source_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -301,6 +299,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_mask_wr", "width": 32},
                     {"name": "int_mask_rd", "width": 32},
+                    {"name": "int_mask_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -309,6 +308,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgt_wr", "width": 32},
                     {"name": "ipgt_rd", "width": 32},
+                    {"name": "ipgt_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -317,6 +317,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr1_wr", "width": 32},
                     {"name": "ipgr1_rd", "width": 32},
+                    {"name": "ipgr1_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -325,6 +326,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr2_wr", "width": 32},
                     {"name": "ipgr2_rd", "width": 32},
+                    {"name": "ipgr2_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -333,6 +335,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "packetlen_wr", "width": 32},
                     {"name": "packetlen_rd", "width": 32},
+                    {"name": "packetlen_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -341,6 +344,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "collconf_wr", "width": 32},
                     {"name": "collconf_rd", "width": 32},
+                    {"name": "collconf_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -349,6 +353,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_bd_num_wr", "width": 32},
                     {"name": "tx_bd_num_rd", "width": 32},
+                    {"name": "tx_bd_num_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -357,6 +362,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ctrlmoder_wr", "width": 32},
                     {"name": "ctrlmoder_rd", "width": 32},
+                    {"name": "ctrlmoder_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -365,6 +371,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miimoder_wr", "width": 32},
                     {"name": "miimoder_rd", "width": 32},
+                    {"name": "miimoder_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -373,6 +380,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miicommand_wr", "width": 32},
                     {"name": "miicommand_rd", "width": 32},
+                    {"name": "miicommand_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -381,6 +389,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miiaddress_wr", "width": 32},
                     {"name": "miiaddress_rd", "width": 32},
+                    {"name": "miiaddress_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -389,6 +398,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miitx_data_wr", "width": 32},
                     {"name": "miitx_data_rd", "width": 32},
+                    {"name": "miitx_data_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -397,6 +407,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miirx_data_wr", "width": 32},
                     {"name": "miirx_data_rd", "width": 32},
+                    {"name": "miirx_data_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -405,6 +416,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miistatus_wr", "width": 32},
                     {"name": "miistatus_rd", "width": 32},
+                    {"name": "miistatus_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -413,6 +425,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr0_wr", "width": 32},
                     {"name": "mac_addr0_rd", "width": 32},
+                    {"name": "mac_addr0_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -421,6 +434,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr1_wr", "width": 32},
                     {"name": "mac_addr1_rd", "width": 32},
+                    {"name": "mac_addr1_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -429,6 +443,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash0_adr_wr", "width": 32},
                     {"name": "eth_hash0_adr_rd", "width": 32},
+                    {"name": "eth_hash0_adr_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -437,6 +452,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash1_adr_wr", "width": 32},
                     {"name": "eth_hash1_adr_rd", "width": 32},
+                    {"name": "eth_hash1_adr_wstrb", "width": 32 / 8},
                 ],
             },
             {
@@ -445,69 +461,69 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_txctrl_wr", "width": 32},
                     {"name": "eth_txctrl_rd", "width": 32},
+                    {"name": "eth_txctrl_wstrb", "width": 32 / 8},
                 ],
             },
             {
                 "name": "tx_bd_cnt",
                 "descr": "",
                 "signals": [
+                    {"name": "tx_bd_cnt_valid_rd", "width": 1},
                     {"name": "tx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
+                    {"name": "tx_bd_cnt_ready_rd", "width": 1},
                     {"name": "tx_bd_cnt_rvalid_rd", "width": 1},
-                    {"name": "tx_bd_cnt_ren_rd", "width": 1},
-                    {"name": "tx_bd_cnt_rready_rd", "width": 1},
                 ],
             },
             {
                 "name": "rx_bd_cnt",
                 "descr": "",
                 "signals": [
+                    {"name": "rx_bd_cnt_valid_rd", "width": 1},
                     {"name": "rx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
+                    {"name": "rx_bd_cnt_ready_rd", "width": 1},
                     {"name": "rx_bd_cnt_rvalid_rd", "width": 1},
-                    {"name": "rx_bd_cnt_ren_rd", "width": 1},
-                    {"name": "rx_bd_cnt_rready_rd", "width": 1},
                 ],
             },
             {
                 "name": "tx_word_cnt",
                 "descr": "",
                 "signals": [
+                    {"name": "tx_word_cnt_valid_rd", "width": 1},
                     {"name": "tx_word_cnt_rdata_rd", "width": "BUFFER_W"},
+                    {"name": "tx_word_cnt_ready_rd", "width": 1},
                     {"name": "tx_word_cnt_rvalid_rd", "width": 1},
-                    {"name": "tx_word_cnt_ren_rd", "width": 1},
-                    {"name": "tx_word_cnt_rready_rd", "width": 1},
                 ],
             },
             {
                 "name": "rx_word_cnt",
                 "descr": "",
                 "signals": [
+                    {"name": "rx_word_cnt_valid_rd", "width": 1},
                     {"name": "rx_word_cnt_rdata_rd", "width": "BUFFER_W"},
+                    {"name": "rx_word_cnt_ready_rd", "width": 1},
                     {"name": "rx_word_cnt_rvalid_rd", "width": 1},
-                    {"name": "rx_word_cnt_ren_rd", "width": 1},
-                    {"name": "rx_word_cnt_rready_rd", "width": 1},
                 ],
             },
             {
                 "name": "rx_nbytes",
                 "descr": "",
                 "signals": [
+                    {"name": "rx_nbytes_valid_rd", "width": 1},
                     {"name": "rx_nbytes_rdata_rd", "width": "BUFFER_W"},
+                    {"name": "rx_nbytes_ready_rd", "width": 1},
                     {"name": "rx_nbytes_rvalid_rd", "width": 1},
-                    {"name": "rx_nbytes_ren_rd", "width": 1},
-                    {"name": "rx_nbytes_rready_rd", "width": 1},
                 ],
             },
             {
                 "name": "frame_word",
                 "descr": "",
                 "signals": [
-                    {"name": "frame_word_wdata_wr", "width": 8},
-                    {"name": "frame_word_wen_wr", "width": 1},
-                    {"name": "frame_word_wready_wr", "width": 1},
-                    {"name": "frame_word_rdata_rd", "width": 8},
-                    {"name": "frame_word_rvalid_rd", "width": 1},
-                    {"name": "frame_word_ren_rd", "width": 1},
-                    {"name": "frame_word_rready_rd", "width": 1},
+                    {"name": "frame_word_valid_wrrd", "width": 1},
+                    {"name": "frame_word_wdata_wrrd", "width": 8},
+                    {"name": "frame_word_wstrb_wrrd", "width": 1},
+                    {"name": "frame_word_ready_wrrd", "width": 1},
+                    {"name": "frame_word_rdata_wrrd", "width": 8},
+                    {"name": "frame_word_rvalid_wrrd", "width": 1},
                 ],
             },
             {
@@ -521,22 +537,20 @@ def setup(py_params_dict):
                 "name": "bd",
                 "descr": "",
                 "signals": [
-                    {"name": "bd_waddr_wr", "width": "BD_NUM_LOG2+1"},
-                    {"name": "bd_wdata_wr", "width": 32},
-                    {"name": "bd_wen_wr", "width": 1},
-                    {"name": "bd_wready_wr", "width": 1},
-                    {"name": "bd_raddr_rd", "width": "BD_NUM_LOG2+1"},
-                    {"name": "bd_rdata_rd", "width": 32},
-                    {"name": "bd_rvalid_rd", "width": 1},
-                    {"name": "bd_ren_rd", "width": 1},
-                    {"name": "bd_rready_rd", "width": 1},
+                    {"name": "bd_valid_wrrd", "width": 1},
+                    {"name": "bd_addr_wrrd", "width": "BD_NUM_LOG2+1+2"},
+                    {"name": "bd_wdata_wrrd", "width": 32},
+                    {"name": "bd_wstrb_wrrd", "width": 32 / 8},
+                    {"name": "bd_ready_wrrd", "width": 1},
+                    {"name": "bd_rdata_wrrd", "width": 32},
+                    {"name": "bd_rvalid_wrrd", "width": 1},
                 ],
             },
         ],
         "subblocks": [
             {
                 "core_name": "iob_csrs",
-                "instance_name": "csrs_inst",
+                "instance_name": "iob_csrs",
                 "instance_description": "Control/Status Registers",
                 "autoaddr": False,
                 "rw_overlap": True,
@@ -547,212 +561,191 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "moder",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 40960,
                                 "addr": 0,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Mode Register",
                             },
                             {
                                 "name": "int_source",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 4,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Interrupt Source Register",
                             },
                             {
                                 "name": "int_mask",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 8,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Interrupt Mask Register",
                             },
                             {
                                 "name": "ipgt",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 18,
                                 "addr": 12,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Back to Back Inter Packet Gap Register",
                             },
                             {
                                 "name": "ipgr1",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 12,
                                 "addr": 16,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Non Back to Back Inter Packet Gap Register 1",
                             },
                             {
                                 "name": "ipgr2",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 18,
                                 "addr": 20,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Non Back to Back Inter Packet Gap Register 2",
                             },
                             {
                                 "name": "packetlen",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 4195840,
                                 "addr": 24,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Packet Length (minimum and maximum) Register",
                             },
                             {
                                 "name": "collconf",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 61443,
                                 "addr": 28,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Collision and Retry Configuration",
                             },
                             {
                                 "name": "tx_bd_num",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 64,
                                 "addr": 32,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Transmit Buffer Descriptor Number",
                             },
                             {
                                 "name": "ctrlmoder",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 36,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Control Module Mode Register",
                             },
                             {
                                 "name": "miimoder",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 100,
                                 "addr": 40,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Mode Register",
                             },
                             {
                                 "name": "miicommand",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 44,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Command Register",
                             },
                             {
                                 "name": "miiaddress",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 48,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Address Register. Contains the PHY address and the register within the PHY address",
                             },
                             {
                                 "name": "miitx_data",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 52,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Transmit Data. The data to be transmitted to the PHY",
                             },
                             {
                                 "name": "miirx_data",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 56,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Receive Data. The data received from the PHY",
                             },
                             {
                                 "name": "miistatus",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 60,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MII Status Register",
                             },
                             {
                                 "name": "mac_addr0",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 64,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MAC Individual Address0. The LSB four bytes of the individual address are written to this register",
                             },
                             {
                                 "name": "mac_addr1",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 68,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "MAC Individual Address1. The MSB two bytes of the individual address are written to this register",
                             },
                             {
                                 "name": "eth_hash0_adr",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 72,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "HASH0 Register",
                             },
                             {
                                 "name": "eth_hash1_adr",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 76,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "HASH1 Register",
                             },
                             {
                                 "name": "eth_txctrl",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 80,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Transmit Control Register",
                             },
                         ],
@@ -763,62 +756,62 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "tx_bd_cnt",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": "BD_NUM_LOG2",
                                 "rst_val": 0,
                                 "addr": 84,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Buffer descriptor number of current TX frame",
                             },
                             {
                                 "name": "rx_bd_cnt",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": "BD_NUM_LOG2",
                                 "rst_val": 0,
                                 "addr": 88,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Buffer descriptor number of current RX frame",
                             },
                             {
                                 "name": "tx_word_cnt",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 92,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Word number of current TX frame",
                             },
                             {
                                 "name": "rx_word_cnt",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 96,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Word number of current RX frame",
                             },
                             {
                                 "name": "rx_nbytes",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 100,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Size of received frame in bytes. Will be zero if no frame has been received. Will reset to zero when cpu completes reading the frame.",
                             },
                             {
                                 "name": "frame_word",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 8,
                                 "rst_val": 0,
                                 "addr": 104,
                                 "log2n_items": 0,
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Frame word to transfer to/from buffer",
                             },
                         ],
@@ -829,12 +822,11 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "phy_rst_val",
-                                "type": "R",
+                                "mode": "R",
                                 "n_bits": 1,
                                 "rst_val": 0,
                                 "addr": 108,
                                 "log2n_items": 0,
-                                "autoreg": True,
                                 "descr": "Current PHY reset signal value",
                             },
                         ],
@@ -845,20 +837,20 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "bd",
-                                "type": "RW",
+                                "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 1024,
                                 "log2n_items": "BD_NUM_LOG2+1",
-                                "autoreg": False,
+                                "type": "NOAUTO",
                                 "descr": "Buffer descriptors",
                             },
                         ],
                     },
                 ],
                 "connect": {
+                    # iob_csrs 'control_if_s' port is connected automatically by py2hwsw
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "control_if_s": "cbus_s",
                     # Register interfaces
                     "moder_io": "moder",
                     "int_source_io": "int_source",
@@ -896,6 +888,27 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
             {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a_e",
+                },
+            },
+            {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a",
+                },
+            },
+            {
+                "core_name": "iob_reg",
+                "instantiate": False,
+                "port_params": {
+                    "clk_en_rst_s": "c_a_r",
+                },
+            },
+            {
                 "core_name": "iob_acc",
                 "instantiate": False,
             },
@@ -920,14 +933,14 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
         ],
-        "superblocks": [
-            # Simulation wrapper
-            {
-                "core_name": "iob_sim",
-                "instance_name": "iob_sim",
-                "dest_dir": "hardware/simulation/src",
-            },
-        ],
     }
+
+    attributes_dict["superblocks"] = [
+        # Simulation wrapper
+        {
+            "core_name": "iob_eth_sim",
+            "dest_dir": "hardware/simulation/src",
+        },
+    ]
 
     return attributes_dict

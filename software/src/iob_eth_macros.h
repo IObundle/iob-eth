@@ -1,6 +1,7 @@
 #ifndef H_IOB_ETH_MACROS_H
 #define H_IOB_ETH_MACROS_H
 
+#include "iob_eth_conf.h"
 #include "iob_eth_rmac.h"
 
 /* mode register */

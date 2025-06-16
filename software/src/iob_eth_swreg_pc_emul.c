@@ -270,119 +270,119 @@ static void try_receive() {
  * csrs functions
  ****************************/
 
-void IOB_ETH_INIT_BASEADDR(uint32_t addr) {
+void iob_eth_csrs_init_baseaddr(uint32_t addr) {
   base = addr;
   reset_socket();
   return;
 }
 
 // Core Setters and Getters
-void IOB_ETH_SET_MODER(uint32_t value) {
+void iob_eth_csrs_set_moder(uint32_t value) {
   moder.val = value;
   // User may have enabled transfer
   try_send();
   try_receive();
 }
 
-uint32_t IOB_ETH_GET_MODER() { return moder.val; }
+uint32_t iob_eth_csrs_get_moder() { return moder.val; }
 
-void IOB_ETH_SET_INT_SOURCE(uint32_t value) {}
+void iob_eth_csrs_set_int_source(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_INT_SOURCE() { return 0; }
+uint32_t iob_eth_csrs_get_int_source() { return 0; }
 
-void IOB_ETH_SET_INT_MASK(uint32_t value) {}
+void iob_eth_csrs_set_int_mask(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_INT_MASK() { return 0; }
+uint32_t iob_eth_csrs_get_int_mask() { return 0; }
 
-void IOB_ETH_SET_IPGT(uint32_t value) {}
+void iob_eth_csrs_set_ipgt(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_IPGT() { return 0; }
+uint32_t iob_eth_csrs_get_ipgt() { return 0; }
 
-void IOB_ETH_SET_IPGR1(uint32_t value) {}
+void iob_eth_csrs_set_ipgr1(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_IPGR1() { return 0; }
+uint32_t iob_eth_csrs_get_ipgr1() { return 0; }
 
-void IOB_ETH_SET_IPGR2(uint32_t value) {}
+void iob_eth_csrs_set_ipgr2(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_IPGR2() { return 0; }
+uint32_t iob_eth_csrs_get_ipgr2() { return 0; }
 
-void IOB_ETH_SET_PACKETLEN(uint32_t value) {}
+void iob_eth_csrs_set_packetlen(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_PACKETLEN() { return 0; }
+uint32_t iob_eth_csrs_get_packetlen() { return 0; }
 
-void IOB_ETH_SET_COLLCONF(uint32_t value) {}
+void iob_eth_csrs_set_collconf(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_COLLCONF() { return 0; }
+uint32_t iob_eth_csrs_get_collconf() { return 0; }
 
-void IOB_ETH_SET_TX_BD_NUM(uint32_t value) { tx_bd_num = (uint8_t)value; }
+void iob_eth_csrs_set_tx_bd_num(uint32_t value) { tx_bd_num = (uint8_t)value; }
 
-uint32_t IOB_ETH_GET_TX_BD_NUM() { return tx_bd_num; }
+uint32_t iob_eth_csrs_get_tx_bd_num() { return tx_bd_num; }
 
-void IOB_ETH_SET_CTRLMODER(uint32_t value) {}
+void iob_eth_csrs_set_ctrlmoder(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_CTRLMODER() { return 0; }
+uint32_t iob_eth_csrs_get_ctrlmoder() { return 0; }
 
-void IOB_ETH_SET_MIIMODER(uint32_t value) {}
+void iob_eth_csrs_set_miimoder(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIIMODER() { return 0; }
+uint32_t iob_eth_csrs_get_miimoder() { return 0; }
 
-void IOB_ETH_SET_MIICOMMAND(uint32_t value) {}
+void iob_eth_csrs_set_miicommand(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIICOMMAND() { return 0; }
+uint32_t iob_eth_csrs_get_miicommand() { return 0; }
 
-void IOB_ETH_SET_MIIADDRESS(uint32_t value) {}
+void iob_eth_csrs_set_miiaddress(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIIADDRESS() { return 0; }
+uint32_t iob_eth_csrs_get_miiaddress() { return 0; }
 
-void IOB_ETH_SET_MIITX_DATA(uint32_t value) {}
+void iob_eth_csrs_set_miitx_data(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIITX_DATA() { return 0; }
+uint32_t iob_eth_csrs_get_miitx_data() { return 0; }
 
-void IOB_ETH_SET_MIIRX_DATA(uint32_t value) {}
+void iob_eth_csrs_set_miirx_data(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIIRX_DATA() { return 0; }
+uint32_t iob_eth_csrs_get_miirx_data() { return 0; }
 
-void IOB_ETH_SET_MIISTATUS(uint32_t value) {}
+void iob_eth_csrs_set_miistatus(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MIISTATUS() { return 0; }
+uint32_t iob_eth_csrs_get_miistatus() { return 0; }
 
-void IOB_ETH_SET_MAC_ADDR0(uint32_t value) {}
+void iob_eth_csrs_set_mac_addr0(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MAC_ADDR0() { return 0; }
+uint32_t iob_eth_csrs_get_mac_addr0() { return 0; }
 
-void IOB_ETH_SET_MAC_ADDR1(uint32_t value) {}
+void iob_eth_csrs_set_mac_addr1(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_MAC_ADDR1() { return 0; }
+uint32_t iob_eth_csrs_get_mac_addr1() { return 0; }
 
-void IOB_ETH_SET_ETH_HASH0_ADR(uint32_t value) {}
+void iob_eth_csrs_set_eth_hash0_adr(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_ETH_HASH0_ADR() { return 0; }
+uint32_t iob_eth_csrs_get_eth_hash0_adr() { return 0; }
 
-void IOB_ETH_SET_ETH_HASH1_ADR(uint32_t value) {}
+void iob_eth_csrs_set_eth_hash1_adr(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_ETH_HASH1_ADR() { return 0; }
+uint32_t iob_eth_csrs_get_eth_hash1_adr() { return 0; }
 
-void IOB_ETH_SET_ETH_TXCTRL(uint32_t value) {}
+void iob_eth_csrs_set_eth_txctrl(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_ETH_TXCTRL() { return 0; }
+uint32_t iob_eth_csrs_get_eth_txctrl() { return 0; }
 
 // No DMA interface
-uint8_t IOB_ETH_GET_TX_BD_CNT() { return 0; }
+uint8_t iob_eth_csrs_get_tx_bd_cnt() { return 0; }
 
-uint8_t IOB_ETH_GET_RX_BD_CNT() { return 0; }
+uint8_t iob_eth_csrs_get_rx_bd_cnt() { return 0; }
 
-uint32_t IOB_ETH_GET_TX_WORD_CNT() { return 0; }
+uint32_t iob_eth_csrs_get_tx_word_cnt() { return 0; }
 
-uint32_t IOB_ETH_GET_RX_WORD_CNT() { return 0; }
+uint32_t iob_eth_csrs_get_rx_word_cnt() { return 0; }
 
-void IOB_ETH_SET_FRAME_WORD(uint32_t value) {}
+void iob_eth_csrs_set_frame_word(uint32_t value) {}
 
-uint32_t IOB_ETH_GET_FRAME_WORD() { return 0; }
+uint32_t iob_eth_csrs_get_frame_word() { return 0; }
 
-uint8_t IOB_ETH_GET_PHY_RST_VAL() { return 0; }
+uint8_t iob_eth_csrs_get_phy_rst_val() { return 0; }
 
 // Buffer descriptors
-void IOB_ETH_SET_BD(uint32_t value, int addr) {
+void iob_eth_csrs_set_bd(uint32_t value, int addr) {
   bd_list[addr >> 1].val[addr & 1] = value;
   // User may have changed ready bits
   if ((addr >> 1) < tx_bd_num)
@@ -391,6 +391,8 @@ void IOB_ETH_SET_BD(uint32_t value, int addr) {
     try_receive();
 }
 
-uint32_t IOB_ETH_GET_BD(int addr) { return bd_list[addr >> 1].val[addr & 1]; }
+uint32_t iob_eth_csrs_get_bd(int addr) {
+  return bd_list[addr >> 1].val[addr & 1];
+}
 
-uint16_t IOB_ETH_GET_VERSION() { return IOB_ETH_VERSION; }
+uint16_t iob_eth_csrs_get_version() { return IOB_ETH_VERSION; }
