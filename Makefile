@@ -106,3 +106,11 @@ clean:
 	@find . -name \*~ -delete
 
 .PHONY: clean
+
+# Release Artifacts
+
+release-artifacts:
+	nix-shell --run "make clean setup"
+	tar -czf $(CORE)_V$(VERSION).tar.gz ../$(CORE)_V$(VERSION)
+
+.PHONY: release-artifacts
