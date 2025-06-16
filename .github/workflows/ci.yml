@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
+name: CI
+
+# Set default shell as interactive (source ~/.bashrc)
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+
+# Run only one instance of this workflow at a time
+# cancel-in-progress: stop running workflow and run latest instead
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+  # Allow manual workflow runs
+  workflow_dispatch:
+
+jobs:
+
+  simulation:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    # run even if previous job failed
+    if: ${{ !cancelled() }}
+    needs: [ pc-emul ]
+  
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Clean untracked files and directories (like old submodules)
+        run: git clean -ffdx
+      - name: run test
+        run: make sim-test

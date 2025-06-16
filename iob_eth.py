@@ -30,17 +30,17 @@ def setup(py_params_dict):
             check=True,
         )
 
-        # Run sudo make set-capabilities
-        subprocess.run(
-            [
-                "sudo",
-                "make",
-                "-C",
-                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-                "set-capabilities",
-            ],
-            check=True,
-        )
+        # # Run sudo make set-capabilities
+        # subprocess.run(
+        #     [
+        #         "sudo",
+        #         "make",
+        #         "-C",
+        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+        #         "set-capabilities",
+        #     ],
+        #     check=True,
+        # )
 
     # Copy simulation testbench utility files
     if py_params_dict["build_dir"]:
