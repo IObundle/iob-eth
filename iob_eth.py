@@ -470,7 +470,6 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_bd_cnt_valid_rd", "width": 1},
                     {"name": "tx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
-                    {"name": "tx_bd_cnt_rready_rd", "width": 1},
                     {"name": "tx_bd_cnt_ready_rd", "width": 1},
                     {"name": "tx_bd_cnt_rvalid_rd", "width": 1},
                 ],
@@ -481,7 +480,6 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_bd_cnt_valid_rd", "width": 1},
                     {"name": "rx_bd_cnt_rdata_rd", "width": "BD_NUM_LOG2"},
-                    {"name": "rx_bd_cnt_rready_rd", "width": 1},
                     {"name": "rx_bd_cnt_ready_rd", "width": 1},
                     {"name": "rx_bd_cnt_rvalid_rd", "width": 1},
                 ],
@@ -492,7 +490,6 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_word_cnt_valid_rd", "width": 1},
                     {"name": "tx_word_cnt_rdata_rd", "width": "BUFFER_W"},
-                    {"name": "tx_word_cnt_rready_rd", "width": 1},
                     {"name": "tx_word_cnt_ready_rd", "width": 1},
                     {"name": "tx_word_cnt_rvalid_rd", "width": 1},
                 ],
@@ -503,7 +500,6 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_word_cnt_valid_rd", "width": 1},
                     {"name": "rx_word_cnt_rdata_rd", "width": "BUFFER_W"},
-                    {"name": "rx_word_cnt_rready_rd", "width": 1},
                     {"name": "rx_word_cnt_ready_rd", "width": 1},
                     {"name": "rx_word_cnt_rvalid_rd", "width": 1},
                 ],
@@ -514,7 +510,6 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_nbytes_valid_rd", "width": 1},
                     {"name": "rx_nbytes_rdata_rd", "width": "BUFFER_W"},
-                    {"name": "rx_nbytes_rready_rd", "width": 1},
                     {"name": "rx_nbytes_ready_rd", "width": 1},
                     {"name": "rx_nbytes_rvalid_rd", "width": 1},
                 ],
@@ -528,7 +523,6 @@ def setup(py_params_dict):
                     {"name": "frame_word_wstrb_wrrd", "width": 1},
                     {"name": "frame_word_ready_wrrd", "width": 1},
                     {"name": "frame_word_rdata_wrrd", "width": 8},
-                    {"name": "frame_word_rready_wrrd", "width": 1},
                     {"name": "frame_word_rvalid_wrrd", "width": 1},
                 ],
             },
@@ -549,7 +543,6 @@ def setup(py_params_dict):
                     {"name": "bd_wstrb_wrrd", "width": 32 / 8},
                     {"name": "bd_ready_wrrd", "width": 1},
                     {"name": "bd_rdata_wrrd", "width": 32},
-                    {"name": "bd_rready_wrrd", "width": 1},
                     {"name": "bd_rvalid_wrrd", "width": 1},
                 ],
             },
