@@ -57,7 +57,7 @@ int iob_core_tb() {
   // iob_eth_csrs_init_baseaddr(3 << SPLIT_ADDR_W);
 
   unsigned int version;
-  uint32_t i, word;
+  uint32_t i;
 
   // Check versions
   // read version 20 times to burn time
@@ -137,91 +137,57 @@ int iob_core_tb() {
   eth_rcv_frame_addr(ETH_NBYTES, TIMEOUT, RCV_RAM_ADDR);
   printf("\t\tdone!\n");
 
-  // TODO:
-  // 6. Receive Frame
-  // 6.1 Set RX buffer pointer
-  // 6.2 Receive frame
+  // 7. Configure AXIS OUT <- DMA <- AXI RAM read operation
+  printf("7.1. Configure AXIStream IN\n");
+  iob_axistream_in_csrs_set_soft_reset(1);
+  iob_axistream_in_csrs_set_soft_reset(0);
+  iob_axistream_in_csrs_set_mode(0);
+  iob_axistream_in_csrs_set_enable(1);
 
-  // 7. Read data with DMA
-  // 8. Validate data
+  printf("7.2. Configure AXIStream OUT\n");
+  iob_axistream_out_csrs_set_soft_reset(1);
+  iob_axistream_out_csrs_set_soft_reset(0);
+  iob_axistream_out_csrs_set_mode(1);
+  iob_axistream_out_csrs_set_nwords(axis_out_nwords);
+  iob_axistream_out_csrs_set_enable(1);
 
-  //
-  // // 4. Configure AXIS OUT <- DMA <- AXI RAM read operation
-  // printf("4.1. Configure AXIStream IN\n");
-  // iob_axistream_in_csrs_set_soft_reset(1);
-  // iob_axistream_in_csrs_set_soft_reset(0);
-  // iob_axistream_in_csrs_set_mode(0);
-  // iob_axistream_in_csrs_set_enable(1);
-  //
-  // printf("4.2. Configure AXIStream OUT\n");
-  // iob_axistream_out_csrs_set_soft_reset(1);
-  // iob_axistream_out_csrs_set_soft_reset(0);
-  // iob_axistream_out_csrs_set_mode(1);
-  // iob_axistream_out_csrs_set_nwords(NWORDS);
-  // iob_axistream_out_csrs_set_enable(1);
-  //
-  // printf("4.3. Configure DMA read transfer\n");
-  // iob_dma_csrs_set_r_burstlen(200);
-  // dma_read_transfer((uint32_t *)RAM_ADDR, NWORDS);
-  //
-  // // 5. Wait for DMA transfer complete
-  // printf("5. Wait for DMA read transfer complete...");
-  // while (dma_read_busy())
-  //   ;
-  // printf("done!\n");
-  //
-  // // 6. Read data from AXIS IN and validate
-  // printf("6. Read data from AXIStream IN\n");
-  // // read data loop
-  // for (i = 0; i < NWORDS; i = i + 1) {
-  //   word = iob_axistream_in_csrs_get_data();
-  //
-  //   // check data
-  //   if (word != i) {
-  //     printf("Error: expected %d, got %d\n", i, word);
-  //     failed = failed + 1;
-  //   }
-  // }
-  //
-  // printf("DMA test complete.\n");
-  // printf("Size:%d(dec):%x(hex)\n", ETH_NBYTES, ETH_NBYTES);
-  //
-  // char send_buffer[ETH_NBYTES] = {0};
-  // char rcv_buffer[ETH_NBYTES] = {0};
-  //
-  // send_buffer[0] = 0xef;
-  // send_buffer[1] = 0xfe;
-  // send_buffer[2] = 0xef;
-  // send_buffer[3] = 0xfe;
-  // for (int i = 4; i < ETH_NBYTES; i++) {
-  //   send_buffer[i] = (char)(i / 4);
-  // }
-  //
-  // // Send frame containing test data
-  // printf("[INFO] Sending test data...\n");
-  // eth_send_frame(send_buffer, ETH_NBYTES);
-  // printf("\t\tdone!\n");
-  //
-  // // Receive loopback frame with test data
-  // printf("[INFO] Receiving test data...\n");
-  // while (eth_rcv_frame(rcv_buffer, ETH_NBYTES, 5000000))
-  //   ; // Data in
-  // printf("\t\tdone!\n");
-  //
-  // // Compare data
-  // printf("[INFO] Check data...\n");
-  // for (i = 0; i < ETH_NBYTES; i++) {
-  //   if (rcv_buffer[i] != send_buffer[i]) {
-  //     printf("Error: Byte[%d]: expected %x, got %x\n", i, send_buffer[i],
-  //            rcv_buffer[i]);
-  //     failed = failed + 1;
-  //   }
-  // }
-  // if (failed == 0) {
-  //   printf("\t\tSUCCESS: Test data correct!\n");
-  // } else {
-  //   printf("\t\tERROR: Found invalid test data\n");
-  // }
-  // printf("\n");
+  printf("7.3. Configure DMA read transfer\n");
+  iob_dma_csrs_set_r_burstlen(axis_out_nwords);
+  dma_read_transfer((uint32_t *)RCV_RAM_ADDR, axis_out_nwords);
+
+  // 8. Wait for DMA transfer complete
+  printf("8. Wait for DMA read transfer complete...");
+  while (dma_read_busy())
+    ;
+  printf("done!\n");
+
+  // 9. Read data from AXIS IN and validate
+  printf("9. Read data from AXIStream IN\n");
+  // read data loop
+  uint32_t rcv_32 = 0;
+  uint32_t b = 0;
+  for (i = 0; i < ptr; i += 4) {
+    rcv_32 = iob_axistream_in_csrs_get_data();
+    d32 = (((uint32_t)send_buffer[i] & 0xFF) << 24) |
+          (((uint32_t)send_buffer[i + 1] & 0xFF) << 16) |
+          (((uint32_t)send_buffer[i + 2] & 0xFF) << 8) |
+          ((uint32_t)send_buffer[i + 3] & 0xFF);
+
+    // check data
+    if (rcv_32 != d32) {
+      printf("Error: expected %x, got %x\n", d32, rcv_32);
+      failed = failed + 1;
+    }
+  }
+
+  printf("Ethernet Loopback test complete.\n");
+  printf("Size:%d(dec):%x(hex)\n", ETH_NBYTES, ETH_NBYTES);
+  if (failed == 0) {
+    printf("\t\tSUCCESS: Test data correct!\n");
+  } else {
+    printf("\t\tERROR: Found invalid test data\n");
+  }
+  printf("\n");
+
   return failed;
 }
