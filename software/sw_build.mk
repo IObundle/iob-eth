@@ -4,9 +4,9 @@
 
 UTARGETS=tb
 TB_INCLUDES=-I./src -I./simulation/src
-CSRS=./src/iob_eth_csrs.c
-CSRS+=./simulation/src/iob_axistream_in_csrs.c
-CSRS+=./simulation/src/iob_axistream_out_csrs.c
-CSRS+=./simulation/src/iob_dma_csrs.c
-CSRS+=./src/iob_dma.c
-CSRS+=./src/iob_eth.c
+TB_SRC=./src/iob_eth_csrs.c
+TB_SRC+=./simulation/src/iob_axistream_in_csrs.c
+TB_SRC+=./simulation/src/iob_axistream_out_csrs.c
+TB_SRC+=./simulation/src/iob_dma_csrs.c
+TB_SRC+=./src/iob_dma.c
+TB_SRC+=./src/iob_eth.c
