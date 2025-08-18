@@ -10,9 +10,9 @@
 `define SIMULATION
 
 module iob_eth #(
-    `include "iob_eth_params.vs"
+   `include "iob_eth_params.vs"
 ) (
-    `include "iob_eth_io.vs"
+   `include "iob_eth_io.vs"
 );
 
    `include "iob_eth_wires.vs"
@@ -20,110 +20,118 @@ module iob_eth #(
    // configuration control and status register file.
    `include "iob_eth_subblocks.vs"
 
-  wire internal_bd_wen;
+   wire internal_bd_wen;
 
-  wire internal_frame_word_wen;
-  wire internal_frame_word_ready_wr;
-  wire internal_frame_word_ren;
-  wire internal_frame_word_ready_rd;
+   wire internal_frame_word_wen;
+   wire internal_frame_word_ready_wr;
+   wire internal_frame_word_ren;
+   wire internal_frame_word_ready_rd;
 
-  // tx bd cnt logic
-  assign tx_bd_cnt_rvalid_rd = 1'b1;
-  assign tx_bd_cnt_ready_rd = 1'b1;
+   // tx bd cnt logic
+   assign tx_bd_cnt_rvalid_rd = 1'b1;
+   assign tx_bd_cnt_ready_rd = 1'b1;
 
-  // rx bd cnt logic
-  assign rx_bd_cnt_rvalid_rd = 1'b1;
-  assign rx_bd_cnt_ready_rd = 1'b1;
+   // rx bd cnt logic
+   assign rx_bd_cnt_rvalid_rd = 1'b1;
+   assign rx_bd_cnt_ready_rd = 1'b1;
 
-  // tx word cnt logic
-  assign tx_word_cnt_rvalid_rd = 1'b1;
-  assign tx_word_cnt_ready_rd = 1'b1;
+   // tx word cnt logic
+   assign tx_word_cnt_rvalid_rd = 1'b1;
+   assign tx_word_cnt_ready_rd = 1'b1;
 
-  // rx word cnt logic
-  assign rx_word_cnt_rvalid_rd = 1'b1;
-  assign rx_word_cnt_ready_rd = 1'b1;
+   // rx word cnt logic
+   assign rx_word_cnt_rvalid_rd = 1'b1;
+   assign rx_word_cnt_ready_rd = 1'b1;
 
-  // rx nbytes logic
-  assign rx_nbytes_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
-  assign rx_nbytes_rvalid_rd = ~rcv_ack; // Wait for ack complete
-  assign rx_nbytes_ready_rd = 1'b1;
+   // rx nbytes logic
+   assign rx_nbytes_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
+   assign rx_nbytes_rvalid_rd = ~rcv_ack;  // Wait for ack complete
+   assign rx_nbytes_ready_rd = 1'b1;
 
-  // frame word logic
-  assign frame_word_ready_wrrd = internal_frame_word_wen ? 
+   // frame word logic
+   assign frame_word_ready_wrrd = internal_frame_word_wen ? 
       internal_frame_word_ready_wr : internal_frame_word_ready_rd;
-  assign internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
-  assign internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
+   assign internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
+   assign internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
 
-  // BD logic
-  assign internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
+   // BD logic
+   assign internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
 
-  wire bd_rvalid_nxt;
-  assign bd_rvalid_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
-  iob_reg_ca #(
+   wire bd_rvalid_nxt;
+   assign bd_rvalid_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
+   iob_reg_ca #(
       .DATA_W (1),
       .RST_VAL(1'd0)
-  ) iob_reg_BD_rvalid (
+   ) iob_reg_BD_rvalid (
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i),
       .data_i(bd_rvalid_nxt),
       .data_o(bd_rvalid_wrrd)
-  );
+   );
 
-  // Connect write outputs to read
-  assign moder_rd = moder_wr;
-  assign int_source_rd = int_source_wr;
-  assign int_mask_rd = int_mask_wr;
-  assign ipgt_rd = ipgt_wr;
-  assign ipgr1_rd = ipgr1_wr;
-  assign ipgr2_rd = ipgr2_wr;
-  assign packetlen_rd = packetlen_wr;
-  assign collconf_rd = collconf_wr;
-  assign tx_bd_num_rd = tx_bd_num_wr;
-  assign ctrlmoder_rd = ctrlmoder_wr;
-  assign miimoder_rd = miimoder_wr;
-  assign miicommand_rd = miicommand_wr;
-  assign miiaddress_rd = miiaddress_wr;
-  assign miitx_data_rd = miitx_data_wr;
-  assign miirx_data_rd = miirx_data_wr;
-  assign miistatus_rd = miistatus_wr;
-  assign mac_addr0_rd = mac_addr0_wr;
-  assign mac_addr1_rd = mac_addr1_wr;
-  assign eth_hash0_adr_rd = eth_hash0_adr_wr;
-  assign eth_hash1_adr_rd = eth_hash1_adr_wr;
-  assign eth_txctrl_rd = eth_txctrl_wr;
+   // Connect write outputs to read
+   assign moder_rd         = moder_wr;
+   assign int_source_rd    = int_source_wr;
+   assign int_mask_rd      = int_mask_wr;
+   assign ipgt_rd          = ipgt_wr;
+   assign ipgr1_rd         = ipgr1_wr;
+   assign ipgr2_rd         = ipgr2_wr;
+   assign packetlen_rd     = packetlen_wr;
+   assign collconf_rd      = collconf_wr;
+   assign tx_bd_num_rd     = tx_bd_num_wr;
+   assign ctrlmoder_rd     = ctrlmoder_wr;
+   assign miimoder_rd      = miimoder_wr;
+   assign miicommand_rd    = miicommand_wr;
+   assign miiaddress_rd    = miiaddress_wr;
+   assign miitx_data_rd    = miitx_data_wr;
+   assign miirx_data_rd    = miirx_data_wr;
+   assign miistatus_rd     = miistatus_wr;
+   assign mac_addr0_rd     = mac_addr0_wr;
+   assign mac_addr1_rd     = mac_addr1_wr;
+   assign eth_hash0_adr_rd = eth_hash0_adr_wr;
+   assign eth_hash1_adr_rd = eth_hash1_adr_wr;
+   assign eth_txctrl_rd    = eth_txctrl_wr;
 
-  // ETH CLOCK DOMAIN
+   // ETH CLOCK DOMAIN
 
-  wire                         iob_eth_tx_buffer_enA;
-  wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
-  wire [                8-1:0] iob_eth_tx_buffer_dinA;
-  wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrB;
-  wire [                8-1:0] iob_eth_tx_buffer_doutB;
+   wire                         iob_eth_tx_buffer_enA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
+   wire [                8-1:0] iob_eth_tx_buffer_dinA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrB;
+   wire [                8-1:0] iob_eth_tx_buffer_doutB;
 
-  wire                         iob_eth_rx_buffer_enA;
-  wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrA;
-  wire [                8-1:0] iob_eth_rx_buffer_dinA;
-  wire                         iob_eth_rx_buffer_enB;
-  wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
-  wire [                8-1:0] iob_eth_rx_buffer_doutB;
+   wire                         iob_eth_rx_buffer_enA;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrA;
+   wire [                8-1:0] iob_eth_rx_buffer_dinA;
+   wire                         iob_eth_rx_buffer_enB;
+   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
+   wire [                8-1:0] iob_eth_rx_buffer_doutB;
 
 
-  assign MTxErr_o = 1'b0;  //TODO
+   assign mii_tx_er_o = 1'b0;  //TODO
+   //assign ... = mii_rx_er_i;  //TODO
 
-  //
-  //  PHY RESET
-  //
+   //assign ... = mii_col_i;  //TODO
+   //assign ... = mii_crs_i;  //TODO
 
-  wire [21-1:0] phy_rst_cnt_o;
-  iob_acc #(
-      .DATA_W(21),
+   assign mii_mdc_o   = 1'b0;  //TODO
+   //assign mii_mdio_io   = 1'b0;  //TODO
+
+
+   //
+   //  PHY RESET
+   //
+
+   wire [21-1:0] phy_rst_cnt_o;
+   iob_acc #(
+      .DATA_W (21),
 `ifndef SIMULATION
       .RST_VAL(21'h100000 | (PHY_RST_CNT - 1))
 `else
-      .RST_VAL(21'h1000FF)  // Shorter reset for simulation
+      .RST_VAL(21'h1000FF)                       // Shorter reset for simulation
 `endif
-  ) phy_rst_cnt_acc (
+   ) phy_rst_cnt_acc (
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i),
@@ -131,134 +139,134 @@ module iob_eth #(
       .en_i  (phy_rst_cnt_o[20]),
       .incr_i(-21'd1),
       .data_o(phy_rst_cnt_o)
-  );
-  wire phy_rst = phy_rst_cnt_o[20];
-  assign phy_rstn_o = ~phy_rst;
-  assign phy_rst_val_rd = phy_rst;
+   );
+   wire phy_rst = phy_rst_cnt_o[20];
+   assign phy_rstn_o     = ~phy_rst;
+   assign phy_rst_val_rd = phy_rst;
 
-  //
-  // SYNCHRONIZERS
-  //
+   //
+   // SYNCHRONIZERS
+   //
 
-  // arst synchronizers
-  wire rx_arst;
-  iob_sync #(
+   // arst synchronizers
+   wire rx_arst;
+   iob_sync #(
       .DATA_W(1)
-  ) rx_arst_sync (
-      .clk_i(MRxClk_i),
-      .arst_i(arst_i),
+   ) rx_arst_sync (
+      .clk_i   (mii_rx_clk_i),
+      .arst_i  (arst_i),
       .signal_i(phy_rst),
       .signal_o(rx_arst)
-  );
+   );
 
-  wire tx_arst;
-  iob_sync #(
+   wire tx_arst;
+   iob_sync #(
       .DATA_W(1)
-  ) tx_arst_sync (
-      .clk_i(MTxClk_i),
-      .arst_i(arst_i),
+   ) tx_arst_sync (
+      .clk_i   (mii_tx_clk_i),
+      .arst_i  (arst_i),
       .signal_i(phy_rst),
       .signal_o(tx_arst)
-  );
+   );
 
-  // clk to MRxClk_i (f2s)
-  wire rcv_ack;
-  wire eth_rcv_ack;
-  iob_sync #(
+   // clk to mii_rx_clk_i (f2s)
+   wire rcv_ack;
+   wire eth_rcv_ack;
+   iob_sync #(
       .DATA_W(1)
-  ) rcv_f2s_sync (
-      .clk_i   (MRxClk_i),
-      .arst_i   (rx_arst),
-      .signal_i (rcv_ack),
-      .signal_o (eth_rcv_ack)
-  );
+   ) rcv_f2s_sync (
+      .clk_i   (mii_rx_clk_i),
+      .arst_i  (rx_arst),
+      .signal_i(rcv_ack),
+      .signal_o(eth_rcv_ack)
+   );
 
-  // clk to MTxClk_i (f2s)
-  wire eth_send;
-  wire send;
-  iob_sync #(
+   // clk to mii_tx_clk_i (f2s)
+   wire eth_send;
+   wire send;
+   iob_sync #(
       .DATA_W(1)
-  ) send_f2s_sync (
-      .clk_i   (MTxClk_i),
-      .arst_i   (tx_arst),
-      .signal_i (send),
-      .signal_o (eth_send)
-  );
+   ) send_f2s_sync (
+      .clk_i   (mii_tx_clk_i),
+      .arst_i  (tx_arst),
+      .signal_i(send),
+      .signal_o(eth_send)
+   );
 
-  wire eth_crc_en;
-  wire crc_en;
-  iob_sync #(
+   wire eth_crc_en;
+   wire crc_en;
+   iob_sync #(
       .DATA_W(1)
-  ) crc_en_f2s_sync (
-      .clk_i   (MTxClk_i),
-      .arst_i   (tx_arst),
-      .signal_i (crc_en),
-      .signal_o (eth_crc_en)
-  );
+   ) crc_en_f2s_sync (
+      .clk_i   (mii_tx_clk_i),
+      .arst_i  (tx_arst),
+      .signal_i(crc_en),
+      .signal_o(eth_crc_en)
+   );
 
-  wire [11-1:0] eth_tx_nbytes;
-  wire [11-1:0] tx_nbytes;
-  iob_sync #(
+   wire [11-1:0] eth_tx_nbytes;
+   wire [11-1:0] tx_nbytes;
+   iob_sync #(
       .DATA_W(11)
-  ) tx_nbytes_f2s_sync (
-      .clk_i   (MTxClk_i),
+   ) tx_nbytes_f2s_sync (
+      .clk_i   (mii_tx_clk_i),
       .arst_i  (tx_arst),
       .signal_i(tx_nbytes),
       .signal_o(eth_tx_nbytes)
-  );
+   );
 
-  // MRxClk_i to clk (s2f)
+   // mii_rx_clk_i to clk (s2f)
 
-  wire eth_crc_err;
-  wire crc_err;
-  iob_sync #(
+   wire eth_crc_err;
+   wire crc_err;
+   iob_sync #(
       .DATA_W(1)
-  ) crc_err_sync (
+   ) crc_err_sync (
       .clk_i   (clk_i),
-      .arst_i   (arst_i),
-      .signal_i (eth_crc_err),
-      .signal_o (crc_err)
-  );
+      .arst_i  (arst_i),
+      .signal_i(eth_crc_err),
+      .signal_o(crc_err)
+   );
 
-  wire [`IOB_ETH_BUFFER_W-1:0] rx_nbytes;
-  iob_sync #(
+   wire [`IOB_ETH_BUFFER_W-1:0] rx_nbytes;
+   iob_sync #(
       .DATA_W(`IOB_ETH_BUFFER_W)
-  ) rx_nbytes_sync (
+   ) rx_nbytes_sync (
       .clk_i   (clk_i),
-      .arst_i   (arst_i),
-      .signal_i (iob_eth_rx_buffer_addrA),
-      .signal_o (rx_nbytes)
-  );
+      .arst_i  (arst_i),
+      .signal_i(iob_eth_rx_buffer_addrA),
+      .signal_o(rx_nbytes)
+   );
 
-  wire eth_rx_data_rcvd;
-  wire rx_data_rcvd;
-  iob_sync #(
+   wire eth_rx_data_rcvd;
+   wire rx_data_rcvd;
+   iob_sync #(
       .DATA_W(1)
-  ) rx_data_rcvd_sync (
+   ) rx_data_rcvd_sync (
       .clk_i   (clk_i),
-      .arst_i   (arst_i),
-      .signal_i (eth_rx_data_rcvd),
-      .signal_o (rx_data_rcvd)
-  );
+      .arst_i  (arst_i),
+      .signal_i(eth_rx_data_rcvd),
+      .signal_o(rx_data_rcvd)
+   );
 
-  // MTxClk_i to clk (s2f)
+   // mii_tx_clk_i to clk (s2f)
 
-  wire eth_tx_ready;
-  wire tx_ready;
-  iob_sync #(
+   wire eth_tx_ready;
+   wire tx_ready;
+   iob_sync #(
       .DATA_W(1)
-  ) tx_ready_sync (
+   ) tx_ready_sync (
       .clk_i   (clk_i),
-      .arst_i   (arst_i),
-      .signal_i (eth_tx_ready),
-      .signal_o (tx_ready)
-  );
+      .arst_i  (arst_i),
+      .signal_i(eth_tx_ready),
+      .signal_o(tx_ready)
+   );
 
-  //
-  // TRANSMITTER
-  //
+   //
+   // TRANSMITTER
+   //
 
-  iob_eth_tx tx (
+   iob_eth_tx tx (
       .arst_i   (tx_arst),
       // Buffer interface
       .addr_o   (iob_eth_tx_buffer_addrB),
@@ -269,17 +277,17 @@ module iob_eth #(
       .nbytes_i (eth_tx_nbytes),
       .crc_en_i (eth_crc_en),
       // MII interface
-      .tx_clk_i (MTxClk_i),
-      .tx_en_o  (MTxEn_o),
-      .tx_data_o(MTxD_o)
-  );
+      .tx_clk_i (mii_tx_clk_i),
+      .tx_en_o  (mii_tx_en_o),
+      .tx_data_o(mii_txd_o)
+   );
 
 
-  //
-  // RECEIVER
-  //
+   //
+   // RECEIVER
+   //
 
-  iob_eth_rx rx (
+   iob_eth_rx rx (
       .arst_i     (rx_arst),
       // Buffer interface
       .wr_o       (iob_eth_rx_buffer_enA),
@@ -290,19 +298,19 @@ module iob_eth #(
       .data_rcvd_o(eth_rx_data_rcvd),
       .crc_err_o  (eth_crc_err),
       // MII interface
-      .rx_clk_i   (MRxClk_i),
-      .rx_data_i  (MRxD_i),
-      .rx_dv_i    (MRxDv_i)
-  );
+      .rx_clk_i   (mii_rx_clk_i),
+      .rx_data_i  (mii_rxd_i),
+      .rx_dv_i    (mii_rx_dv_i)
+   );
 
-  // BUFFER memories
-  iob_ram_at2p #(
+   // BUFFER memories
+   iob_ram_at2p #(
       .DATA_W(8),
       // Note: the tx buffer also includes PREAMBLE+SFD,
       // maybe we should increase this size to acount for
       // this.
       .ADDR_W(`IOB_ETH_BUFFER_W)
-  ) tx_buffer (
+   ) tx_buffer (
       // Front-End (written by host)
       .w_clk_i (clk_i),
       .w_en_i  (iob_eth_tx_buffer_enA),
@@ -310,18 +318,18 @@ module iob_eth #(
       .w_data_i(iob_eth_tx_buffer_dinA),
 
       // Back-End (read by core)
-      .r_clk_i (MTxClk_i),
+      .r_clk_i (mii_tx_clk_i),
       .r_en_i  (1'b1),
       .r_addr_i(iob_eth_tx_buffer_addrB),
       .r_data_o(iob_eth_tx_buffer_doutB)
-  );
+   );
 
-  iob_ram_at2p #(
+   iob_ram_at2p #(
       .DATA_W(8),
       .ADDR_W(`IOB_ETH_BUFFER_W)
-  ) rx_buffer (
+   ) rx_buffer (
       // Front-End (written by core)
-      .w_clk_i (MRxClk_i),
+      .w_clk_i (mii_rx_clk_i),
       .w_en_i  (iob_eth_rx_buffer_enA),
       .w_addr_i(iob_eth_rx_buffer_addrA),
       .w_data_i(iob_eth_rx_buffer_dinA),
@@ -331,21 +339,21 @@ module iob_eth #(
       .r_en_i  (iob_eth_rx_buffer_enB),
       .r_addr_i(iob_eth_rx_buffer_addrB),
       .r_data_o(iob_eth_rx_buffer_doutB)
-  );
+   );
 
-  // DMA buffer descriptor wires
-  wire dma_bd_en;
-  wire [7:0] dma_bd_addr;
-  wire dma_bd_wen;
-  wire [31:0] dma_bd_i;
-  wire [31:0] dma_bd_o;
-  // DMA interrupt wires
-  wire rx_irq;
-  wire tx_irq;
-  assign inta_o = rx_irq | tx_irq;
+   // DMA buffer descriptor wires
+   wire        dma_bd_en;
+   wire [ 7:0] dma_bd_addr;
+   wire        dma_bd_wen;
+   wire [31:0] dma_bd_i;
+   wire [31:0] dma_bd_o;
+   // DMA interrupt wires
+   wire        rx_irq;
+   wire        tx_irq;
+   assign inta_o = rx_irq | tx_irq;
 
-  // Data transfer module (includes DMA)
-  iob_eth_dma #(
+   // Data transfer module (includes DMA)
+   iob_eth_dma #(
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W),
       .AXI_LEN_W (AXI_LEN_W),
@@ -353,37 +361,37 @@ module iob_eth #(
       //.BURST_W   (BURST_W),
       .BUFFER_W  (`IOB_ETH_BUFFER_W),
       .BD_ADDR_W (BD_NUM_LOG2 + 1)
-  ) dma_inst (
+   ) dma_inst (
       // SW reg control interface
-      .rx_en_i(moder_wr[0]),
-      .tx_en_i(moder_wr[1]),
+      .rx_en_i    (moder_wr[0]),
+      .tx_en_i    (moder_wr[1]),
       // Note: ethmac datasheet specifies TX_BD_NUM should support 0x80 value
       .tx_bd_num_i(tx_bd_num_wr[BD_NUM_LOG2-1:0]),
 
       // Buffer descriptors
-      .bd_en_o(dma_bd_en),
+      .bd_en_o  (dma_bd_en),
       .bd_addr_o(dma_bd_addr),
-      .bd_wen_o(dma_bd_wen),
-      .bd_i(dma_bd_i),
-      .bd_o(dma_bd_o),
+      .bd_wen_o (dma_bd_wen),
+      .bd_i     (dma_bd_i),
+      .bd_o     (dma_bd_o),
 
       // TX Front-End
-      .eth_data_wr_wen_o(iob_eth_tx_buffer_enA),  // |ETH_DATA_WR_wstrb
-      .eth_data_wr_addr_o(iob_eth_tx_buffer_addrA),
+      .eth_data_wr_wen_o  (iob_eth_tx_buffer_enA),    // |ETH_DATA_WR_wstrb
+      .eth_data_wr_addr_o (iob_eth_tx_buffer_addrA),
       .eth_data_wr_wdata_o(iob_eth_tx_buffer_dinA),
-      .tx_ready_i(tx_ready),
-      .crc_en_o(crc_en),
-      .tx_nbytes_o(tx_nbytes),
-      .send_o(send),
+      .tx_ready_i         (tx_ready),
+      .crc_en_o           (crc_en),
+      .tx_nbytes_o        (tx_nbytes),
+      .send_o             (send),
 
       // RX Back-End
-      .eth_data_rd_ren_o(iob_eth_rx_buffer_enB),
-      .eth_data_rd_addr_o(iob_eth_rx_buffer_addrB),
+      .eth_data_rd_ren_o  (iob_eth_rx_buffer_enB),
+      .eth_data_rd_addr_o (iob_eth_rx_buffer_addrB),
       .eth_data_rd_rdata_i(iob_eth_rx_buffer_doutB),
-      .rx_data_rcvd_i(rx_data_rcvd),
-      .crc_err_i(crc_err),
-      .rx_nbytes_i(rx_nbytes),
-      .rcv_ack_o(rcv_ack),
+      .rx_data_rcvd_i     (rx_data_rcvd),
+      .crc_err_i          (crc_err),
+      .rx_nbytes_i        (rx_nbytes),
+      .rcv_ack_o          (rcv_ack),
 
       // AXI master interface
       // Can't use generated include, because of `internal_axi_*addr_o` signals.
@@ -425,17 +433,17 @@ module iob_eth #(
       .axi_rready_o(axi_rready_o),  //Read channel ready.
 
       // No-DMA interface
-      .tx_bd_cnt_o(tx_bd_cnt_rdata_rd),
-      .tx_word_cnt_o(tx_word_cnt_rdata_rd),
-      .tx_frame_word_wen_i(internal_frame_word_wen),
-      .tx_frame_word_wdata_i(frame_word_wdata_wrrd),
-      .tx_frame_word_ready_o(internal_frame_word_ready_wr),
-      .rx_bd_cnt_o(rx_bd_cnt_rdata_rd),
-      .rx_word_cnt_o(rx_word_cnt_rdata_rd),
-      .rx_frame_word_ren_i(internal_frame_word_ren),
-      .rx_frame_word_rdata_o(frame_word_rdata_wrrd),
+      .tx_bd_cnt_o           (tx_bd_cnt_rdata_rd),
+      .tx_word_cnt_o         (tx_word_cnt_rdata_rd),
+      .tx_frame_word_wen_i   (internal_frame_word_wen),
+      .tx_frame_word_wdata_i (frame_word_wdata_wrrd),
+      .tx_frame_word_ready_o (internal_frame_word_ready_wr),
+      .rx_bd_cnt_o           (rx_bd_cnt_rdata_rd),
+      .rx_word_cnt_o         (rx_word_cnt_rdata_rd),
+      .rx_frame_word_ren_i   (internal_frame_word_ren),
+      .rx_frame_word_rdata_o (frame_word_rdata_wrrd),
       .rx_frame_word_rvalid_o(frame_word_rvalid_wrrd),
-      .rx_frame_word_ready_o(internal_frame_word_ready_rd),
+      .rx_frame_word_ready_o (internal_frame_word_ready_rd),
 
       // Interrupts
       .tx_irq_o(tx_irq),
@@ -445,34 +453,34 @@ module iob_eth #(
       .clk_i (clk_i),
       .cke_i (cke_i),
       .arst_i(arst_i)
-  );
+   );
 
 
-  // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
+   // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
 
-  assign bd_ready_wrrd = 1'b1;
+   assign bd_ready_wrrd = 1'b1;
 
-  // Buffer descriptors memory
-  iob_ram_tdp #(
-      .DATA_W(32),
-      .ADDR_W(BD_NUM_LOG2 + 1),
+   // Buffer descriptors memory
+   iob_ram_tdp #(
+      .DATA_W              (32),
+      .ADDR_W              (BD_NUM_LOG2 + 1),
       .MEM_NO_READ_ON_WRITE(1)
-  ) bd_ram (
+   ) bd_ram (
       .clk_i(clk_i),
 
       // Port A - csrss
       .addrA_i(bd_addr_wrrd[2+:(BD_NUM_LOG2+1)]),
-      .enA_i(bd_valid_wrrd),
-      .weA_i(internal_bd_wen),
-      .dA_i(bd_wdata_wrrd),
-      .dA_o(bd_rdata_wrrd),
+      .enA_i  (bd_valid_wrrd),
+      .weA_i  (internal_bd_wen),
+      .dA_i   (bd_wdata_wrrd),
+      .dA_o   (bd_rdata_wrrd),
 
       // Port B - DMA module
       .addrB_i(dma_bd_addr),
-      .enB_i(dma_bd_en),
-      .weB_i(dma_bd_wen),
-      .dB_i(dma_bd_o),
-      .dB_o(dma_bd_i)
-  );
+      .enB_i  (dma_bd_en),
+      .weB_i  (dma_bd_wen),
+      .dB_i   (dma_bd_o),
+      .dB_o   (dma_bd_i)
+   );
 
 endmodule
