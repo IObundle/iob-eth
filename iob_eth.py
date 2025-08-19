@@ -203,7 +203,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "phy_rst_o",
+                "name": "phy_rstn_o",
                 "descr": "",
                 "signals": [
                     {
