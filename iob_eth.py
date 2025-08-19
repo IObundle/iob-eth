@@ -186,7 +186,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "axi_m",
-                "descr": "AXI master interface for external memory",
+                "descr": "AXI manager interface for external memory",
                 "signals": {
                     "type": "axi",
                     "ID_W": "AXI_ID_W",

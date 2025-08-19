@@ -393,7 +393,7 @@ module iob_eth #(
       .rx_nbytes_i        (rx_nbytes),
       .rcv_ack_o          (rcv_ack),
 
-      // AXI master interface
+      // AXI manager interface
       // Can't use generated include, because of `internal_axi_*addr_o` signals.
       //include "axi_m_m_portmap.vs"
       .axi_awid_o(axi_awid_o),  //Address write channel ID.
@@ -402,7 +402,7 @@ module iob_eth #(
       .axi_awsize_o(axi_awsize_o), //Address write channel burst size. This signal indicates the size of each transfer in the burst.
       .axi_awburst_o(axi_awburst_o),  //Address write channel burst type.
       .axi_awlock_o(axi_awlock_o),  //Address write channel lock type.
-      .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
+      .axi_awcache_o(axi_awcache_o), //Address write channel memory type. Set to 0000 if manager output; ignored if subordinate input.
       .axi_awqos_o(axi_awqos_o),  //Address write channel quality of service.
       .axi_awvalid_o(axi_awvalid_o),  //Address write channel valid.
       .axi_awready_i(axi_awready_i),  //Address write channel ready.
@@ -421,7 +421,7 @@ module iob_eth #(
       .axi_arsize_o(axi_arsize_o), //Address read channel burst size. This signal indicates the size of each transfer in the burst.
       .axi_arburst_o(axi_arburst_o),  //Address read channel burst type.
       .axi_arlock_o(axi_arlock_o),  //Address read channel lock type.
-      .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
+      .axi_arcache_o(axi_arcache_o), //Address read channel memory type. Set to 0000 if manager output; ignored if subordinate input.
       .axi_arqos_o(axi_arqos_o),  //Address read channel quality of service.
       .axi_arvalid_o(axi_arvalid_o),  //Address read channel valid.
       .axi_arready_i(axi_arready_i),  //Address read channel ready.

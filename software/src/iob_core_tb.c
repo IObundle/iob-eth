@@ -46,13 +46,13 @@ int iob_core_tb() {
   printf("Reset complete\n");
 
   //
-  // axistream_in connected to 1st master of split
+  // axistream_in connected to 1st manager of split
   iob_axistream_in_csrs_init_baseaddr(0);
-  // axistream_out connected to 2nd master of split
+  // axistream_out connected to 2nd manager of split
   iob_axistream_out_csrs_init_baseaddr(1 << SPLIT_ADDR_W);
-  // dma connected to 3rd master of split
+  // dma connected to 3rd manager of split
   iob_dma_csrs_init_baseaddr(2 << SPLIT_ADDR_W);
-  // eth connected to 4th master of split
+  // eth connected to 4th manager of split
   eth_vutb_init(3 << SPLIT_ADDR_W);
   // iob_eth_csrs_init_baseaddr(3 << SPLIT_ADDR_W);
 
