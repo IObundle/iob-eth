@@ -3,6 +3,7 @@
 #include "iob_eth_defines.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static FILE *eth2soc_fd;
 static FILE *soc2eth_fd;

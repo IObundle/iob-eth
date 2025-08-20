@@ -19,17 +19,17 @@ def setup(py_params_dict):
     if not os.path.exists(pyRawWrapper_path):
         print("Create pyRawWrapper for RAW access to ethernet frames")
 
-        # Run make compile
-        subprocess.run(
-            [
-                "make",
-                "-C",
-                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-                "compile",
-            ],
-            check=True,
-        )
-
+        # # Run make compile
+        # subprocess.run(
+        #     [
+        #         "make",
+        #         "-C",
+        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+        #         "compile",
+        #     ],
+        #     check=True,
+        # )
+        #
         # # Run sudo make set-capabilities
         # subprocess.run(
         #     [
@@ -108,14 +108,6 @@ def setup(py_params_dict):
                 "min": "NA",
                 "max": "128",
                 "descr": "Data bus width",
-            },
-            {
-                "name": "ADDR_W",
-                "type": "P",
-                "val": "`IOB_ETH_CSRS_ADDR_W",
-                "min": "NA",
-                "max": "128",
-                "descr": "Address bus width",
             },
             # External memory interface
             {
