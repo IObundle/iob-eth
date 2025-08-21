@@ -280,7 +280,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "moder_wr", "width": 32},
                     {"name": "moder_rd", "width": 32},
-                    {"name": "moder_wstrb", "width": 32 / 8},
+                    {"name": "moder_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -289,7 +289,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_source_wr", "width": 32},
                     {"name": "int_source_rd", "width": 32},
-                    {"name": "int_source_wstrb", "width": 32 / 8},
+                    {"name": "int_source_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -298,7 +298,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_mask_wr", "width": 32},
                     {"name": "int_mask_rd", "width": 32},
-                    {"name": "int_mask_wstrb", "width": 32 / 8},
+                    {"name": "int_mask_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -307,7 +307,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgt_wr", "width": 32},
                     {"name": "ipgt_rd", "width": 32},
-                    {"name": "ipgt_wstrb", "width": 32 / 8},
+                    {"name": "ipgt_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -316,7 +316,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr1_wr", "width": 32},
                     {"name": "ipgr1_rd", "width": 32},
-                    {"name": "ipgr1_wstrb", "width": 32 / 8},
+                    {"name": "ipgr1_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -325,7 +325,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr2_wr", "width": 32},
                     {"name": "ipgr2_rd", "width": 32},
-                    {"name": "ipgr2_wstrb", "width": 32 / 8},
+                    {"name": "ipgr2_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -334,7 +334,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "packetlen_wr", "width": 32},
                     {"name": "packetlen_rd", "width": 32},
-                    {"name": "packetlen_wstrb", "width": 32 / 8},
+                    {"name": "packetlen_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -343,7 +343,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "collconf_wr", "width": 32},
                     {"name": "collconf_rd", "width": 32},
-                    {"name": "collconf_wstrb", "width": 32 / 8},
+                    {"name": "collconf_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -352,7 +352,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_bd_num_wr", "width": 32},
                     {"name": "tx_bd_num_rd", "width": 32},
-                    {"name": "tx_bd_num_wstrb", "width": 32 / 8},
+                    {"name": "tx_bd_num_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -361,7 +361,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ctrlmoder_wr", "width": 32},
                     {"name": "ctrlmoder_rd", "width": 32},
-                    {"name": "ctrlmoder_wstrb", "width": 32 / 8},
+                    {"name": "ctrlmoder_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -370,7 +370,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miimoder_wr", "width": 32},
                     {"name": "miimoder_rd", "width": 32},
-                    {"name": "miimoder_wstrb", "width": 32 / 8},
+                    {"name": "miimoder_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -379,7 +379,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miicommand_wr", "width": 32},
                     {"name": "miicommand_rd", "width": 32},
-                    {"name": "miicommand_wstrb", "width": 32 / 8},
+                    {"name": "miicommand_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -388,7 +388,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miiaddress_wr", "width": 32},
                     {"name": "miiaddress_rd", "width": 32},
-                    {"name": "miiaddress_wstrb", "width": 32 / 8},
+                    {"name": "miiaddress_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -397,7 +397,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miitx_data_wr", "width": 32},
                     {"name": "miitx_data_rd", "width": 32},
-                    {"name": "miitx_data_wstrb", "width": 32 / 8},
+                    {"name": "miitx_data_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -406,7 +406,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miirx_data_wr", "width": 32},
                     {"name": "miirx_data_rd", "width": 32},
-                    {"name": "miirx_data_wstrb", "width": 32 / 8},
+                    {"name": "miirx_data_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -415,7 +415,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miistatus_wr", "width": 32},
                     {"name": "miistatus_rd", "width": 32},
-                    {"name": "miistatus_wstrb", "width": 32 / 8},
+                    {"name": "miistatus_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -424,7 +424,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr0_wr", "width": 32},
                     {"name": "mac_addr0_rd", "width": 32},
-                    {"name": "mac_addr0_wstrb", "width": 32 / 8},
+                    {"name": "mac_addr0_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -433,7 +433,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr1_wr", "width": 32},
                     {"name": "mac_addr1_rd", "width": 32},
-                    {"name": "mac_addr1_wstrb", "width": 32 / 8},
+                    {"name": "mac_addr1_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -442,7 +442,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash0_adr_wr", "width": 32},
                     {"name": "eth_hash0_adr_rd", "width": 32},
-                    {"name": "eth_hash0_adr_wstrb", "width": 32 / 8},
+                    {"name": "eth_hash0_adr_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -451,7 +451,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash1_adr_wr", "width": 32},
                     {"name": "eth_hash1_adr_rd", "width": 32},
-                    {"name": "eth_hash1_adr_wstrb", "width": 32 / 8},
+                    {"name": "eth_hash1_adr_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -460,7 +460,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_txctrl_wr", "width": 32},
                     {"name": "eth_txctrl_rd", "width": 32},
-                    {"name": "eth_txctrl_wstrb", "width": 32 / 8},
+                    {"name": "eth_txctrl_wstrb", "width": int(32 / 8)},
                 ],
             },
             {
@@ -539,7 +539,7 @@ def setup(py_params_dict):
                     {"name": "bd_valid_wrrd", "width": 1},
                     {"name": "bd_addr_wrrd", "width": "BD_NUM_LOG2+1+2"},
                     {"name": "bd_wdata_wrrd", "width": 32},
-                    {"name": "bd_wstrb_wrrd", "width": 32 / 8},
+                    {"name": "bd_wstrb_wrrd", "width": int(32 / 8)},
                     {"name": "bd_ready_wrrd", "width": 1},
                     {"name": "bd_rdata_wrrd", "width": 32},
                     {"name": "bd_rvalid_wrrd", "width": 1},
