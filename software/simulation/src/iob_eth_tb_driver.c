@@ -119,7 +119,8 @@ static void relay_frame_eth_2_file(int frame_size) {
 }
 
 static void cpu_initeth(int base_address) {
-  eth_init_mac(base_address, ETH_MAC_ADDR, ETH_RMAC_ADDR);
+  // RMAC and MAC flipped: testbench ethernet peripheral emulates console
+  eth_init_mac(base_address, ETH_RMAC_ADDR, ETH_MAC_ADDR);
   eth_reset_bd_memory();
 
   /**** Configure receiver *****/
