@@ -8,11 +8,16 @@ def gen_custom_config_build(py_params_dict):
 ### Set Ethernet environment variables
 #Eth interface address of pc connected to ethernet peripheral (based on board name)
 $(if $(findstring sim,$(MAKECMDGOALS))$(SIMULATOR),$(eval BOARD=))
-ifeq ($(BOARD),AES-KU040-DB-G)
+ifeq ($(BOARD),iob_aes_ku040_db_g)
 ETH_IF ?=eno1
 endif
-ifeq ($(BOARD),CYCLONEV-GT-DK)
+ifeq ($(BOARD),iob_cyclonev_gt_dk)
 ETH_IF ?= enp0s31f6
+endif
+# Set RMAC_ADDR automatically if running on fpga board, based on ETH_IF
+ifneq ($(BOARD),)
+RMAC_ADDR ?= $(shell cat /sys/class/net/$(ETH_IF)/address | sed 's/://g')
+$(info ETH_IF=$(ETH_IF) RMAC_ADDR=$(RMAC_ADDR))
 endif
 # Set a MAC address for console (randomly generated)
 RMAC_ADDR ?=88431eafa897

@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 
 set_global_assignment -name SDC_FILE quartus/$BOARD/iob_eth_dev.sdc
-# Only timinig constraint is:
+# Only timinig constraint from .sdc file is is:
 # create_clock -period 40 [get_ports {enet_rx_clk_i}]
 
 set_location_assignment PIN_AN9 -to enet_resetn_o
@@ -35,4 +35,9 @@ set_instance_assignment -name IO_STANDARD "2.5-V" -to enet_tx_d1_o
 set_instance_assignment -name IO_STANDARD "2.5-V" -to enet_tx_d2_o
 set_instance_assignment -name IO_STANDARD "2.5-V" -to enet_tx_d3_o
 set_instance_assignment -name IO_STANDARD "2.5-V" -to enet_tx_en_o
+
+#Force registers into IOBs
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to *
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to *
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to *
 
