@@ -581,7 +581,7 @@ module iob_eth_dma #(
    );
    assign rcv_ack_o = rcv_ack;
 
-   reg rx_frame_word_rdata_o_nxt;
+   reg [8-1:0] rx_frame_word_rdata_o_nxt;
    iob_reg_ca #(
       .DATA_W (8),
       .RST_VAL(0)
