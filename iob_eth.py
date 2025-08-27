@@ -42,21 +42,19 @@ def setup(py_params_dict):
         #     check=True,
         # )
 
-    # Copy simulation testbench utility files
+    # Copy utility files
     if py_params_dict["build_dir"]:
-        # dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
-        # os.makedirs(dst, exist_ok=True)
-        # src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
-        # for src_file in [
-        #     # "iob_eth_driver_tb.v",
-        #     # "iob_eth_driver_tb.h",
-        #     # "iob_eth_driver_tb.cpp",
-        #     "iob_eth_defines.vh",
-        #     "iob_eth_defines_verilator.h",
-        #     "iob_eth_defines_tasks.vs",
-        # ]:
-        #     shutil.copy2(os.path.join(src, src_file), dst)
-        #
+        paths = [
+            ("hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc", "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc"),
+        ]
+
+        for src, dst in paths:
+            dst = os.path.join(py_params_dict["build_dir"], dst)
+            dst_dir = os.path.dirname(dst)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.copy2(f"{os.path.dirname(__file__)}/{src}", dst)
+
+        # Copy all scripts
         shutil.copytree(
             f"{os.path.dirname(__file__)}/scripts",
             f"{py_params_dict['build_dir']}/scripts",
