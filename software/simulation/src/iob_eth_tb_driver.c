@@ -31,9 +31,9 @@ void eth_relay_frames() {
   // Relay ethernet frames from core to file
   rx_nbytes_reg = iob_eth_csrs_get_rx_nbytes();
   if (rx_nbytes_reg) {
-    // printf("$eth2file\n");  // DEBUG
+    printf("$eth2file sending %d bytes.\n", rx_nbytes_reg); // DEBUG
     relay_frame_eth_2_file(rx_nbytes_reg);
-    // printf("$eth2file_done\n");  // DEBUG
+    printf("$eth2file_done\n"); // DEBUG
   }
   // Relay ethernet frames from file to core
   if (eth_tx_ready(0)) {
@@ -67,7 +67,7 @@ static void relay_frame_file_2_eth() {
   // Continue if size read successfully
   if (n == 2) {
     frame_size = (size_h << 8) | size_l;
-    // printf("$file2eth received %d bytes.\n", frame_size);  // DEBUG
+    printf("$file2eth received %d bytes.\n", frame_size); // DEBUG
     //  wait for ready
     while (!eth_tx_ready(0))
       ;
@@ -87,7 +87,7 @@ static void relay_frame_file_2_eth() {
     fclose(eth2soc_fd);
     // Delete frame from file
     eth2soc_fd = fopen("./eth2soc", "wb");
-    // printf("$file2eth_done\n");  // DEBUG
+    printf("$file2eth_done\n"); // DEBUG
   } // n != 0
   fclose(eth2soc_fd);
 }
@@ -102,8 +102,10 @@ static void relay_frame_eth_2_file(int frame_size) {
   // Read frame bytes from core and write to file
   for (i = 0; i < frame_size; i = i + 1) {
     frame_byte = iob_eth_csrs_get_frame_word();
+    printf("%x ", frame_byte); // DEBUG
     fprintf(soc2eth_fd, "%c", frame_byte);
   }
+  printf("\n"); // DEBUG
   fflush(soc2eth_fd);
 
   // Wait for BD status update (via ready/empty bit)
