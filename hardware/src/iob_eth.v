@@ -20,55 +20,7 @@ module iob_eth #(
    // configuration control and status register file.
    `include "iob_eth_subblocks.vs"
 
-   wire internal_bd_wen;
-
-   wire internal_frame_word_wen;
-   wire internal_frame_word_ready_wr;
-   wire internal_frame_word_ren;
-   wire internal_frame_word_ready_rd;
-
-   // tx bd cnt logic
-   assign tx_bd_cnt_rvalid_rd = 1'b1;
-   assign tx_bd_cnt_ready_rd = 1'b1;
-
-   // rx bd cnt logic
-   assign rx_bd_cnt_rvalid_rd = 1'b1;
-   assign rx_bd_cnt_ready_rd = 1'b1;
-
-   // tx word cnt logic
-   assign tx_word_cnt_rvalid_rd = 1'b1;
-   assign tx_word_cnt_ready_rd = 1'b1;
-
-   // rx word cnt logic
-   assign rx_word_cnt_rvalid_rd = 1'b1;
-   assign rx_word_cnt_ready_rd = 1'b1;
-
-   // rx nbytes logic
-   assign rx_nbytes_rdata_rd = rx_data_rcvd ? rx_nbytes : 0;
-   assign rx_nbytes_rvalid_rd = ~rcv_ack;  // Wait for ack complete
-   assign rx_nbytes_ready_rd = 1'b1;
-
-   // frame word logic
-   assign frame_word_ready_wrrd = internal_frame_word_wen ? 
-      internal_frame_word_ready_wr : internal_frame_word_ready_rd;
-   assign internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
-   assign internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
-
-   // BD logic
-   assign internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
-
-   wire bd_rvalid_nxt;
-   assign bd_rvalid_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
-   iob_reg_ca #(
-      .DATA_W (1),
-      .RST_VAL(1'd0)
-   ) iob_reg_BD_rvalid (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(bd_rvalid_nxt),
-      .data_o(bd_rvalid_wrrd)
-   );
+   `include "iob_eth_comb.vs"
 
    // Connect write outputs to read
    assign moder_rd         = moder_wr;
@@ -93,29 +45,13 @@ module iob_eth #(
    assign eth_hash1_adr_rd = eth_hash1_adr_wr;
    assign eth_txctrl_rd    = eth_txctrl_wr;
 
-   // ETH CLOCK DOMAIN
-
-   wire                         iob_eth_tx_buffer_enA;
-   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrA;
-   wire [                8-1:0] iob_eth_tx_buffer_dinA;
-   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_tx_buffer_addrB;
-   wire [                8-1:0] iob_eth_tx_buffer_doutB;
-
-   wire                         iob_eth_rx_buffer_enA;
-   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrA;
-   wire [                8-1:0] iob_eth_rx_buffer_dinA;
-   wire                         iob_eth_rx_buffer_enB;
-   wire [`IOB_ETH_BUFFER_W-1:0] iob_eth_rx_buffer_addrB;
-   wire [                8-1:0] iob_eth_rx_buffer_doutB;
-
-
-   assign mii_tx_er_o = 1'b0;  //TODO
+   assign mii_tx_er_o      = 1'b0;  //TODO
    //assign ... = mii_rx_er_i;  //TODO
 
    //assign ... = mii_col_i;  //TODO
    //assign ... = mii_crs_i;  //TODO
 
-   assign mii_mdc_o   = 1'b0;  //TODO
+   assign mii_mdc_o        = 1'b0;  //TODO
    //assign mii_mdio_io   = 1'b0;  //TODO
 
 
@@ -457,8 +393,6 @@ module iob_eth #(
 
 
    // wire [31:0] buffer_addr = (iob_addr_i - `IOB_ETH_BD_ADDR) >> 2; Might still be needed
-
-   assign bd_ready_wrrd = 1'b1;
 
    // Buffer descriptors memory
    iob_ram_tdp #(

@@ -545,6 +545,34 @@ def setup(py_params_dict):
                     {"name": "bd_rvalid_wrrd", "width": 1},
                 ],
             },
+            {
+                "name": "internal_signals",
+                "descr": "",
+                "signals": [
+                    {"name": "internal_bd_wen", "width": 1},
+                    {"name": "internal_frame_word_wen", "width": 1},
+                    {"name": "internal_frame_word_ready_wr", "width": 1},
+                    {"name": "internal_frame_word_ren", "width": 1},
+                    {"name": "internal_frame_word_ready_rd", "width": 1},
+                ],
+            },
+            {
+                "name": "eth_clock_domain",
+                "descr": "",
+                "signals": [
+                    {"name": "iob_eth_tx_buffer_enA", "width": 1},
+                    {"name": "iob_eth_tx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_tx_buffer_dinA", "width": 8},
+                    {"name": "iob_eth_tx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_tx_buffer_doutB", "width": 8},
+                    {"name": "iob_eth_rx_buffer_enA", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_rx_buffer_dinA", "width": 8},
+                    {"name": "iob_eth_rx_buffer_enB", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_rx_buffer_doutB", "width": 8},
+                ],
+            },
         ],
         "subblocks": [
             {
@@ -932,6 +960,47 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
         ],
+        "comb": {
+            "code": """
+   // Delay rvalid and rdata signals of NOAUTO CSRs by one clock cycle, since they must come after valid & ready handshake
+
+   // tx bd cnt logic
+   tx_bd_cnt_ready_rd = 1'b1;
+   tx_bd_cnt_rvalid_rd_nxt = tx_bd_cnt_valid_rd & tx_bd_cnt_ready_rd;
+
+   // rx bd cnt logic
+   rx_bd_cnt_ready_rd = 1'b1;
+   rx_bd_cnt_rvalid_rd_nxt = rx_bd_cnt_valid_rd & rx_bd_cnt_ready_rd;
+
+   // tx word cnt logic
+   tx_word_cnt_ready_rd = 1'b1;
+   tx_word_cnt_rvalid_rd_nxt = tx_word_cnt_valid_rd & tx_word_cnt_ready_rd;
+
+   // rx word cnt logic
+   rx_word_cnt_ready_rd = 1'b1;
+   rx_word_cnt_rvalid_rd_nxt = rx_word_cnt_valid_rd & rx_word_cnt_ready_rd;
+
+   // rx nbytes logic
+   rx_nbytes_ready_rd = ~rcv_ack;  // Wait for ack complete
+   rx_nbytes_rvalid_rd_en = rx_nbytes_valid_rd & rx_nbytes_ready_rd;
+   rx_nbytes_rvalid_rd_rst = rx_nbytes_rvalid_rd; // Enable for one clock cycle
+   rx_nbytes_rvalid_rd_nxt = 1'b1;
+   // same logic for rdata
+   rx_nbytes_rdata_rd_en = rx_nbytes_rvalid_rd_en;
+   rx_nbytes_rdata_rd_nxt = rx_data_rcvd ? rx_nbytes : 0;
+
+   // frame word logic
+   frame_word_ready_wrrd = internal_frame_word_wen ? internal_frame_word_ready_wr : internal_frame_word_ready_rd;
+   internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
+   internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
+
+   // BD logic
+   internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
+   bd_ready_wrrd = 1'b1;
+   bd_rvalid_wrrd_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
+   // bd_rdata_wrrd already delayed due to RAM
+""",
+        },
     }
 
     attributes_dict["superblocks"] = [

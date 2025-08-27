@@ -581,6 +581,30 @@ module iob_eth_dma #(
    );
    assign rcv_ack_o = rcv_ack;
 
+   reg rx_frame_word_rdata_o_nxt;
+   iob_reg_ca #(
+      .DATA_W (8),
+      .RST_VAL(0)
+   ) rx_frame_word_rdata_o_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_frame_word_rdata_o_nxt),
+      .data_o(rx_frame_word_rdata_o)
+   );
+
+   reg rx_frame_word_rvalid_o_nxt;
+   iob_reg_ca #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) rx_frame_word_rvalid_o_reg (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(arst_i),
+      .data_i(rx_frame_word_rvalid_o_nxt),
+      .data_o(rx_frame_word_rvalid_o)
+   );
+
    always @* begin
       rx_req                     = 1'b0;
       rx_state_nxt               = rx_state + 1'b1;
@@ -596,8 +620,8 @@ module iob_eth_dma #(
       // No-DMA interface
       rx_bd_cnt_o                = 1'b0;
       rx_word_cnt_o              = 1'b0;
-      rx_frame_word_rdata_o      = 1'b0;
-      rx_frame_word_rvalid_o     = 1'b0;
+      rx_frame_word_rdata_o_nxt  = 8'b0;
+      rx_frame_word_rvalid_o_nxt = 1'b0;
       rx_frame_word_ready_o      = 1'b0;
 
       axi_awaddr_o_reg           = 1'b0;
@@ -613,22 +637,22 @@ module iob_eth_dma #(
 
       if (arst_i) begin
 
-         rx_state_nxt           = 1'b0;
-         rx_bd_num_nxt          = tx_bd_num_i;
-         rx_bd_addr_o           = 1'b0;
-         rx_bd_wen_o            = 1'b0;
-         rx_bd_o                = 1'b0;
-         rcv_ack_nxt            = 1'b0;
-         axi_awvalid_o_reg      = 1'b0;
-         axi_wvalid_o_reg       = 1'b0;
-         axi_wlast_o_reg        = 1'b0;
-         rx_irq_o               = 1'b0;
+         rx_state_nxt               = 1'b0;
+         rx_bd_num_nxt              = tx_bd_num_i;
+         rx_bd_addr_o               = 1'b0;
+         rx_bd_wen_o                = 1'b0;
+         rx_bd_o                    = 1'b0;
+         rcv_ack_nxt                = 1'b0;
+         axi_awvalid_o_reg          = 1'b0;
+         axi_wvalid_o_reg           = 1'b0;
+         axi_wlast_o_reg            = 1'b0;
+         rx_irq_o                   = 1'b0;
          // No-DMA interface
-         rx_bd_cnt_o            = 1'b0;
-         rx_word_cnt_o          = 1'b0;
-         rx_frame_word_rdata_o  = 1'b0;
-         rx_frame_word_rvalid_o = 1'b0;
-         rx_frame_word_ready_o  = 1'b0;
+         rx_bd_cnt_o                = 1'b0;
+         rx_word_cnt_o              = 1'b0;
+         rx_frame_word_rdata_o_nxt  = 8'b0;
+         rx_frame_word_rvalid_o_nxt = 1'b0;
+         rx_frame_word_ready_o      = 1'b0;
 
       end else begin
 
@@ -712,8 +736,8 @@ module iob_eth_dma #(
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
                   eth_data_rd_addr_o = rx_buffer_byte_counter + 1'b1;  // Update next word addr
                   // Send word from buffer to CPU
-                  rx_frame_word_rdata_o = eth_data_rd_rdata_i;
-                  rx_frame_word_rvalid_o = 1'b1;
+                  rx_frame_word_rdata_o_nxt = eth_data_rd_rdata_i;
+                  rx_frame_word_rvalid_o_nxt = 1'b1;
                end
 
             end
