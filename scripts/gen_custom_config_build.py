@@ -14,11 +14,6 @@ endif
 ifeq ($(BOARD),iob_cyclonev_gt_dk)
 ETH_IF ?= enp0s31f6
 endif
-# Set RMAC_ADDR automatically if running on fpga board, based on ETH_IF
-ifneq ($(BOARD),)
-RMAC_ADDR ?= $(shell cat /sys/class/net/$(ETH_IF)/address | sed 's/://g')
-$(info ETH_IF=$(ETH_IF) RMAC_ADDR=$(RMAC_ADDR))
-endif
 # Set a MAC address for console (randomly generated)
 RMAC_ADDR ?=88431eafa897
 export RMAC_ADDR
