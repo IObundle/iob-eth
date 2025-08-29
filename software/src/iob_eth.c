@@ -75,6 +75,10 @@ void eth_init_clear_cache(void (*clear_cache_func)(void)) {
 }
 
 // Use custom memory allocator
+// Normally used to ensure that ethernet uses a memory region that is shared
+// with the CPU. For example, in a system with various memories, ethernet may
+// not have access to all of them. A custom allocator can be used to ensure that
+// ethernet allocates and uses memory that it can access and shared with the CPU
 void eth_init_mem_alloc(void *(*mem_alloc_func)(size_t),
                         void (*mem_free_func)(void *)) {
   mem_alloc = mem_alloc_func;
