@@ -436,6 +436,18 @@ We can then use that python wrapper to launch scripts that need the `CAP_NET_RAW
 For multi-user installations, it is recommended to move the wrapper to a system-wide location and set the user/group permissions accordingly.
 Note that any user with execute permissions for this wrapper will be able to run any program with the `CAP_NET_RAW` capability, allowing the user to sniff and manipulate all network traffic.
 
+## Common issues:
+
+```bash
+unable to set iab: Operation not permitted
+```
+
+This error usually appears when the Python interpreter (pyRawWrapper) does not have the linux 'CAP_NET_RAW' capability set.
+Running the following command with root privileges will set the capability:
+```bash
+setcap cap_net_raw,cap_setpcap=p path/to/pyRawWrapper
+```
+
 # Acknowledgement
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
 with financial support from the European Commission's Next Generation Internet
