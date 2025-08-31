@@ -53,13 +53,18 @@ def setup(py_params_dict):
             dst_dir = os.path.dirname(dst)
             os.makedirs(dst_dir, exist_ok=True)
             shutil.copy2(f"{os.path.dirname(__file__)}/{src}", dst)
+            # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+            os.system("chmod -R ug+w " + dst)
 
         # Copy all scripts
+        dst = os.path.join(py_params_dict["build_dir"], "scripts")
         shutil.copytree(
             f"{os.path.dirname(__file__)}/scripts",
-            f"{py_params_dict['build_dir']}/scripts",
+            dst,
             dirs_exist_ok=True,
         )
+        # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+        os.system("chmod -R ug+w " + dst)
 
     attributes_dict = {
         "generate_hw": True,
