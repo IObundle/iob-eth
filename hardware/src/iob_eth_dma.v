@@ -446,9 +446,11 @@ module iob_eth_dma #(
             8: begin  // Wirte Preamble and SFD (runs at arst)
                tx_state_nxt      = tx_state;
                eth_data_wr_wen_o = 1'b1;
-               if (tx_buffer_byte_counter == `IOB_ETH_PREAMBLE_LEN)
+               if (tx_buffer_byte_counter == `IOB_ETH_PREAMBLE_LEN) begin
                   eth_data_wr_wdata_o = `IOB_ETH_SFD;
-               else eth_data_wr_wdata_o = `IOB_ETH_PREAMBLE;
+               end else begin
+                  eth_data_wr_wdata_o = `IOB_ETH_PREAMBLE;
+               end
                eth_data_wr_addr_o         = tx_buffer_byte_counter;
                tx_buffer_byte_counter_nxt = tx_buffer_byte_counter + 1'b1;
                if (tx_buffer_byte_counter == PRE_FRAME_LEN) tx_state_nxt = 1'b0;
