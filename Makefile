@@ -87,10 +87,12 @@ doc-build: clean
 
 .PHONY: doc-build
 
+PRIVILEGED_CMD = $(shell command -v doas > /dev/null 2>&1 && echo "doas" || command -v sudo > /dev/null 2>&1 && echo "sudo sh -c" || echo "su root -c")
+
 # Create a virtual network interface
 ETH_IF ?= eth10
 virtual-network-if:
-	su root -c "modprobe dummy;\
+	$(PRIVILEGED_CMD) "modprobe dummy;\
 	ip link add $(ETH_IF) type dummy;\
 	ifconfig $(ETH_IF) up"
 

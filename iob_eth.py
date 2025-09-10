@@ -19,17 +19,17 @@ def setup(py_params_dict):
     if not os.path.exists(pyRawWrapper_path):
         print("Create pyRawWrapper for RAW access to ethernet frames")
 
-        # Run make compile
-        subprocess.run(
-            [
-                "make",
-                "-C",
-                f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-                "compile",
-            ],
-            check=True,
-        )
-
+        # # Run make compile
+        # subprocess.run(
+        #     [
+        #         "make",
+        #         "-C",
+        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+        #         "compile",
+        #     ],
+        #     check=True,
+        # )
+        #
         # # Run sudo make set-capabilities
         # subprocess.run(
         #     [
@@ -42,26 +42,29 @@ def setup(py_params_dict):
         #     check=True,
         # )
 
-    # Copy simulation testbench utility files
+    # Copy utility files
     if py_params_dict["build_dir"]:
-        # dst = f"{py_params_dict['build_dir']}/hardware/simulation/src"
-        # os.makedirs(dst, exist_ok=True)
-        # src = f"{os.path.dirname(__file__)}/hardware/simulation/src"
-        # for src_file in [
-        #     # "iob_eth_driver_tb.v",
-        #     # "iob_eth_driver_tb.h",
-        #     # "iob_eth_driver_tb.cpp",
-        #     "iob_eth_defines.vh",
-        #     "iob_eth_defines_verilator.h",
-        #     "iob_eth_defines_tasks.vs",
-        # ]:
-        #     shutil.copy2(os.path.join(src, src_file), dst)
-        #
+        paths = [
+            ("hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc", "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc"),
+        ]
+
+        for src, dst in paths:
+            dst = os.path.join(py_params_dict["build_dir"], dst)
+            dst_dir = os.path.dirname(dst)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.copy2(f"{os.path.dirname(__file__)}/{src}", dst)
+            # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+            os.system("chmod -R ug+w " + dst)
+
+        # Copy all scripts
+        dst = os.path.join(py_params_dict["build_dir"], "scripts")
         shutil.copytree(
             f"{os.path.dirname(__file__)}/scripts",
-            f"{py_params_dict['build_dir']}/scripts",
+            dst,
             dirs_exist_ok=True,
         )
+        # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+        os.system("chmod -R ug+w " + dst)
 
     attributes_dict = {
         "generate_hw": True,
@@ -108,14 +111,6 @@ def setup(py_params_dict):
                 "min": "NA",
                 "max": "128",
                 "descr": "Data bus width",
-            },
-            {
-                "name": "ADDR_W",
-                "type": "P",
-                "val": "`IOB_ETH_CSRS_ADDR_W",
-                "min": "NA",
-                "max": "128",
-                "descr": "Address bus width",
             },
             # External memory interface
             {
@@ -186,7 +181,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "axi_m",
-                "descr": "AXI master interface for external memory",
+                "descr": "AXI manager interface for external memory",
                 "signals": {
                     "type": "axi",
                     "ID_W": "AXI_ID_W",
@@ -203,73 +198,80 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "phy_io",
-                "descr": "PHY Interface Ports",
+                "name": "phy_rstn_o",
+                "descr": "",
                 "signals": [
-                    {
-                        "name": "MTxClk_i",
-                        "width": "1",
-                        "descr": "Transmit Nibble or Symbol Clock. The PHY provides the MTxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the transfer of MTxD[3:0], MtxEn, and MTxErr.",
-                    },
-                    {
-                        "name": "MTxEn_o",
-                        "width": "1",
-                        "descr": "Transmit Enable. When asserted, this signal indicates to the PHY that the data MTxD[3:0] is valid and the transmission can start. The transmission starts with the first nibble of the preamble. The signal remains asserted until all nibbles to be transmitted are presented to the PHY. It is deasserted prior to the first MTxClk, following the final nibble of a frame.",
-                    },
-                    {
-                        "name": "MTxD_o",
-                        "width": "4",
-                        "descr": "Transmit Data Nibble. Signals are the transmit data nibbles. They are synchronized to the rising edge of MTxClk. When MTxEn is asserted, PHY accepts the MTxD.",
-                    },
-                    {
-                        "name": "MTxErr_o",
-                        "width": "1",
-                        "descr": "Transmit Coding Error. When asserted for one MTxClk clock period while MTxEn is also asserted, this signal causes the PHY to transmit one or more symbols that are not part of the valid data or delimiter set somewhere in the frame being transmitted to indicate that there has been a transmit coding error.",
-                    },
-                    {
-                        "name": "MRxClk_i",
-                        "width": "1",
-                        "descr": "Receive Nibble or Symbol Clock. The PHY provides the MRxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the reception of MRxD[3:0], MRxDV, and MRxErr.",
-                    },
-                    {
-                        "name": "MRxDv_i",
-                        "width": "1",
-                        "descr": "Receive Data Valid. The PHY asserts this signal to indicate to the Rx MAC that it is presenting the valid nibbles on the MRxD[3:0] signals. The signal is asserted synchronously to the MRxClk. MRxDV is asserted from the first recovered nibble of the frame to the final recovered nibble. It is then deasserted prior to the first MRxClk that follows the final nibble.",
-                    },
-                    {
-                        "name": "MRxD_i",
-                        "width": "4",
-                        "descr": "Receive Data Nibble. These signals are the receive data nibble. They are synchronized to the rising edge of MRxClk. When MRxDV is asserted, the PHY sends a data nibble to the Rx MAC. For a correctly interpreted frame, seven bytes of a preamble and a completely formed SFD must be passed across the interface.",
-                    },
-                    {
-                        "name": "MRxErr_i",
-                        "width": "1",
-                        "descr": "Receive Error. The PHY asserts this signal to indicate to the Rx MAC that a media error was detected during the transmission of the current frame. MRxErr is synchronous to the MRxClk and is asserted for one or more MRxClk clock periods and then deasserted.",
-                    },
-                    {
-                        "name": "MColl_i",
-                        "width": "1",
-                        "descr": "Collision Detected. The PHY asynchronously asserts the collision signal MColl after the collision has been detected on the media. When deasserted, no collision is detected on the media.",
-                    },
-                    {
-                        "name": "MCrS_i",
-                        "width": "1",
-                        "descr": "Carrier Sense. The PHY asynchronously asserts the carrier sense MCrS signal after the medium is detected in a non-idle state. When deasserted, this signal indicates that the media is in an idle state (and the transmission can start).",
-                    },
-                    {
-                        "name": "MDC_o",
-                        "width": "1",
-                        "descr": "Management Data Clock. This is a clock for the MDIO serial data channel.",
-                    },
-                    {
-                        "name": "MDIO_o",  # TODO: Make this port bidirectional. Probably best by using two separate ports, as 'inout' may not be synthesizable.
-                        "width": "1",
-                        "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
-                    },
                     {
                         "name": "phy_rstn_o",
                         "width": "1",
                         "descr": "Reset signal for PHY. Duration configurable via PHY_RST_CNT parameter.",
+                    },
+                ],
+            },
+            {
+                "name": "mii_io",
+                "descr": "MII interface",
+                "signals": [
+                    # Same signals as standard "mii" interface, but with custom descriptions.
+                    {
+                        "name": "mii_tx_clk_i",
+                        "width": "1",
+                        "descr": "Transmit Nibble or Symbol Clock. The PHY provides the MTxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the transfer of MTxD[3:0], MtxEn, and MTxErr.",
+                    },
+                    {
+                        "name": "mii_txd_o",
+                        "width": "4",
+                        "descr": "Transmit Data Nibble. Signals are the transmit data nibbles. They are synchronized to the rising edge of MTxClk. When MTxEn is asserted, PHY accepts the MTxD.",
+                    },
+                    {
+                        "name": "mii_tx_en_o",
+                        "width": "1",
+                        "descr": "Transmit Enable. When asserted, this signal indicates to the PHY that the data MTxD[3:0] is valid and the transmission can start. The transmission starts with the first nibble of the preamble. The signal remains asserted until all nibbles to be transmitted are presented to the PHY. It is deasserted prior to the first MTxClk, following the final nibble of a frame.",
+                    },
+                    {
+                        "name": "mii_tx_er_o",
+                        "width": "1",
+                        "descr": "Transmit Coding Error. When asserted for one MTxClk clock period while MTxEn is also asserted, this signal causes the PHY to transmit one or more symbols that are not part of the valid data or delimiter set somewhere in the frame being transmitted to indicate that there has been a transmit coding error.",
+                    },
+                    {
+                        "name": "mii_rx_clk_i",
+                        "width": "1",
+                        "descr": "Receive Nibble or Symbol Clock. The PHY provides the MRxClk signal. It operates at a frequency of 25 MHz (100 Mbps) or 2.5 MHz (10 Mbps). The clock is used as a timing reference for the reception of MRxD[3:0], MRxDV, and MRxErr.",
+                    },
+                    {
+                        "name": "mii_rxd_i",
+                        "width": "4",
+                        "descr": "Receive Data Nibble. These signals are the receive data nibble. They are synchronized to the rising edge of MRxClk. When MRxDV is asserted, the PHY sends a data nibble to the Rx MAC. For a correctly interpreted frame, seven bytes of a preamble and a completely formed SFD must be passed across the interface.",
+                    },
+                    {
+                        "name": "mii_rx_dv_i",
+                        "width": "1",
+                        "descr": "Receive Data Valid. The PHY asserts this signal to indicate to the Rx MAC that it is presenting the valid nibbles on the MRxD[3:0] signals. The signal is asserted synchronously to the MRxClk. MRxDV is asserted from the first recovered nibble of the frame to the final recovered nibble. It is then deasserted prior to the first MRxClk that follows the final nibble.",
+                    },
+                    {
+                        "name": "mii_rx_er_i",
+                        "width": "1",
+                        "descr": "Receive Error. The PHY asserts this signal to indicate to the Rx MAC that a media error was detected during the transmission of the current frame. MRxErr is synchronous to the MRxClk and is asserted for one or more MRxClk clock periods and then deasserted.",
+                    },
+                    {
+                        "name": "mii_crs_i",
+                        "width": "1",
+                        "descr": "Carrier Sense. The PHY asynchronously asserts the carrier sense MCrS signal after the medium is detected in a non-idle state. When deasserted, this signal indicates that the media is in an idle state (and the transmission can start).",
+                    },
+                    {
+                        "name": "mii_col_i",
+                        "width": "1",
+                        "descr": "Collision Detected. The PHY asynchronously asserts the collision signal MColl after the collision has been detected on the media. When deasserted, no collision is detected on the media.",
+                    },
+                    {
+                        "name": "mii_mdio_io",
+                        "width": "1",
+                        "descr": "Management Data Input/Output. Bi-directional serial data channel for PHY/STA communication.",
+                    },
+                    {
+                        "name": "mii_mdc_o",
+                        "width": "1",
+                        "descr": "Management Data Clock. This is a clock for the MDIO serial data channel.",
                     },
                 ],
             },
@@ -281,7 +283,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "moder_wr", "width": 32},
                     {"name": "moder_rd", "width": 32},
-                    {"name": "moder_wstrb", "width": 32 / 8},
+                    {"name": "moder_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -290,7 +292,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_source_wr", "width": 32},
                     {"name": "int_source_rd", "width": 32},
-                    {"name": "int_source_wstrb", "width": 32 / 8},
+                    {"name": "int_source_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -299,7 +301,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "int_mask_wr", "width": 32},
                     {"name": "int_mask_rd", "width": 32},
-                    {"name": "int_mask_wstrb", "width": 32 / 8},
+                    {"name": "int_mask_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -308,7 +310,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgt_wr", "width": 32},
                     {"name": "ipgt_rd", "width": 32},
-                    {"name": "ipgt_wstrb", "width": 32 / 8},
+                    {"name": "ipgt_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -317,7 +319,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr1_wr", "width": 32},
                     {"name": "ipgr1_rd", "width": 32},
-                    {"name": "ipgr1_wstrb", "width": 32 / 8},
+                    {"name": "ipgr1_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -326,7 +328,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ipgr2_wr", "width": 32},
                     {"name": "ipgr2_rd", "width": 32},
-                    {"name": "ipgr2_wstrb", "width": 32 / 8},
+                    {"name": "ipgr2_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -335,7 +337,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "packetlen_wr", "width": 32},
                     {"name": "packetlen_rd", "width": 32},
-                    {"name": "packetlen_wstrb", "width": 32 / 8},
+                    {"name": "packetlen_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -344,7 +346,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "collconf_wr", "width": 32},
                     {"name": "collconf_rd", "width": 32},
-                    {"name": "collconf_wstrb", "width": 32 / 8},
+                    {"name": "collconf_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -353,7 +355,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "tx_bd_num_wr", "width": 32},
                     {"name": "tx_bd_num_rd", "width": 32},
-                    {"name": "tx_bd_num_wstrb", "width": 32 / 8},
+                    {"name": "tx_bd_num_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -362,7 +364,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "ctrlmoder_wr", "width": 32},
                     {"name": "ctrlmoder_rd", "width": 32},
-                    {"name": "ctrlmoder_wstrb", "width": 32 / 8},
+                    {"name": "ctrlmoder_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -371,7 +373,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miimoder_wr", "width": 32},
                     {"name": "miimoder_rd", "width": 32},
-                    {"name": "miimoder_wstrb", "width": 32 / 8},
+                    {"name": "miimoder_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -380,7 +382,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miicommand_wr", "width": 32},
                     {"name": "miicommand_rd", "width": 32},
-                    {"name": "miicommand_wstrb", "width": 32 / 8},
+                    {"name": "miicommand_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -389,7 +391,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miiaddress_wr", "width": 32},
                     {"name": "miiaddress_rd", "width": 32},
-                    {"name": "miiaddress_wstrb", "width": 32 / 8},
+                    {"name": "miiaddress_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -398,7 +400,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miitx_data_wr", "width": 32},
                     {"name": "miitx_data_rd", "width": 32},
-                    {"name": "miitx_data_wstrb", "width": 32 / 8},
+                    {"name": "miitx_data_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -407,7 +409,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miirx_data_wr", "width": 32},
                     {"name": "miirx_data_rd", "width": 32},
-                    {"name": "miirx_data_wstrb", "width": 32 / 8},
+                    {"name": "miirx_data_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -416,7 +418,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "miistatus_wr", "width": 32},
                     {"name": "miistatus_rd", "width": 32},
-                    {"name": "miistatus_wstrb", "width": 32 / 8},
+                    {"name": "miistatus_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -425,7 +427,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr0_wr", "width": 32},
                     {"name": "mac_addr0_rd", "width": 32},
-                    {"name": "mac_addr0_wstrb", "width": 32 / 8},
+                    {"name": "mac_addr0_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -434,7 +436,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "mac_addr1_wr", "width": 32},
                     {"name": "mac_addr1_rd", "width": 32},
-                    {"name": "mac_addr1_wstrb", "width": 32 / 8},
+                    {"name": "mac_addr1_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -443,7 +445,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash0_adr_wr", "width": 32},
                     {"name": "eth_hash0_adr_rd", "width": 32},
-                    {"name": "eth_hash0_adr_wstrb", "width": 32 / 8},
+                    {"name": "eth_hash0_adr_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -452,7 +454,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_hash1_adr_wr", "width": 32},
                     {"name": "eth_hash1_adr_rd", "width": 32},
-                    {"name": "eth_hash1_adr_wstrb", "width": 32 / 8},
+                    {"name": "eth_hash1_adr_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -461,7 +463,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "eth_txctrl_wr", "width": 32},
                     {"name": "eth_txctrl_rd", "width": 32},
-                    {"name": "eth_txctrl_wstrb", "width": 32 / 8},
+                    {"name": "eth_txctrl_wstrb", "width": 32 // 8},
                 ],
             },
             {
@@ -540,10 +542,38 @@ def setup(py_params_dict):
                     {"name": "bd_valid_wrrd", "width": 1},
                     {"name": "bd_addr_wrrd", "width": "BD_NUM_LOG2+1+2"},
                     {"name": "bd_wdata_wrrd", "width": 32},
-                    {"name": "bd_wstrb_wrrd", "width": 32 / 8},
+                    {"name": "bd_wstrb_wrrd", "width": 32 // 8},
                     {"name": "bd_ready_wrrd", "width": 1},
                     {"name": "bd_rdata_wrrd", "width": 32},
                     {"name": "bd_rvalid_wrrd", "width": 1},
+                ],
+            },
+            {
+                "name": "internal_signals",
+                "descr": "",
+                "signals": [
+                    {"name": "internal_bd_wen", "width": 1},
+                    {"name": "internal_frame_word_wen", "width": 1},
+                    {"name": "internal_frame_word_ready_wr", "width": 1},
+                    {"name": "internal_frame_word_ren", "width": 1},
+                    {"name": "internal_frame_word_ready_rd", "width": 1},
+                ],
+            },
+            {
+                "name": "eth_clock_domain",
+                "descr": "",
+                "signals": [
+                    {"name": "iob_eth_tx_buffer_enA", "width": 1},
+                    {"name": "iob_eth_tx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_tx_buffer_dinA", "width": 8},
+                    {"name": "iob_eth_tx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_tx_buffer_doutB", "width": 8},
+                    {"name": "iob_eth_rx_buffer_enA", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_rx_buffer_dinA", "width": 8},
+                    {"name": "iob_eth_rx_buffer_enB", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "iob_eth_rx_buffer_doutB", "width": 8},
                 ],
             },
         ],
@@ -933,6 +963,47 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
         ],
+        "comb": {
+            "code": """
+   // Delay rvalid and rdata signals of NOAUTO CSRs by one clock cycle, since they must come after valid & ready handshake
+
+   // tx bd cnt logic
+   tx_bd_cnt_ready_rd = 1'b1;
+   tx_bd_cnt_rvalid_rd_nxt = tx_bd_cnt_valid_rd & tx_bd_cnt_ready_rd;
+
+   // rx bd cnt logic
+   rx_bd_cnt_ready_rd = 1'b1;
+   rx_bd_cnt_rvalid_rd_nxt = rx_bd_cnt_valid_rd & rx_bd_cnt_ready_rd;
+
+   // tx word cnt logic
+   tx_word_cnt_ready_rd = 1'b1;
+   tx_word_cnt_rvalid_rd_nxt = tx_word_cnt_valid_rd & tx_word_cnt_ready_rd;
+
+   // rx word cnt logic
+   rx_word_cnt_ready_rd = 1'b1;
+   rx_word_cnt_rvalid_rd_nxt = rx_word_cnt_valid_rd & rx_word_cnt_ready_rd;
+
+   // rx nbytes logic
+   rx_nbytes_ready_rd = ~rcv_ack;  // Wait for ack complete
+   rx_nbytes_rvalid_rd_en = rx_nbytes_valid_rd & rx_nbytes_ready_rd;
+   rx_nbytes_rvalid_rd_rst = rx_nbytes_rvalid_rd; // Enable for one clock cycle
+   rx_nbytes_rvalid_rd_nxt = 1'b1;
+   // same logic for rdata
+   rx_nbytes_rdata_rd_en = rx_nbytes_rvalid_rd_en;
+   rx_nbytes_rdata_rd_nxt = rx_data_rcvd ? rx_nbytes : 0;
+
+   // frame word logic
+   frame_word_ready_wrrd = internal_frame_word_wen ? internal_frame_word_ready_wr : internal_frame_word_ready_rd;
+   internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
+   internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
+
+   // BD logic
+   internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
+   bd_ready_wrrd = 1'b1;
+   bd_rvalid_wrrd_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
+   // bd_rdata_wrrd already delayed due to RAM
+""",
+        },
     }
 
     attributes_dict["superblocks"] = [

@@ -4,132 +4,132 @@
 `include "iob_eth_defines.vh"
 
 module iob_eth_mem_wrapper #(
-    parameter integer ADDR_W = `IOB_ETH_CSRS_ADDR_W,
-    parameter integer DATA_W = 32,
-    parameter integer AXI_ID_W = 1,
-    // Fit at least two frames in memory (2 * 2^9 words * 4 byte-word)
-    // 12 is the minimum supported by axi_interconnect
-    parameter integer AXI_ADDR_W = 12,
-    parameter integer AXI_DATA_W = 32,
-    parameter integer AXI_LEN_W = 8,
-    parameter integer MEM_ADDR_OFFSET = `IOB_ETH_MEM_ADDR_OFFSET,
-    parameter integer PHY_RST_CNT = `IOB_ETH_PHY_RST_CNT,
-    parameter integer BD_NUM_LOG2 = `IOB_ETH_BD_NUM_LOG2,
-    parameter integer BUFFER_W = `IOB_ETH_BUFFER_W
+   parameter integer ADDR_W          = `IOB_ETH_CSRS_ADDR_W,
+   parameter integer DATA_W          = 32,
+   parameter integer AXI_ID_W        = 1,
+   // Fit at least two frames in memory (2 * 2^9 words * 4 byte-word)
+   // 12 is the minimum supported by axi_interconnect
+   parameter integer AXI_ADDR_W      = 12,
+   parameter integer AXI_DATA_W      = 32,
+   parameter integer AXI_LEN_W       = 8,
+   parameter integer MEM_ADDR_OFFSET = `IOB_ETH_MEM_ADDR_OFFSET,
+   parameter integer PHY_RST_CNT     = `IOB_ETH_PHY_RST_CNT,
+   parameter integer BD_NUM_LOG2     = `IOB_ETH_BD_NUM_LOG2,
+   parameter integer BUFFER_W        = `IOB_ETH_BUFFER_W
 ) (
-    // Eth IOb csrs interface
-    `include "iob_eth_iob_s_port.vs"
+   // Eth IOb csrs interface
+   `include "iob_eth_iob_s_port.vs"
 
-    // Testbench memory control
-    input [AXI_ADDR_W-1:0] tb_addr,
-    input tb_awvalid,
-    output tb_awready,
-    input tb_arvalid,
-    output tb_arready,
-    input [AXI_DATA_W-1:0] tb_wdata,
-    input tb_wvalid,
-    output tb_wready,
-    output [AXI_DATA_W-1:0] tb_rdata,
-    output tb_rvalid,
-    input tb_rready,
+   // Testbench memory control
+   input  [AXI_ADDR_W-1:0] tb_addr,
+   input                   tb_awvalid,
+   output                  tb_awready,
+   input                   tb_arvalid,
+   output                  tb_arready,
+   input  [AXI_DATA_W-1:0] tb_wdata,
+   input                   tb_wvalid,
+   output                  tb_wready,
+   output [AXI_DATA_W-1:0] tb_rdata,
+   output                  tb_rvalid,
+   input                   tb_rready,
 
-    `include "iob_eth_iob_clk_s_port.vs"
+   `include "iob_eth_iob_clk_s_port.vs"
 );
 
-  // ETH SIDE
-  reg        mii_clk;
-  wire [3:0] mii_data;
-  wire       mii_en;
+   // ETH SIDE
+   reg                           mii_clk;
+   wire [                   3:0] mii_data;
+   wire                          mii_en;
 
-  // DMA wires
-  wire [(2*AXI_ADDR_W)-1:0] axi_araddr;
-  wire [(2*1)-1:0] axi_arvalid;
-  wire [(2*1)-1:0] axi_arready;
-  wire [(2*AXI_DATA_W)-1:0] axi_rdata;
-  wire [(2*2)-1:0] axi_rresp;
-  wire [(2*1)-1:0] axi_rvalid;
-  wire [(2*1)-1:0] axi_rready;
-  wire [(2*AXI_ID_W)-1:0] axi_arid;
-  wire [(2*AXI_LEN_W)-1:0] axi_arlen;
-  wire [(2*3)-1:0] axi_arsize;
-  wire [(2*2)-1:0] axi_arburst;
-  wire [(2*2)-1:0] axi_arlock;
-  wire [(2*4)-1:0] axi_arcache;
-  wire [(2*4)-1:0] axi_arqos;
-  wire [(2*AXI_ID_W)-1:0] axi_rid;
-  wire [(2*1)-1:0] axi_rlast;
-  wire [(2*AXI_ADDR_W)-1:0] axi_awaddr;
-  wire [(2*1)-1:0] axi_awvalid;
-  wire [(2*1)-1:0] axi_awready;
-  wire [(2*AXI_DATA_W)-1:0] axi_wdata;
-  wire [(2*(AXI_DATA_W/8))-1:0] axi_wstrb;
-  wire [(2*1)-1:0] axi_wvalid;
-  wire [(2*1)-1:0] axi_wready;
-  wire [(2*2)-1:0] axi_bresp;
-  wire [(2*1)-1:0] axi_bvalid;
-  wire [(2*1)-1:0] axi_bready;
-  wire [(2*AXI_ID_W)-1:0] axi_awid;
-  wire [(2*AXI_LEN_W)-1:0] axi_awlen;
-  wire [(2*3)-1:0] axi_awsize;
-  wire [(2*2)-1:0] axi_awburst;
-  wire [(2*2)-1:0] axi_awlock;
-  wire [(2*4)-1:0] axi_awcache;
-  wire [(2*4)-1:0] axi_awqos;
-  wire [(2*1)-1:0] axi_wlast;
-  wire [(2*AXI_ID_W)-1:0] axi_bid;
+   // DMA wires
+   wire [    (2*AXI_ADDR_W)-1:0] axi_araddr;
+   wire [             (2*1)-1:0] axi_arvalid;
+   wire [             (2*1)-1:0] axi_arready;
+   wire [    (2*AXI_DATA_W)-1:0] axi_rdata;
+   wire [             (2*2)-1:0] axi_rresp;
+   wire [             (2*1)-1:0] axi_rvalid;
+   wire [             (2*1)-1:0] axi_rready;
+   wire [      (2*AXI_ID_W)-1:0] axi_arid;
+   wire [     (2*AXI_LEN_W)-1:0] axi_arlen;
+   wire [             (2*3)-1:0] axi_arsize;
+   wire [             (2*2)-1:0] axi_arburst;
+   wire [             (2*2)-1:0] axi_arlock;
+   wire [             (2*4)-1:0] axi_arcache;
+   wire [             (2*4)-1:0] axi_arqos;
+   wire [      (2*AXI_ID_W)-1:0] axi_rid;
+   wire [             (2*1)-1:0] axi_rlast;
+   wire [    (2*AXI_ADDR_W)-1:0] axi_awaddr;
+   wire [             (2*1)-1:0] axi_awvalid;
+   wire [             (2*1)-1:0] axi_awready;
+   wire [    (2*AXI_DATA_W)-1:0] axi_wdata;
+   wire [(2*(AXI_DATA_W/8))-1:0] axi_wstrb;
+   wire [             (2*1)-1:0] axi_wvalid;
+   wire [             (2*1)-1:0] axi_wready;
+   wire [             (2*2)-1:0] axi_bresp;
+   wire [             (2*1)-1:0] axi_bvalid;
+   wire [             (2*1)-1:0] axi_bready;
+   wire [      (2*AXI_ID_W)-1:0] axi_awid;
+   wire [     (2*AXI_LEN_W)-1:0] axi_awlen;
+   wire [             (2*3)-1:0] axi_awsize;
+   wire [             (2*2)-1:0] axi_awburst;
+   wire [             (2*2)-1:0] axi_awlock;
+   wire [             (2*4)-1:0] axi_awcache;
+   wire [             (2*4)-1:0] axi_awqos;
+   wire [             (2*1)-1:0] axi_wlast;
+   wire [      (2*AXI_ID_W)-1:0] axi_bid;
 
-  // Wires to connect the interconnect with the memory
-  wire [AXI_ADDR_W-1:0] memory_axi_araddr;
-  wire [1-1:0] memory_axi_arvalid;
-  wire [1-1:0] memory_axi_arready;
-  wire [AXI_DATA_W-1:0] memory_axi_rdata;
-  wire [2-1:0] memory_axi_rresp;
-  wire [1-1:0] memory_axi_rvalid;
-  wire [1-1:0] memory_axi_rready;
-  wire [AXI_ID_W-1:0] memory_axi_arid;
-  wire [AXI_LEN_W-1:0] memory_axi_arlen;
-  wire [3-1:0] memory_axi_arsize;
-  wire [2-1:0] memory_axi_arburst;
-  wire [2-1:0] memory_axi_arlock;
-  wire [4-1:0] memory_axi_arcache;
-  wire [4-1:0] memory_axi_arqos;
-  wire [AXI_ID_W-1:0] memory_axi_rid;
-  wire [1-1:0] memory_axi_rlast;
-  wire [AXI_ADDR_W-1:0] memory_axi_awaddr;
-  wire [1-1:0] memory_axi_awvalid;
-  wire [1-1:0] memory_axi_awready;
-  wire [AXI_DATA_W-1:0] memory_axi_wdata;
-  wire [(AXI_DATA_W/8)-1:0] memory_axi_wstrb;
-  wire [1-1:0] memory_axi_wvalid;
-  wire [1-1:0] memory_axi_wready;
-  wire [2-1:0] memory_axi_bresp;
-  wire [1-1:0] memory_axi_bvalid;
-  wire [1-1:0] memory_axi_bready;
-  wire [AXI_ID_W-1:0] memory_axi_awid;
-  wire [AXI_LEN_W-1:0] memory_axi_awlen;
-  wire [3-1:0] memory_axi_awsize;
-  wire [2-1:0] memory_axi_awburst;
-  wire [2-1:0] memory_axi_awlock;
-  wire [4-1:0] memory_axi_awcache;
-  wire [4-1:0] memory_axi_awqos;
-  wire [1-1:0] memory_axi_wlast;
-  wire [AXI_ID_W-1:0] memory_axi_bid;
+   // Wires to connect the interconnect with the memory
+   wire [        AXI_ADDR_W-1:0] memory_axi_araddr;
+   wire [                 1-1:0] memory_axi_arvalid;
+   wire [                 1-1:0] memory_axi_arready;
+   wire [        AXI_DATA_W-1:0] memory_axi_rdata;
+   wire [                 2-1:0] memory_axi_rresp;
+   wire [                 1-1:0] memory_axi_rvalid;
+   wire [                 1-1:0] memory_axi_rready;
+   wire [          AXI_ID_W-1:0] memory_axi_arid;
+   wire [         AXI_LEN_W-1:0] memory_axi_arlen;
+   wire [                 3-1:0] memory_axi_arsize;
+   wire [                 2-1:0] memory_axi_arburst;
+   wire [                 2-1:0] memory_axi_arlock;
+   wire [                 4-1:0] memory_axi_arcache;
+   wire [                 4-1:0] memory_axi_arqos;
+   wire [          AXI_ID_W-1:0] memory_axi_rid;
+   wire [                 1-1:0] memory_axi_rlast;
+   wire [        AXI_ADDR_W-1:0] memory_axi_awaddr;
+   wire [                 1-1:0] memory_axi_awvalid;
+   wire [                 1-1:0] memory_axi_awready;
+   wire [        AXI_DATA_W-1:0] memory_axi_wdata;
+   wire [    (AXI_DATA_W/8)-1:0] memory_axi_wstrb;
+   wire [                 1-1:0] memory_axi_wvalid;
+   wire [                 1-1:0] memory_axi_wready;
+   wire [                 2-1:0] memory_axi_bresp;
+   wire [                 1-1:0] memory_axi_bvalid;
+   wire [                 1-1:0] memory_axi_bready;
+   wire [          AXI_ID_W-1:0] memory_axi_awid;
+   wire [         AXI_LEN_W-1:0] memory_axi_awlen;
+   wire [                 3-1:0] memory_axi_awsize;
+   wire [                 2-1:0] memory_axi_awburst;
+   wire [                 2-1:0] memory_axi_awlock;
+   wire [                 4-1:0] memory_axi_awcache;
+   wire [                 4-1:0] memory_axi_awqos;
+   wire [                 1-1:0] memory_axi_wlast;
+   wire [          AXI_ID_W-1:0] memory_axi_bid;
 
-  //ethernet clock: 4x slower than system clock
-  reg [1:0] eth_cnt = 2'b0;
+   //ethernet clock: 4x slower than system clock
+   reg  [                   1:0] eth_cnt = 2'b0;
 
-  always @(posedge clk_i) begin
-    eth_cnt <= eth_cnt + 1'b1;
-    mii_clk <= eth_cnt[1];
-  end
+   always @(posedge clk_i) begin
+      eth_cnt <= eth_cnt + 1'b1;
+      mii_clk <= eth_cnt[1];
+   end
 
-  // UUT ethernet instance (MII signals connected to itself)
-  iob_eth #(
+   // UUT ethernet instance (MII signals connected to itself)
+   iob_eth #(
       .AXI_ID_W  (AXI_ID_W),
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W),
       .AXI_LEN_W (AXI_LEN_W)
-  ) eth (
+   ) eth (
       .inta_o(),
 
       // PHY
@@ -151,62 +151,62 @@ module iob_eth_mem_wrapper #(
       `include "iob_eth_iob_s_s_portmap.vs"
 
       // Connect DMA interface to interconnect (bus index 0)
-      .axi_awid_o(axi_awid[0+:AXI_ID_W]),
-      .axi_awaddr_o(axi_awaddr[0+:AXI_ADDR_W]),
-      .axi_awlen_o(axi_awlen[0+:AXI_LEN_W]),
-      .axi_awsize_o(axi_awsize[0+:3]),
+      .axi_awid_o   (axi_awid[0+:AXI_ID_W]),
+      .axi_awaddr_o (axi_awaddr[0+:AXI_ADDR_W]),
+      .axi_awlen_o  (axi_awlen[0+:AXI_LEN_W]),
+      .axi_awsize_o (axi_awsize[0+:3]),
       .axi_awburst_o(axi_awburst[0+:2]),
-      .axi_awlock_o(axi_awlock[0+:2]),
+      .axi_awlock_o (axi_awlock[0+:2]),
       .axi_awcache_o(axi_awcache[0+:4]),
-      .axi_awprot_o(axi_awprot[0+:3]),
-      .axi_awqos_o(axi_awqos[0+:4]),
+      .axi_awprot_o (axi_awprot[0+:3]),
+      .axi_awqos_o  (axi_awqos[0+:4]),
       .axi_awvalid_o(axi_awvalid[0+:1]),
       .axi_awready_i(axi_awready[0+:1]),
-      .axi_wdata_o(axi_wdata[0+:AXI_DATA_W]),
-      .axi_wstrb_o(axi_wstrb[0+:(AXI_DATA_W/8)]),
-      .axi_wlast_o(axi_wlast[0+:1]),
-      .axi_wvalid_o(axi_wvalid[0+:1]),
-      .axi_wready_i(axi_wready[0+:1]),
-      .axi_bid_i(axi_bid[0+:AXI_ID_W]),
-      .axi_bresp_i(axi_bresp[0+:2]),
-      .axi_bvalid_i(axi_bvalid[0+:1]),
-      .axi_bready_o(axi_bready[0+:1]),
-      .axi_arid_o(axi_arid[0+:AXI_ID_W]),
-      .axi_araddr_o(axi_araddr[0+:AXI_ADDR_W]),
-      .axi_arlen_o(axi_arlen[0+:AXI_LEN_W]),
-      .axi_arsize_o(axi_arsize[0+:3]),
+      .axi_wdata_o  (axi_wdata[0+:AXI_DATA_W]),
+      .axi_wstrb_o  (axi_wstrb[0+:(AXI_DATA_W/8)]),
+      .axi_wlast_o  (axi_wlast[0+:1]),
+      .axi_wvalid_o (axi_wvalid[0+:1]),
+      .axi_wready_i (axi_wready[0+:1]),
+      .axi_bid_i    (axi_bid[0+:AXI_ID_W]),
+      .axi_bresp_i  (axi_bresp[0+:2]),
+      .axi_bvalid_i (axi_bvalid[0+:1]),
+      .axi_bready_o (axi_bready[0+:1]),
+      .axi_arid_o   (axi_arid[0+:AXI_ID_W]),
+      .axi_araddr_o (axi_araddr[0+:AXI_ADDR_W]),
+      .axi_arlen_o  (axi_arlen[0+:AXI_LEN_W]),
+      .axi_arsize_o (axi_arsize[0+:3]),
       .axi_arburst_o(axi_arburst[0+:2]),
-      .axi_arlock_o(axi_arlock[0+:2]),
+      .axi_arlock_o (axi_arlock[0+:2]),
       .axi_arcache_o(axi_arcache[0+:4]),
-      .axi_arprot_o(axi_arprot[0+:3]),
-      .axi_arqos_o(axi_arqos[0+:4]),
+      .axi_arprot_o (axi_arprot[0+:3]),
+      .axi_arqos_o  (axi_arqos[0+:4]),
       .axi_arvalid_o(axi_arvalid[0+:1]),
       .axi_arready_i(axi_arready[0+:1]),
-      .axi_rid_i(axi_rid[0+:AXI_ID_W]),
-      .axi_rdata_i(axi_rdata[0+:AXI_DATA_W]),
-      .axi_rresp_i(axi_rresp[0+:2]),
-      .axi_rlast_i(axi_rlast[0+:1]),
-      .axi_rvalid_i(axi_rvalid[0+:1]),
-      .axi_rready_o(axi_rready[0+:1]),
+      .axi_rid_i    (axi_rid[0+:AXI_ID_W]),
+      .axi_rdata_i  (axi_rdata[0+:AXI_DATA_W]),
+      .axi_rresp_i  (axi_rresp[0+:2]),
+      .axi_rlast_i  (axi_rlast[0+:1]),
+      .axi_rvalid_i (axi_rvalid[0+:1]),
+      .axi_rready_o (axi_rready[0+:1]),
 
       .clk_i (clk_i),
       .arst_i(arst_i),
       .cke_i (cke_i)
-  );
+   );
 
-  //Axi interconnect
-  axi_interconnect #(
+   //Axi interconnect
+   axi_interconnect #(
       .ID_WIDTH    (AXI_ID_W),
       .DATA_WIDTH  (AXI_DATA_W),
       .ADDR_WIDTH  (AXI_ADDR_W),
       .M_ADDR_WIDTH(AXI_ADDR_W),
       .S_COUNT     (2),           // Eth core and testbench ctrl
       .M_COUNT     (1)
-  ) system_axi_interconnect (
+   ) system_axi_interconnect (
       .clk(clk_i),
       .rst(arst_i),
 
-      // Need to use manually defined connections because awlock and arlock of interconnect is only on bit for each slave
+      // Need to use manually defined connections because awlock and arlock of interconnect is only on bit for each subordinate
       .s_axi_awid(axi_awid),  //Address write channel ID.
       .s_axi_awaddr(axi_awaddr),  //Address write channel address.
       .s_axi_awlen(axi_awlen),  //Address write channel burst length.
@@ -297,22 +297,22 @@ module iob_eth_mem_wrapper #(
       .m_axi_ruser   (1'b0),
       .m_axi_awregion(),
       .m_axi_arregion()
-  );
+   );
 
-  axi_ram #(
+   axi_ram #(
       .ID_WIDTH  (AXI_ID_W),
       .DATA_WIDTH(AXI_DATA_W),
       .ADDR_WIDTH(AXI_ADDR_W),
       .LEN_WIDTH (AXI_LEN_W)
-  ) ddr_model_mem (
+   ) ddr_model_mem (
       .axi_awid_i(memory_axi_awid),  //Address write channel ID.
       .axi_awaddr_i(memory_axi_awaddr),  //Address write channel address.
       .axi_awlen_i(memory_axi_awlen),  //Address write channel burst length.
       .axi_awsize_i(memory_axi_awsize), //Address write channel burst size. This signal indicates the size of each transfer in the burst.
       .axi_awburst_i(memory_axi_awburst),  //Address write channel burst type.
       .axi_awlock_i(memory_axi_awlock),  //Address write channel lock type.
-      .axi_awcache_i(memory_axi_awcache), //Address write channel memory type. Set to 0000 if master output; ignored if slave input.
-      .axi_awprot_i(memory_axi_awprot), //Address write channel protection type. Set to 000 if master output; ignored if slave input.
+      .axi_awcache_i(memory_axi_awcache), //Address write channel memory type. Set to 0000 if manager output; ignored if subordinate input.
+      .axi_awprot_i(memory_axi_awprot), //Address write channel protection type. Set to 000 if manager output; ignored if subordinate input.
       .axi_awqos_i(memory_axi_awqos),  //Address write channel quality of service.
       .axi_awvalid_i(memory_axi_awvalid),  //Address write channel valid.
       .axi_awready_o(memory_axi_awready),  //Address write channel ready.
@@ -331,8 +331,8 @@ module iob_eth_mem_wrapper #(
       .axi_arsize_i(memory_axi_arsize), //Address read channel burst size. This signal indicates the size of each transfer in the burst.
       .axi_arburst_i(memory_axi_arburst),  //Address read channel burst type.
       .axi_arlock_i(memory_axi_arlock),  //Address read channel lock type.
-      .axi_arcache_i(memory_axi_arcache), //Address read channel memory type. Set to 0000 if master output; ignored if slave input.
-      .axi_arprot_i(memory_axi_arprot), //Address read channel protection type. Set to 000 if master output; ignored if slave input.
+      .axi_arcache_i(memory_axi_arcache), //Address read channel memory type. Set to 0000 if manager output; ignored if subordinate input.
+      .axi_arprot_i(memory_axi_arprot), //Address read channel protection type. Set to 000 if manager output; ignored if subordinate input.
       .axi_arqos_i(memory_axi_arqos),  //Address read channel quality of service.
       .axi_arvalid_i(memory_axi_arvalid),  //Address read channel valid.
       .axi_arready_o(memory_axi_arready),  //Address read channel ready.
@@ -345,45 +345,45 @@ module iob_eth_mem_wrapper #(
 
       .clk_i(clk_i),
       .rst_i(arst_i)
-  );
+   );
 
-  // AXI bus[1] signals for testbench
-  assign axi_awid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
-  assign axi_awaddr[1*(AXI_ADDR_W)+:AXI_ADDR_W] = tb_addr;  //input
-  assign axi_awlen[1*(AXI_LEN_W)+:AXI_LEN_W] = {AXI_LEN_W{1'b0}};  //input
-  assign axi_awsize[1*(3)+:3] = 3'b0;  //input
-  assign axi_awburst[1*(2)+:2] = 2'b0;  //input
-  assign axi_awlock[1*(2)+:2] = 2'b0;  //input
-  assign axi_awcache[1*(4)+:4] = 4'b0;  //input
-  assign axi_awprot[1*(3)+:3] = 3'b0;  //input
-  assign axi_awqos[1*(4)+:4] = 4'b0;  //input
-  assign axi_awvalid[1*(1)+:1] = tb_awvalid;  //input
-  assign tb_awready = axi_awready[1*(1)+:1];  //output
-  assign axi_wdata[1*(AXI_DATA_W)+:AXI_DATA_W] = tb_wdata;  //input
-  assign axi_wstrb[1*((AXI_DATA_W/8))+:(AXI_DATA_W/8)] = {(AXI_DATA_W / 8) {1'b1}};  //input
-  assign axi_wlast[1*(1)+:1] = 1'b1;  //input
-  assign axi_wvalid[1*(1)+:1] = tb_wvalid;  //input
-  assign tb_wready = axi_wready[1*(1)+:1];  //output
-  //assign              axi_bid[1*(AXI_ID_W)+:AXI_ID_W];  //output
-  //assign                            axi_bresp[1*(2)+:2];  //output
-  //assign                            axi_bvalid[1*(1)+:1];  //output
-  assign axi_bready[1*(1)+:1] = 1'b1;  //input
-  assign axi_arid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
-  assign axi_araddr[1*(AXI_ADDR_W)+:AXI_ADDR_W] = tb_addr;  //input
-  assign axi_arlen[1*(AXI_LEN_W)+:AXI_LEN_W] = {AXI_LEN_W{1'b0}};  //input
-  assign axi_arsize[1*(3)+:3] = 3'b0;  //input
-  assign axi_arburst[1*(2)+:2] = 2'b0;  //input
-  assign axi_arlock[1*(2)+:2] = 2'b0;  //input
-  assign axi_arcache[1*(4)+:4] = 4'b0;  //input
-  assign axi_arprot[1*(3)+:3] = 3'b0;  //input
-  assign axi_arqos[1*(4)+:4] = 4'b0;  //input
-  assign axi_arvalid[1*(1)+:1] = tb_arvalid;  //input
-  assign tb_arready = axi_arready[1*(1)+:1];  //output
-  assign axi_rid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
-  assign tb_rdata = axi_rdata[1*(AXI_DATA_W)+:AXI_DATA_W];  //output
-  //assign                            axi_rresp[1*(2)+:2];  //output
-  //assign                            axi_rlast[1*(1)+:1];  //output
-  assign tb_rvalid = axi_rvalid[1*(1)+:1];  //output
-  assign axi_rready[1*(1)+:1] = tb_rready;  //input
+   // AXI bus[1] signals for testbench
+   assign axi_awid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
+   assign axi_awaddr[1*(AXI_ADDR_W)+:AXI_ADDR_W] = tb_addr;  //input
+   assign axi_awlen[1*(AXI_LEN_W)+:AXI_LEN_W] = {AXI_LEN_W{1'b0}};  //input
+   assign axi_awsize[1*(3)+:3] = 3'b0;  //input
+   assign axi_awburst[1*(2)+:2] = 2'b0;  //input
+   assign axi_awlock[1*(2)+:2] = 2'b0;  //input
+   assign axi_awcache[1*(4)+:4] = 4'b0;  //input
+   assign axi_awprot[1*(3)+:3] = 3'b0;  //input
+   assign axi_awqos[1*(4)+:4] = 4'b0;  //input
+   assign axi_awvalid[1*(1)+:1] = tb_awvalid;  //input
+   assign tb_awready = axi_awready[1*(1)+:1];  //output
+   assign axi_wdata[1*(AXI_DATA_W)+:AXI_DATA_W] = tb_wdata;  //input
+   assign axi_wstrb[1*((AXI_DATA_W/8))+:(AXI_DATA_W/8)] = {(AXI_DATA_W / 8) {1'b1}};  //input
+   assign axi_wlast[1*(1)+:1] = 1'b1;  //input
+   assign axi_wvalid[1*(1)+:1] = tb_wvalid;  //input
+   assign tb_wready = axi_wready[1*(1)+:1];  //output
+   //assign              axi_bid[1*(AXI_ID_W)+:AXI_ID_W];  //output
+   //assign                            axi_bresp[1*(2)+:2];  //output
+   //assign                            axi_bvalid[1*(1)+:1];  //output
+   assign axi_bready[1*(1)+:1] = 1'b1;  //input
+   assign axi_arid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
+   assign axi_araddr[1*(AXI_ADDR_W)+:AXI_ADDR_W] = tb_addr;  //input
+   assign axi_arlen[1*(AXI_LEN_W)+:AXI_LEN_W] = {AXI_LEN_W{1'b0}};  //input
+   assign axi_arsize[1*(3)+:3] = 3'b0;  //input
+   assign axi_arburst[1*(2)+:2] = 2'b0;  //input
+   assign axi_arlock[1*(2)+:2] = 2'b0;  //input
+   assign axi_arcache[1*(4)+:4] = 4'b0;  //input
+   assign axi_arprot[1*(3)+:3] = 3'b0;  //input
+   assign axi_arqos[1*(4)+:4] = 4'b0;  //input
+   assign axi_arvalid[1*(1)+:1] = tb_arvalid;  //input
+   assign tb_arready = axi_arready[1*(1)+:1];  //output
+   assign axi_rid[1*(AXI_ID_W)+:AXI_ID_W] = {AXI_ID_W{1'b0}};  //input
+   assign tb_rdata = axi_rdata[1*(AXI_DATA_W)+:AXI_DATA_W];  //output
+   //assign                            axi_rresp[1*(2)+:2];  //output
+   //assign                            axi_rlast[1*(1)+:1];  //output
+   assign tb_rvalid = axi_rvalid[1*(1)+:1];  //output
+   assign axi_rready[1*(1)+:1] = tb_rready;  //input
 
 endmodule

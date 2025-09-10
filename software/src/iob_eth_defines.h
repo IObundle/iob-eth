@@ -61,6 +61,6 @@
   })
 
 #define eth_set_ptr(idx, ptr)                                                  \
-  ({ iob_eth_csrs_set_bd((uint32_t)ptr, (idx << 1) + 1); })
+  ({ iob_eth_csrs_set_bd((uint32_t)(uintptr_t)ptr, (idx << 1) + 1); })
 
 #endif // H_IOB_ETH_DEFINES_H

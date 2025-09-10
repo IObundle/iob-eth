@@ -6,7 +6,7 @@
 static char TEMPLATE[TEMPLATE_LEN];
 
 // Function to clear cache
-static void (*clear_cache)(void);
+static void (*clear_cache)(void) = NULL;
 // Functions to alloc and clear memory
 static void *(*mem_alloc)(size_t) = &malloc;
 static void (*mem_free)(void *) = &free;
@@ -75,6 +75,10 @@ void eth_init_clear_cache(void (*clear_cache_func)(void)) {
 }
 
 // Use custom memory allocator
+// Normally used to ensure that ethernet uses a memory region that is shared
+// with the CPU. For example, in a system with various memories, ethernet may
+// not have access to all of them. A custom allocator can be used to ensure that
+// ethernet allocates and uses memory that it can access and shared with the CPU
 void eth_init_mem_alloc(void *(*mem_alloc_func)(size_t),
                         void (*mem_free_func)(void *)) {
   mem_alloc = mem_alloc_func;
@@ -359,8 +363,9 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     // Disable reception
     eth_receive(0);
 
-    // Clear cache
-    (*clear_cache)();
+    // Clear cache if function is defined
+    if (clear_cache)
+      (*clear_cache)();
 
     // Check destination MAC address to see if should ignore frame
     ignore = 0;
