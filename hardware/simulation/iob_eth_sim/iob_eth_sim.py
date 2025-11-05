@@ -302,10 +302,16 @@ def setup(py_params_dict):
         },
         # Other
         {
-            "name": "mii_cnt_en_rst",
-            "descr": "mii counter reset and enable wires",
+            "name": "mii_cnt_en",
+            "descr": "mii counter enable",
             "signals": [
                 {"name": "mii_cnt_en", "width": 1},
+            ],
+        },
+        {
+            "name": "mii_cnt_rst",
+            "descr": "mii counter reset",
+            "signals": [
                 {"name": "mii_cnt_rst", "width": 1},
             ],
         },
@@ -431,7 +437,8 @@ def setup(py_params_dict):
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "en_rst_i": "mii_cnt_en_rst",
+                "counter_en_i": "mii_cnt_en",
+                "counter_rst_i": "mii_cnt_rst",
                 "data_o": "mii_cnt",
             },
         },
