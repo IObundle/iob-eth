@@ -20,16 +20,14 @@ setup:
 # SIMULATION
 #------------------------------------------------------------
 
-sim-build: clean
-	nix-shell --run 'make clean setup'
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-build"
+sim-build: clean setup
+	nix-shell --run "make -C $(BUILD_DIR) sim-build"
 
-sim-run: clean
-	nix-shell --run 'make clean setup'
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-run"
+sim-run: clean setup
+	nix-shell --run "make -C $(BUILD_DIR) sim-run"
 
 sim-waves:
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-waves"
+	nix-shell --run "make -C $(BUILD_DIR) sim-waves"
 
 sim-test: sim-run
 
