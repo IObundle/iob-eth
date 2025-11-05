@@ -507,7 +507,6 @@ def setup(py_params_dict):
             "instance_description": "Unit Under Test (UUT) DMA instance.",
             "parameters": {
                 "DATA_W": "DATA_W",
-                "ADDR_W": "(ADDR_W-2)",
                 "AXI_ADDR_W": "AXI_ADDR_W",
                 "AXI_DATA_W": "AXI_DATA_W",
                 "AXI_ID_W": "AXI_ID_W",
