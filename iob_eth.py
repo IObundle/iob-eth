@@ -45,7 +45,10 @@ def setup(py_params_dict):
     # Copy utility files
     if py_params_dict["build_dir"]:
         paths = [
-            ("hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc", "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc"),
+            (
+                "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+                "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+            ),
         ]
 
         for src, dst in paths:

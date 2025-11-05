@@ -5,4 +5,3 @@ void eth_setup(int base_address);
 void eth_relay_frames();
 
 #endif // H_IOB_ETH_TB_DRIVER_H
-
