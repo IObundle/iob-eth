@@ -72,7 +72,7 @@ fpga-run:
 
 
 
-.PHONY: fpga-build fpga-test fpga-run
+.PHONY: fpga-build fpga-run
 
 
 
