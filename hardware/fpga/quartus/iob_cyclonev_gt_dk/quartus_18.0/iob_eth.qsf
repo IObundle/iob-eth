@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 set_global_assignment -name FAMILY "Cyclone V"
 set_global_assignment -name DEVICE 5CGTFD9E5F35C7
 set_global_assignment -name TOP_LEVEL_ENTITY iob_eth

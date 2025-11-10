@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 """ethSendData.py
 
 Size of data transfered is known by destination address.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 """ethSendVariableData.py
 
 Size of data transfered is not known by destination address.

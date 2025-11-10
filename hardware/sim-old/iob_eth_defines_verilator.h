@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 // Verilator functions based on macros from 'iob-eth-defines.h'
 // Similar functionality of 'iob_eth_defines_tasks.vs'
 

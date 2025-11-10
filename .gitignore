@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 software/python/__pycache__/*
 scripts/pyRawWrapper/pyRawWrapper

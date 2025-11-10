@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
 // Tasks based on macros from iob-eth-defines.h
 
 task static eth_tx_ready(input reg [ADDR_W-1:0] idx, output reg ready);

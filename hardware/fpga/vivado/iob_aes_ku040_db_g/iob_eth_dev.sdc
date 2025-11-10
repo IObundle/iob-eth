@@ -1,5 +1,10 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 # ----------------------------------------------------------------------------
 # IOb_Eth Example Constrain File
+# SPDX-FileCopyrightText: 2025 IObundle
 #
 # This file contains the ethernet core constraints for the AES-KU040-DB-G board.
 # ----------------------------------------------------------------------------

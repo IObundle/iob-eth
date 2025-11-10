@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 ETHERNET_DIR:=../../../../..
 
 include $(ETHERNET_DIR)/hardware/hardware.mk

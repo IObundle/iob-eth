@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #define ETH_TYPE_H 0x60
 #define ETH_TYPE_L 0x00
 

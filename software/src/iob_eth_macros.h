@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef H_IOB_ETH_MACROS_H
 #define H_IOB_ETH_MACROS_H
 
