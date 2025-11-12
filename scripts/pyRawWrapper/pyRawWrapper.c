@@ -1,7 +1,12 @@
 /*
- * Python wrapper for CAP_NET_RAW capability
- * Based on solution from here: https://stackoverflow.com/a/67733220/11442904
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
  */
+
+// Python wrapper for CAP_NET_RAW capability
+// Based on solution from here: https://stackoverflow.com/a/67733220/11442904
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/capability.h>

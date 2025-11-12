@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
 `include "iob_eth_conf.vh"
 `include "iob_eth_csrs_def.vh"
 

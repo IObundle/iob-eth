@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "Viob_eth_mem_wrapper.h"
 #include <fstream>
 #include <iostream>

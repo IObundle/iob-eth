@@ -1,7 +1,5 @@
-####################################################################
+# SPDX-FileCopyrightText: 2025 IObundle
 #
-#   Copyright (C) 2018 IObundle, Lda  All rights reserved
-#
-#####################################################################
+# SPDX-License-Identifier: MIT
 
 create_clock -name "clk" -add -period 10.0 [get_ports clk]

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #define ETH_STATUS 0
 #define ETH_SEND 1
 #define ETH_RCVACK 2

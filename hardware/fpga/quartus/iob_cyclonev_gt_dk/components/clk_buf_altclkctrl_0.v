@@ -1,23 +1,12 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
 //altclkctrl CBX_SINGLE_OUTPUT_FILE="ON" CLOCK_TYPE="Global Clock" DEVICE_FAMILY="Cyclone V" USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION="OFF" ena inclk outclk
 //VERSION_BEGIN 18.0 cbx_altclkbuf 2018:04:18:06:50:44:SJ cbx_cycloneii 2018:04:18:06:50:44:SJ cbx_lpm_add_sub 2018:04:18:06:50:44:SJ cbx_lpm_compare 2018:04:18:06:50:44:SJ cbx_lpm_decode 2018:04:18:06:50:44:SJ cbx_lpm_mux 2018:04:18:06:50:44:SJ cbx_mgl 2018:04:18:07:37:08:SJ cbx_nadder 2018:04:18:06:50:44:SJ cbx_stratix 2018:04:18:06:50:44:SJ cbx_stratixii 2018:04:18:06:50:44:SJ cbx_stratixiii 2018:04:18:06:50:44:SJ cbx_stratixv 2018:04:18:06:50:44:SJ  VERSION_END
 // synthesis VERILOG_INPUT_VERSION VERILOG_2001
 // altera message_off 10463
 
-
-
-// Copyright (C) 2018  Intel Corporation. All rights reserved.
-//  Your use of Intel Corporation's design tools, logic functions 
-//  and other software and tools, and its AMPP partner logic 
-//  functions, and any output files from any of the foregoing 
-//  (including device programming or simulation files), and any 
-//  associated documentation or information are expressly subject 
-//  to the terms and conditions of the Intel Program License 
-//  Subscription Agreement, the Intel Quartus Prime License Agreement,
-//  the Intel FPGA IP License Agreement, or other applicable license
-//  agreement, including, without limitation, that your use is for
-//  the sole purpose of programming logic devices manufactured by
-//  Intel and sold by Intel or its authorized distributors.  Please
-//  refer to the applicable agreement for further details.
 
 
 
@@ -55,18 +44,7 @@ module clk_buf_altclkctrl_0_sub (
    //     sd1.lpm_type = "cyclonev_clkena";
    assign clkselect = {2{1'b0}}, outclk = wire_sd1_outclk;
 endmodule  //clk_buf_altclkctrl_0_sub
-//VALID FILE // (C) 2001-2018 Intel Corporation. All rights reserved.
-// Your use of Intel Corporation's design tools, logic functions and other 
-// software and tools, and its AMPP partner logic functions, and any output 
-// files from any of the foregoing (including device programming or simulation 
-// files), and any associated documentation or information are expressly subject 
-// to the terms and conditions of the Intel Program License Subscription 
-// Agreement, Intel FPGA IP License Agreement, or other applicable 
-// license agreement, including, without limitation, that your use is for the 
-// sole purpose of programming logic devices manufactured by Intel and sold by 
-// Intel or its authorized distributors.  Please refer to the applicable 
-// agreement for further details.
-
+//VALID FILE
 
 
 // synopsys translate_off

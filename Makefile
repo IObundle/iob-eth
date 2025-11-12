@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 IObundle
+#
+# SPDX-License-Identifier: MIT
+
 CORE := iob_eth
 
 SIMULATOR ?= icarus
@@ -20,16 +24,14 @@ setup:
 # SIMULATION
 #------------------------------------------------------------
 
-sim-build: clean
-	nix-shell --run 'make clean setup'
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-build"
+sim-build: clean setup
+	nix-shell --run "make -C $(BUILD_DIR) sim-build"
 
-sim-run: clean
-	nix-shell --run 'make clean setup'
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-run"
+sim-run: clean setup
+	nix-shell --run "make -C $(BUILD_DIR) sim-run"
 
 sim-waves:
-	nix-shell --run "make -C $(BUILD_DIR)/ sim-waves"
+	nix-shell --run "make -C $(BUILD_DIR) sim-waves"
 
 sim-test: sim-run
 
@@ -74,7 +76,7 @@ fpga-run:
 
 
 
-.PHONY: fpga-build fpga-test fpga-run
+.PHONY: fpga-build fpga-run
 
 
 
@@ -104,15 +106,20 @@ remove-virtual-network-if:
 
 clean:
 	nix-shell --run "py2hwsw $(CORE) clean --build_dir '$(BUILD_DIR)'"
-	@rm -rf ../*.summary ../*.rpt
+	@rm -rf ../*.summary ../*.rpt fusesoc_exports
 	@find . -name \*~ -delete
 
 .PHONY: clean
 
+fusesoc-export: clean setup
+	nix-shell --run "py2hwsw $(CORE) export_fusesoc --build_dir '$(BUILD_DIR)'"
+
+.PHONY: fusesoc-export
+
 # Release Artifacts
 
 release-artifacts:
-	nix-shell --run "make clean setup"
-	tar -czf $(CORE)_V$(VERSION).tar.gz ../$(CORE)_V$(VERSION)
+	make fusesoc-export
+	tar -czf $(CORE)_V$(VERSION).tar.gz ./fusesoc_exports/*
 
 .PHONY: release-artifacts

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 IObundle
+
+SPDX-License-Identifier: MIT
+-->
+
 # IOb-eth
 IObundle's ethernet core.
 
@@ -447,6 +453,13 @@ Running the following command with root privileges will set the capability:
 ```bash
 setcap cap_net_raw,cap_setpcap=p path/to/pyRawWrapper
 ```
+
+## Pre-built files
+
+A [FuseSoC](https://github.com/olofk/fusesoc)-compatible pre-built version of IOb-Eth is available in the [repository's release page](https://github.com/IObundle/iob-eth/releases).
+The core's Verilog sources are available in the `iob_eth/hardware/src/` directory of the compressed tar.gz file in the release page.
+
+To use this pre-built core in FuseSoC, extract the compressed tar.gz files to a [FuseSoC library directory](https://fusesoc.readthedocs.io/en/stable/user/overview.html#discover-cores-the-package-manager).
 
 # Acknowledgement
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet

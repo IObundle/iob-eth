@@ -302,10 +302,16 @@ def setup(py_params_dict):
         },
         # Other
         {
-            "name": "mii_cnt_en_rst",
-            "descr": "mii counter reset and enable wires",
+            "name": "mii_cnt_en",
+            "descr": "mii counter enable",
             "signals": [
                 {"name": "mii_cnt_en", "width": 1},
+            ],
+        },
+        {
+            "name": "mii_cnt_rst",
+            "descr": "mii counter reset",
+            "signals": [
                 {"name": "mii_cnt_rst", "width": 1},
             ],
         },
@@ -431,7 +437,8 @@ def setup(py_params_dict):
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "en_rst_i": "mii_cnt_en_rst",
+                "counter_en_i": "mii_cnt_en",
+                "counter_rst_i": "mii_cnt_rst",
                 "data_o": "mii_cnt",
             },
         },
@@ -485,13 +492,13 @@ def setup(py_params_dict):
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "reset_i": "split_reset",
-                "input_s": "pbus_s",
-                "output_0_m": "axistream_in_csrs",
-                "output_1_m": "axistream_out_csrs",
-                "output_2_m": "dma_csrs",
-                "output_3_m": "eth_csrs",
+                "s_s": "pbus_s",
+                "m_0_m": "axistream_in_csrs",
+                "m_1_m": "axistream_out_csrs",
+                "m_2_m": "dma_csrs",
+                "m_3_m": "eth_csrs",
             },
-            "num_outputs": 4,
+            "num_managers": 4,
             "addr_w": 14,
         },
         {
@@ -500,7 +507,6 @@ def setup(py_params_dict):
             "instance_description": "Unit Under Test (UUT) DMA instance.",
             "parameters": {
                 "DATA_W": "DATA_W",
-                "ADDR_W": "(ADDR_W-2)",
                 "AXI_ADDR_W": "AXI_ADDR_W",
                 "AXI_DATA_W": "AXI_DATA_W",
                 "AXI_ID_W": "AXI_ID_W",

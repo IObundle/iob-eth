@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 IObundle
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "iob_eth_driver_tb.h"
 #include "iob_eth_defines_verilator.h"
 

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 IObundle
+# SPDX-FileCopyrightText: 2025 IObundle
 #
 # SPDX-License-Identifier: MIT
 
@@ -14,38 +14,44 @@ from gen_custom_config_build import gen_custom_config_build
 def setup(py_params_dict):
     gen_custom_config_build(py_params_dict)
 
-    pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
-    # Check if pyRawWrapper exists
-    if not os.path.exists(pyRawWrapper_path):
-        print("Create pyRawWrapper for RAW access to ethernet frames")
+    # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
+    # # Check if pyRawWrapper exists
+    # if py_params_dict.get("py2hwsw_target", "") == "setup" and not os.path.exists(pyRawWrapper_path):
+    #     print("Create pyRawWrapper for RAW access to ethernet frames")
 
-        # # Run make compile
-        # subprocess.run(
-        #     [
-        #         "make",
-        #         "-C",
-        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-        #         "compile",
-        #     ],
-        #     check=True,
-        # )
-        #
-        # # Run sudo make set-capabilities
-        # subprocess.run(
-        #     [
-        #         "sudo",
-        #         "make",
-        #         "-C",
-        #         f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-        #         "set-capabilities",
-        #     ],
-        #     check=True,
-        # )
+    #     # Run make compile
+    #     subprocess.run(
+    #         [
+    #             "make",
+    #             "-C",
+    #             f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+    #             "compile",
+    #         ],
+    #         check=True,
+    #     )
+    #
+    #     # Run sudo make set-capabilities
+    #     subprocess.run(
+    #         [
+    #             "sudo",
+    #             "make",
+    #             "-C",
+    #             f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
+    #             "set-capabilities",
+    #         ],
+    #         check=True,
+    #     )
 
     # Copy utility files
-    if py_params_dict["build_dir"]:
+    if (
+        py_params_dict.get("py2hwsw_target", "") == "setup"
+        and py_params_dict["build_dir"]
+    ):
         paths = [
-            ("hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc", "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc"),
+            (
+                "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+                "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+            ),
         ]
 
         for src, dst in paths:

@@ -1,7 +1,8 @@
-# (c) 2023-Present IObundle, Lda, all rights reserved
+# SPDX-FileCopyrightText: 2025 IObundle
 #
+# SPDX-License-Identifier: MIT
+
 # This makefile segment is used at build-time in $(DOC_DIR)/Makefile
-#
 
 #Set ASICSYNTH to 1 to include an ASIC synthesis section
 ASICSYNTH=
