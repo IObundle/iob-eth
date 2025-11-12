@@ -106,7 +106,7 @@ remove-virtual-network-if:
 
 clean:
 	nix-shell --run "py2hwsw $(CORE) clean --build_dir '$(BUILD_DIR)'"
-	@rm -rf ../*.summary ../*.rpt fusesoc_exports
+	@rm -rf ../*.summary ../*.rpt fusesoc_exports *.core
 	@find . -name \*~ -delete
 
 .PHONY: clean
@@ -116,10 +116,28 @@ fusesoc-export: clean setup
 
 .PHONY: fusesoc-export
 
+# Multiline string (use a here‑document)
+define MULTILINE_TEXT
+provider:
+  name: url
+  url: https://github.com/IObundle/iob-eth/releases/latest/download/$(CORE)_V$(VERSION).tar.gz
+  filetype: tar
+endef
+
+# Generate independent fusesoc .core file. FuseSoC will obtain the Verilog sources from remote url with a pre-built build directory.
+export MULTILINE_TEXT
+fusesoc-core-file: fusesoc-export
+	cp fusesoc_exports/$(CORE).core .
+	# Append provider remote url to .core file
+	printf "\n%s\n" "$$MULTILINE_TEXT" >> $(CORE).core
+	echo "Generated independent $(CORE).core file."
+
+.PHONY: fusesoc-core-file
+
 # Release Artifacts
 
 release-artifacts:
 	make fusesoc-export
-	tar -czf $(CORE)_V$(VERSION).tar.gz ./fusesoc_exports/*
+	tar -czf $(CORE)_V$(VERSION).tar.gz -C ./fusesoc_exports .
 
 .PHONY: release-artifacts
