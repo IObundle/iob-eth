@@ -116,7 +116,6 @@ fusesoc-export: clean setup
 
 .PHONY: fusesoc-export
 
-# Multiline string (use a here‑document)
 define MULTILINE_TEXT
 provider:
   name: url
