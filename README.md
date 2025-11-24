@@ -10,7 +10,7 @@ IObundle's ethernet core.
 This core implements raw socket ethernet communication. This corresponds to the
 data link layer (2) of the OSI Model.
 
-This core is driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, as it contains a similar SWreg interface.
+This core is driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.
 
 This peripheral can be used as a verification tool for the [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project.
 

@@ -74,6 +74,7 @@ def setup(py_params_dict):
 
     attributes_dict = {
         "generate_hw": True,
+        "description": "IObundle's ethernet core. Driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.",
         "version": "0.1",
         "confs": [
             # Macros
