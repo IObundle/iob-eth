@@ -49,6 +49,29 @@ module iob_eth #(
    assign eth_hash1_adr_rd = eth_hash1_adr_wr;
    assign eth_txctrl_rd    = eth_txctrl_wr;
 
+   // signals are never written from core
+   assign moder_wstrb         = 4'h0;
+   assign int_source_wstrb    = 4'h0;
+   assign int_mask_wstrb      = 4'h0;
+   assign ipgt_wstrb          = 4'h0;
+   assign ipgr1_wstrb         = 4'h0;
+   assign ipgr2_wstrb         = 4'h0;
+   assign packetlen_wstrb     = 4'h0;
+   assign collconf_wstrb      = 4'h0;
+   assign tx_bd_num_wstrb     = 4'h0;
+   assign ctrlmoder_wstrb     = 4'h0;
+   assign miimoder_wstrb      = 4'h0;
+   assign miicommand_wstrb    = 4'h0;
+   assign miiaddress_wstrb    = 4'h0;
+   assign miitx_data_wstrb    = 4'h0;
+   assign miirx_data_wstrb    = 4'h0;
+   assign miistatus_wstrb     = 4'h0;
+   assign mac_addr0_wstrb     = 4'h0;
+   assign mac_addr1_wstrb     = 4'h0;
+   assign eth_hash0_adr_wstrb = 4'h0;
+   assign eth_hash1_adr_wstrb = 4'h0;
+   assign eth_txctrl_wstrb    = 4'h0;
+
    assign mii_tx_er_o      = 1'b0;  //TODO
    //assign ... = mii_rx_er_i;  //TODO
 

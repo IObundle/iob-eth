@@ -12,52 +12,73 @@ module iob_eth_crc (
    output reg [31:0] crc_o
 );
 
-   function static [31:0] crc_nxt;
-      input [7:0] D;
-      input [31:0] C;
-      reg [31:0] crc;
-      begin
-         crc[0] = C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[1] = C[25] ^ C[31] ^ D[0] ^ D[6] ^ C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[2] = C[26] ^ D[5] ^ C[25] ^ C[31] ^ D[0] ^ D[6] ^ C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[3] = C[27] ^ D[4] ^ C[26] ^ D[5] ^ C[25] ^ C[31] ^ D[0] ^ D[6];
-         crc[4] = C[28] ^ D[3] ^ C[27] ^ D[4] ^ C[26] ^ D[5] ^ C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[5]=C[29]^D[2]^C[28]^D[3]^C[27]^D[4]^C[25]^C[31]^D[0]^D[6]^C[24]^C[30]^D[1]^D[7];
-         crc[6]=C[30]^D[1]^C[29]^D[2]^C[28]^D[3]^C[26]^D[5]^C[25]^C[31]^D[0]^D[6];
-         crc[7] = C[31] ^ D[0] ^ C[29] ^ D[2] ^ C[27] ^ D[4] ^ C[26] ^ D[5] ^ C[24] ^ D[7];
-         crc[8] = C[0] ^ C[28] ^ D[3] ^ C[27] ^ D[4] ^ C[25] ^ D[6] ^ C[24] ^ D[7];
-         crc[9] = C[1] ^ C[29] ^ D[2] ^ C[28] ^ D[3] ^ C[26] ^ D[5] ^ C[25] ^ D[6];
-         crc[10] = C[2] ^ C[29] ^ D[2] ^ C[27] ^ D[4] ^ C[26] ^ D[5] ^ C[24] ^ D[7];
-         crc[11] = C[3] ^ C[28] ^ D[3] ^ C[27] ^ D[4] ^ C[25] ^ D[6] ^ C[24] ^ D[7];
-         crc[12]=C[4]^C[29]^D[2]^C[28]^D[3]^C[26]^D[5]^C[25]^D[6]^C[24]^C[30]^D[1]^D[7];
-         crc[13]=C[5]^C[30]^D[1]^C[29]^D[2]^C[27]^D[4]^C[26]^D[5]^C[25]^C[31]^D[0]^D[6];
-         crc[14] = C[6] ^ C[31] ^ D[0] ^ C[30] ^ D[1] ^ C[28] ^ D[3] ^ C[27] ^ D[4] ^ C[26] ^ D[5];
-         crc[15] = C[7] ^ C[31] ^ D[0] ^ C[29] ^ D[2] ^ C[28] ^ D[3] ^ C[27] ^ D[4];
-         crc[16] = C[8] ^ C[29] ^ D[2] ^ C[28] ^ D[3] ^ C[24] ^ D[7];
-         crc[17] = C[9] ^ C[30] ^ D[1] ^ C[29] ^ D[2] ^ C[25] ^ D[6];
-         crc[18] = C[10] ^ C[31] ^ D[0] ^ C[30] ^ D[1] ^ C[26] ^ D[5];
-         crc[19] = C[11] ^ C[31] ^ D[0] ^ C[27] ^ D[4];
-         crc[20] = C[12] ^ C[28] ^ D[3];
-         crc[21] = C[13] ^ C[29] ^ D[2];
-         crc[22] = C[14] ^ C[24] ^ D[7];
-         crc[23] = C[15] ^ C[25] ^ D[6] ^ C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[24] = C[16] ^ C[26] ^ D[5] ^ C[25] ^ C[31] ^ D[0] ^ D[6];
-         crc[25] = C[17] ^ C[27] ^ D[4] ^ C[26] ^ D[5];
-         crc[26] = C[18] ^ C[28] ^ D[3] ^ C[27] ^ D[4] ^ C[24] ^ C[30] ^ D[1] ^ D[7];
-         crc[27] = C[19] ^ C[29] ^ D[2] ^ C[28] ^ D[3] ^ C[25] ^ C[31] ^ D[0] ^ D[6];
-         crc[28] = C[20] ^ C[30] ^ D[1] ^ C[29] ^ D[2] ^ C[26] ^ D[5];
-         crc[29] = C[21] ^ C[31] ^ D[0] ^ C[30] ^ D[1] ^ C[27] ^ D[4];
-         crc[30] = C[22] ^ C[31] ^ D[0] ^ C[28] ^ D[3];
-         crc[31] = C[23] ^ C[29] ^ D[2];
-         crc_nxt = crc;
-      end
-   endfunction
-
    always @(posedge clk_i or posedge arst_i)
-      if (arst_i) crc_o <= 32'hffffffff;
-      else if (start_i) crc_o <= 32'hffffffff;
-      else if (data_en_i) crc_o <= crc_nxt(data_i, crc_o);
+       if (arst_i) begin
+           crc_o <= 32'hffffffff;
+       end else if (start_i) begin
+           crc_o <= 32'hffffffff;
+       end else if (data_en_i) begin
+         crc_o[0] <= ^{crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[1] <= ^{crc_o[25], crc_o[31], data_i[0], data_i[6], 
+                       crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[2] <= ^{crc_o[26], data_i[5], crc_o[25], crc_o[31], data_i[0], 
+                       data_i[6], crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[3] <= ^{crc_o[27], data_i[4], crc_o[26], data_i[5], 
+                       crc_o[25], crc_o[31], data_i[0], data_i[6]};
+         crc_o[4] <= ^{crc_o[28], data_i[3], crc_o[27], data_i[4], crc_o[26], 
+                       data_i[5], crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[5] <= ^{crc_o[29], data_i[2], crc_o[28], data_i[3], crc_o[27], 
+                       data_i[4], crc_o[25], crc_o[31], data_i[0], data_i[6], 
+                       crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[6] <= ^{crc_o[30], data_i[1], crc_o[29], data_i[2], crc_o[28], 
+                       data_i[3], crc_o[26], data_i[5], crc_o[25], crc_o[31], 
+                       data_i[0], data_i[6]};
+         crc_o[7] <= ^{crc_o[31], data_i[0], crc_o[29], data_i[2], crc_o[27], 
+                       data_i[4], crc_o[26], data_i[5], crc_o[24], data_i[7]};
+         crc_o[8] <= ^{crc_o[0], crc_o[28], data_i[3], crc_o[27], data_i[4], 
+                       crc_o[25], data_i[6], crc_o[24], data_i[7]};
+         crc_o[9] <= ^{crc_o[1], crc_o[29], data_i[2], crc_o[28], data_i[3], 
+                       crc_o[26], data_i[5], crc_o[25], data_i[6]};
+         crc_o[10] <= ^{crc_o[2], crc_o[29], data_i[2], crc_o[27], data_i[4], 
+                        crc_o[26], data_i[5], crc_o[24], data_i[7]};
+         crc_o[11] <= ^{crc_o[3], crc_o[28], data_i[3], crc_o[27], data_i[4], 
+                        crc_o[25], data_i[6], crc_o[24], data_i[7]};
+         crc_o[12] <= ^{crc_o[4], crc_o[29], data_i[2], crc_o[28], data_i[3], 
+                        crc_o[26], data_i[5], crc_o[25], data_i[6], crc_o[24], 
+                        crc_o[30], data_i[1], data_i[7]};
+         crc_o[13] <= ^{crc_o[5], crc_o[30], data_i[1], crc_o[29], data_i[2], 
+                        crc_o[27], data_i[4], crc_o[26], data_i[5], crc_o[25], 
+                        crc_o[31], data_i[0], data_i[6]};
+         crc_o[14] <= ^{crc_o[6], crc_o[31], data_i[0], crc_o[30], data_i[1], 
+                        crc_o[28], data_i[3], crc_o[27], data_i[4], crc_o[26], 
+                        data_i[5]};
+         crc_o[15] <= ^{crc_o[7], crc_o[31], data_i[0], crc_o[29], data_i[2], 
+                        crc_o[28], data_i[3], crc_o[27], data_i[4]};
+         crc_o[16] <= ^{crc_o[8], crc_o[29], data_i[2], crc_o[28], 
+                        data_i[3], crc_o[24], data_i[7]};
+         crc_o[17] <= ^{crc_o[9], crc_o[30], data_i[1], crc_o[29], 
+                        data_i[2], crc_o[25], data_i[6]};
+         crc_o[18] <= ^{crc_o[10], crc_o[31], data_i[0], crc_o[30], 
+                        data_i[1], crc_o[26], data_i[5]};
+         crc_o[19] <= ^{crc_o[11], crc_o[31], data_i[0], crc_o[27], data_i[4]};
+         crc_o[20] <= ^{crc_o[12], crc_o[28], data_i[3]};
+         crc_o[21] <= ^{crc_o[13], crc_o[29], data_i[2]};
+         crc_o[22] <= ^{crc_o[14], crc_o[24], data_i[7]};
+         crc_o[23] <= ^{crc_o[15], crc_o[25], data_i[6], crc_o[24], 
+                        crc_o[30], data_i[1], data_i[7]};
+         crc_o[24] <= ^{crc_o[16], crc_o[26], data_i[5], crc_o[25], 
+                        crc_o[31], data_i[0], data_i[6]};
+         crc_o[25] <= ^{crc_o[17], crc_o[27], data_i[4], crc_o[26], data_i[5]};
+         crc_o[26] <= ^{crc_o[18], crc_o[28], data_i[3], crc_o[27], data_i[4], 
+                        crc_o[24], crc_o[30], data_i[1], data_i[7]};
+         crc_o[27] <= ^{crc_o[19], crc_o[29], data_i[2], crc_o[28], data_i[3], 
+                        crc_o[25], crc_o[31], data_i[0], data_i[6]};
+         crc_o[28] <= ^{crc_o[20], crc_o[30], data_i[1], crc_o[29], 
+                        data_i[2], crc_o[26], data_i[5]};
+         crc_o[29] <= ^{crc_o[21], crc_o[31], data_i[0], crc_o[30], 
+                        data_i[1], crc_o[27], data_i[4]};
+         crc_o[30] <= ^{crc_o[22], crc_o[31], data_i[0], crc_o[28], data_i[3]};
+         crc_o[31] <= ^{crc_o[23], crc_o[29], data_i[2]};
+      end
 
 endmodule
-
-

@@ -98,7 +98,8 @@ module iob_eth_dma #(
       .LSB_PRIORITY("LOW")
    ) bd_mem_arbiter (
       .clk(clk_i),
-      .rst(arst_i),
+      .arst(arst_i),
+      .rst(1'b0),
 
       .request    (bd_mem_arbiter_req),
       .acknowledge(bd_mem_arbiter_ack),
