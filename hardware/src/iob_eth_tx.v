@@ -56,7 +56,7 @@ module iob_eth_tx (
      end else begin
 
         pc     <= pc + 1'b1;
-        addr_o   <= addr_o + pc[0];
+        addr_o <= addr_o + {10'b0, pc[0]};
         crc_en_int <= 0;
 
         case (pc)
