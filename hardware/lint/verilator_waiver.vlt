@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
 // DESCRIPTION: Verilator output: Waivers generated with --waiver-output
 
 `verilator_config
