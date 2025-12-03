@@ -969,6 +969,12 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
         ],
+        "sw_modules": [
+            {
+                "core_name": "iob_coverage_analyze",
+                "instance_name": "iob_coverage_analyze_inst",
+            },
+        ],
         "comb": {
             "code": """
    // Delay rvalid and rdata signals of NOAUTO CSRs by one clock cycle, since they must come after valid & ready handshake
