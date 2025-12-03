@@ -52,3 +52,11 @@ lint_off -rule UNUSEDSIGNAL -file "**/iob_arbiter.v" -match "Signal is not used:
 
 // Subtraction width missmatch is handled by valid logic
 lint_off -rule WIDTHTRUNC -file "**/iob_eth_csrs.v" -match "Operator ASSIGNW expects 10 bits on the Assign RHS, but Assign RHS's SUB generates 32 or 12 bits.*"
+
+// No carry / overflow in ADD operation
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator ADD expects 12 bits on the RHS, but RHS's VARREF 'byte_offset' generates 3 bits.*"
+// rdata wires width is BUFFER_W that can have up to 32bit width
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'tx_word_cnt_rdata_i' generates 11 bits.*"
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'rx_word_cnt_rdata_i' generates 11 bits.*"
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'rx_nbytes_rdata_i' generates 11 bits.*"
+
