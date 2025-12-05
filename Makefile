@@ -5,6 +5,7 @@
 CORE := iob_eth
 
 SIMULATOR ?= icarus
+SYNTHESIZER ?= yosys
 LINTER ?= spyglass
 BOARD ?= iob_ku040_db_g
 
@@ -78,7 +79,11 @@ fpga-run:
 
 .PHONY: fpga-build fpga-run
 
-
+#------------------------------------------------------------
+# FPGA
+#------------------------------------------------------------
+syn-build: clean setup
+	nix-shell --run "make -C $(BUILD_DIR) syn-build SYNTHESIZER=$(SYNTHESIZER)"
 
 #------------------------------------------------------------
 # DOCUMENT BUILD
