@@ -85,6 +85,8 @@ fpga-run:
 syn-build: clean setup
 	nix-shell --run "make -C $(BUILD_DIR) syn-build SYNTHESIZER=$(SYNTHESIZER)"
 
+.PHONY: syn-build
+
 #------------------------------------------------------------
 # DOCUMENT BUILD
 #------------------------------------------------------------
