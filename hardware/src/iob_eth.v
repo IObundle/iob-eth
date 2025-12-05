@@ -133,7 +133,6 @@ module iob_eth #(
    );
 
    // clk to mii_rx_clk_i (f2s)
-   wire rcv_ack;
    wire eth_rcv_ack;
    iob_sync #(
       .DATA_W(1)
@@ -191,7 +190,6 @@ module iob_eth #(
       .signal_o(crc_err)
    );
 
-   wire [`IOB_ETH_BUFFER_W-1:0] rx_nbytes;
    iob_sync #(
       .DATA_W(`IOB_ETH_BUFFER_W)
    ) rx_nbytes_sync (
@@ -202,7 +200,6 @@ module iob_eth #(
    );
 
    wire eth_rx_data_rcvd;
-   wire rx_data_rcvd;
    iob_sync #(
       .DATA_W(1)
    ) rx_data_rcvd_sync (

@@ -75,6 +75,7 @@ def setup(py_params_dict):
     attributes_dict = {
         "generate_hw": True,
         "version": "0.1",
+        "board_list": ["iob_aes_ku040_db_g"],
         "confs": [
             # Macros
             {
@@ -580,6 +581,15 @@ def setup(py_params_dict):
                     {"name": "iob_eth_rx_buffer_enB", "width": 1},
                     {"name": "iob_eth_rx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
                     {"name": "iob_eth_rx_buffer_doutB", "width": 8},
+                ],
+            },
+            {
+                "name": "comb_wires",
+                "descr": "",
+                "signals": [
+                    {"name": "rcv_ack", "width": 1},
+                    {"name": "rx_data_rcvd", "width": 1},
+                    {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
                 ],
             },
         ],

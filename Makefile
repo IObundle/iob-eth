@@ -55,14 +55,8 @@ QUARTUS_STA=$(BUILD_DIR)/hardware/fpga/reports/*sta.rpt
 QUARTUS_FIT_SUMMARY=$(BUILD_DIR)/hardware/fpga/reports/*fit.summary
 QUARTUS_STA_SUMMARY=$(BUILD_DIR)/hardware/fpga/reports/*sta.summary
 
-fpga-build:
-ifeq ($(TESTER),1)
-	nix-shell --run 'make -j1 clean setup TESTER=$(TESTER) N_PINS_W=$(N_PINS_W) CSR_IF=$(CSR_IF)'
-	nix-shell --run 'make -j1 -C $(BUILD_DIR)/. fpga-fw-build BOARD=$(BOARD)'
-	make -C $(BUILD_DIR)/ fpga-build BOARD=$(BOARD)
-else
-	nix-shell --run "make clean setup && make -C $(BUILD_DIR)/ fpga-build"
-endif
+fpga-build: clean setup
+	nix-shell --run "make -C $(BUILD_DIR)/ fpga-build BOARD=$(BOARD)"
 	set -e; file=$(VIVADO_TIMING_SUMMARY); if [ -f  $(VIVADO_TIMING_SUMMARY) ]; then cp $(VIVADO_TIMING_SUMMARY) ..; fi
 	set -e; if [ -f  $(VIVADO_UTILIZATION) ]; then cp $(VIVADO_UTILIZATION) ..; fi
 	if [ -f $(VIVADO_LOG) ]; then  grep -i critical $(VIVADO_LOG); fi; sleep 0;
@@ -72,12 +66,10 @@ endif
 	if [ -f $(QUARTUS_FIT) ]; then  grep -i critical $(QUARTUS_FIT); fi; sleep 0;
 	if [ -f $(QUARTUS_STA) ]; then  grep -i critical $(QUARTUS_STA); fi; sleep 0;
 
-fpga-run:
-	nix-shell --run "make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD)"
+fpga-test:
+	make clean setup fpga-build BOARD=iob_aes_ku040_db_g
 
-
-
-.PHONY: fpga-build fpga-run
+.PHONY: fpga-build fpga-test
 
 #------------------------------------------------------------
 # FPGA
