@@ -1,0 +1,66 @@
+// SPDX-FileCopyrightText: 2025 IObundle
+//
+// SPDX-License-Identifier: MIT
+
+// DESCRIPTION: Verilator output: Waivers generated with --waiver-output
+
+`verilator_config
+
+// Below are suggested waivers. You have three options:
+//   1. Fix the reason for the linter warning in the Verilog sources
+//   2. Keep the waiver permanently if you are sure it is okay
+//   3. Keep the waiver temporarily to suppress the output
+
+// unused module outputs
+lint_off -rule PINCONNECTEMPTY -file "**/iob_priority_encoder.v" -match "Instance pin connected by name with empty reference: 'output_unencoded'*"
+lint_off -rule PINCONNECTEMPTY -file "**/iob_priority_encoder.v" -match "Instance pin connected by name with empty reference: 'output_unencoded'*"
+lint_off -rule PINCONNECTEMPTY -file "**/iob_priority_encoder.v" -match "Instance pin connected by name with empty reference: 'output_unencoded'*"
+lint_off -rule PINCONNECTEMPTY -file "**/iob_priority_encoder.v" -match "Instance pin connected by name with empty reference: 'output_unencoded'*"
+
+// Parameter used outside simulation
+lint_off -rule UNUSEDPARAM -file "**/iob_eth.v" -match "Parameter is not used: 'PHY_RST_CNT'*"
+
+// CSRS generated with all module parameters
+lint_off -rule UNUSEDPARAM -file "**/iob_eth_csrs.v" -match "Parameter is not used: 'AXI_ID_W'*"
+lint_off -rule UNUSEDPARAM -file "**/iob_eth_csrs.v" -match "Parameter is not used: 'AXI_ADDR_W'*"
+lint_off -rule UNUSEDPARAM -file "**/iob_eth_csrs.v" -match "Parameter is not used: 'AXI_DATA_W'*"
+lint_off -rule UNUSEDPARAM -file "**/iob_eth_csrs.v" -match "Parameter is not used: 'AXI_LEN_W'*"
+lint_off -rule UNUSEDPARAM -file "**/iob_eth_csrs.v" -match "Parameter is not used: 'PHY_RST_CNT'*"
+
+// Inputs kept for standard MII Interface
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth.v" -match "Signal is not used: 'mii_rx_er_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth.v" -match "Signal is not used: 'mii_crs_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth.v" -match "Signal is not used: 'mii_col_i'*"
+
+// Input signals kept for standard AXI implementation
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_dma.v" -match "Signal is not used: 'axi_rresp_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_dma.v" -match "Signal is not used: 'axi_rid_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_dma.v" -match "Signal is not used: 'axi_bresp_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_dma.v" -match "Signal is not used: 'axi_bvalid_i'*"
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_dma.v" -match "Signal is not used: 'axi_bid_i'*"
+
+// Keep 2 LSBs for byte addressing from CSRs
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth.v" -match "Bits of signal are not used: 'bd_addr_wrrd'[1:0]*"
+
+// Signal used outside simulation
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth.v" -match "Bits of signal are not used: 'phy_rst_cnt_o'[19:0]*"
+
+// Save complete Ethernet Frame Destination Address (48bits) - Currently no HW check
+lint_off -rule UNUSEDSIGNAL -file "**/iob_eth_rx.v" -match "Bits of signal are not used: 'dest_mac_addr'[47:40]*"
+
+// Keep MSB for add overflow
+lint_off -rule UNUSEDSIGNAL -file "**/iob_acc.v" -match "Bits of signal are not used: 'data_nxt'[21]*"
+
+// Signal used in other module configurations
+lint_off -rule UNUSEDSIGNAL -file "**/iob_arbiter.v" -match "Signal is not used: 'acknowledge'*"
+
+// Subtraction width mismatch is handled by valid logic
+lint_off -rule WIDTHTRUNC -file "**/iob_eth_csrs.v" -match "Operator ASSIGNW expects 10 bits on the Assign RHS, but Assign RHS's SUB generates 32 or 12 bits.*"
+
+// No carry / overflow in ADD operation
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator ADD expects 12 bits on the RHS, but RHS's VARREF 'byte_offset' generates 3 bits.*"
+// rdata wires width is BUFFER_W that can have up to 32bit width
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'tx_word_cnt_rdata_i' generates 11 bits.*"
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'rx_word_cnt_rdata_i' generates 11 bits.*"
+lint_off -rule WIDTHEXPAND -file "**/iob_eth_csrs.v" -match "Operator OR expects 32 bits on the LHS, but LHS's VARREF 'rx_nbytes_rdata_i' generates 11 bits.*"
+

@@ -75,7 +75,7 @@ module iob_eth_rx (
       end else begin
 
          pc   <= pc + 1'b1;
-         addr_o <= addr_o + pc[0];
+         addr_o <= addr_o + {10'b0, pc[0]};
          wr_o   <= 0;
 
          case (pc)
