@@ -358,7 +358,7 @@ module iob_eth_dma #(
 
             4: begin  // Start frame transfer from external memory
                axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_byte_counter[AXI_ADDR_W-1:0];
-               if(AXI_MAX_BURST_LEN[15:0] < tx_buffer_diff) begin
+               if(AXI_MAX_BURST_LEN < tx_buffer_diff) begin
                    axi_arlen_nxt = AXI_MAX_BURST_LEN[AXI_LEN_W-1:0];
                end else begin
                    axi_arlen_nxt = tx_buffer_diff[AXI_LEN_W-1:0];
@@ -753,7 +753,7 @@ module iob_eth_dma #(
                rx_frame_word_ready_o = 1;
                if (rx_frame_word_ren_i) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_byte_counter[10:0] + 1'b1;  // Update next word addr
+                  eth_data_rd_addr_o = rx_buffer_byte_counter[BUFFER_W-1:0] + 1'b1;  // Update next word addr
                   // Send word from buffer to CPU
                   rx_frame_word_rdata_o_nxt = eth_data_rd_rdata_i;
                   rx_frame_word_rvalid_o_nxt = 1;
@@ -770,7 +770,7 @@ module iob_eth_dma #(
                axi_wstrb_o_reg    = 1 << axi_awaddr_o_reg[1:0];
                axi_wdata_o_reg    = {{(AXI_DATA_W-8){1'b0}}, eth_data_rd_rdata_i} << (axi_awaddr_o_reg[1:0] * 8);
 
-               eth_data_rd_addr_o = rx_buffer_byte_counter[10:0];
+               eth_data_rd_addr_o = rx_buffer_byte_counter[BUFFER_W-1:0];
 
                // Enable wlast in last transfer of the burst
                if (rx_burst_word_num == axi_awlen) begin
@@ -780,7 +780,7 @@ module iob_eth_dma #(
                // wait for write ready
                if (axi_wready_i == 1) begin
                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                  eth_data_rd_addr_o = rx_buffer_byte_counter[10:0] + 1'b1;  // Update next word addr
+                  eth_data_rd_addr_o = rx_buffer_byte_counter[BUFFER_W-1:0] + 1'b1;  // Update next word addr
                   rx_burst_word_num_nxt = rx_burst_word_num + 1'b1;
 
                   // Burst complete

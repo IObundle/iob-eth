@@ -54,7 +54,7 @@ lint_off -rule UNUSEDSIGNAL -file "**/iob_acc.v" -match "Bits of signal are not 
 // Signal used in other module configurations
 lint_off -rule UNUSEDSIGNAL -file "**/iob_arbiter.v" -match "Signal is not used: 'acknowledge'*"
 
-// Subtraction width missmatch is handled by valid logic
+// Subtraction width mismatch is handled by valid logic
 lint_off -rule WIDTHTRUNC -file "**/iob_eth_csrs.v" -match "Operator ASSIGNW expects 10 bits on the Assign RHS, but Assign RHS's SUB generates 32 or 12 bits.*"
 
 // No carry / overflow in ADD operation
