@@ -2,59 +2,31 @@
 #
 # SPDX-License-Identifier: MIT
 
-# ----------------------------------------------------------------------------
-# IOb_Eth Example Constrain File
-# SPDX-FileCopyrightText: 2025 IObundle
-#
-# This file contains the ethernet core constraints for the AES-KU040-DB-G board.
-# ----------------------------------------------------------------------------
+# TODO: this is the iob_eth_dev.sdc
+# when iob_eth is top module
+
+create_clock -name "clk" -add -period 10.0 [get_ports clk_i]
+set_property CFGBVS VCCO [current_design]
+set_property HD.CLK_SRC BUFGCTRL_X0Y0 [get_ports clk_i]
 
 #Constraint Clock Transitions
 # RX_CLK is 25MHz for 100Mbps operation according to Texas Instruments DP83867 datasheet
-create_clock -period 40 [get_ports {enet_rx_clk_i}]
+create_clock -name "tx_clk" -period 40 [get_ports {mii_tx_clk_i}]
+set_property HD.CLK_SRC BUFGCTRL_X0Y1 [get_ports mii_tx_clk_i]
+create_clock -name "rx_clk" -period 40 [get_ports {mii_rx_clk_i}]
+set_property HD.CLK_SRC BUFGCTRL_X0Y2 [get_ports mii_rx_clk_i]
 
-## Ethernet #1 Interface (J1)
-set_property PACKAGE_PIN D9 [get_ports enet_resetn_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_resetn_o]
+# Clock groups
+set_clock_groups -asynchronous -group {clk} -group {rx_clk} -group {tx_clk}
 
-set_property PACKAGE_PIN A10 [get_ports enet_rx_d0_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_d0_i]
+# Clock periods
+set clk_period 10.0
+set eth_period 40.0
 
-set_property PACKAGE_PIN B10 [get_ports enet_rx_d1_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_d1_i]
+# Input delays
+set clk_i_delay [expr $clk_period * 0.15]
+set eth_i_delay [expr $eth_period * 0.15]
 
-set_property PACKAGE_PIN B11 [get_ports enet_rx_d2_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_d2_i]
-
-set_property PACKAGE_PIN C11 [get_ports enet_rx_d3_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_d3_i]
-
-set_property PACKAGE_PIN D11 [get_ports enet_rx_dv_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_dv_i]
-
-set_property PACKAGE_PIN E11 [get_ports enet_rx_clk_i]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_rx_clk_i]
-
-set_property PACKAGE_PIN H8 [get_ports enet_tx_d0_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_d0_o]
-
-set_property PACKAGE_PIN H9 [get_ports enet_tx_d1_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_d1_o]
-
-set_property PACKAGE_PIN J9 [get_ports enet_tx_d2_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_d2_o]
-
-set_property PACKAGE_PIN J10 [get_ports enet_tx_d3_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_d3_o]
-
-set_property PACKAGE_PIN G9 [get_ports enet_tx_en_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_en_o]
-
-set_property PACKAGE_PIN G10 [get_ports enet_gtx_clk_o]
-set_property IOSTANDARD LVCMOS18 [get_ports enet_gtx_clk_o]
-
-set_property IOB TRUE [get_ports enet_tx_d0_o]
-set_property IOB TRUE [get_ports enet_tx_d1_o]
-set_property IOB TRUE [get_ports enet_tx_d2_o]
-set_property IOB TRUE [get_ports enet_tx_d3_o]
-set_property IOB TRUE [get_ports enet_tx_en_o]
+# Output delays
+set clk_o_delay [expr $clk_period * 0.05]
+set eth_o_delay [expr $eth_period * 0.05]
