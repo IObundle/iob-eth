@@ -21,11 +21,6 @@ module iob_eth #(
 
    `include "iob_eth_wires.vs"
 
-   // configuration control and status register file.
-   `include "iob_eth_subblocks.vs"
-
-   `include "iob_eth_comb.vs"
-
    // Connect write outputs to read
    assign moder_rd         = moder_wr;
    assign int_source_rd    = int_source_wr;
@@ -443,5 +438,10 @@ module iob_eth #(
       .dB_i   (dma_bd_o),
       .dB_o   (dma_bd_i)
    );
+
+   // configuration control and status register file.
+   `include "iob_eth_subblocks.vs"
+
+   `include "iob_eth_comb.vs"
 
 endmodule
