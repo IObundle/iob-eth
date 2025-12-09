@@ -43,13 +43,15 @@ def setup(py_params_dict):
     #     )
 
     # Copy utility files
-    if (
-        py_params_dict.get("py2hwsw_target", "") == "setup"
-        and py_params_dict["build_dir"]
-    ):
+    if py_params_dict.get("py2hwsw_target", "") == "setup":
+        # check if eth is top module
+        if py_params_dict["issuer"]:
+            ku040_sdc = "iob_eth_dev_top.sdc"
+        else:
+            ku040_sdc = "iob_eth_dev_periph.sdc"
         paths = [
             (
-                "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+                f"hardware/fpga/vivado/iob_aes_ku040_db_g/{ku040_sdc}",
                 "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
             ),
         ]
@@ -62,15 +64,17 @@ def setup(py_params_dict):
             # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
             os.system("chmod -R ug+w " + dst)
 
-        # Copy all scripts
-        dst = os.path.join(py_params_dict["build_dir"], "scripts")
-        shutil.copytree(
-            f"{os.path.dirname(__file__)}/scripts",
-            dst,
-            dirs_exist_ok=True,
-        )
-        # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
-        os.system("chmod -R ug+w " + dst)
+        if py_params_dict["build_dir"]:
+
+            # Copy all scripts
+            dst = os.path.join(py_params_dict["build_dir"], "scripts")
+            shutil.copytree(
+                f"{os.path.dirname(__file__)}/scripts",
+                dst,
+                dirs_exist_ok=True,
+            )
+            # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+            os.system("chmod -R ug+w " + dst)
 
     attributes_dict = {
         "generate_hw": True,
