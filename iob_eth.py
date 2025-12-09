@@ -46,9 +46,9 @@ def setup(py_params_dict):
     if py_params_dict.get("py2hwsw_target", "") == "setup":
         # check if eth is top module
         if py_params_dict["issuer"]:
-            ku040_sdc = "iob_eth_dev_top.sdc"
-        else:
             ku040_sdc = "iob_eth_dev_periph.sdc"
+        else:
+            ku040_sdc = "iob_eth_dev_top.sdc"
         paths = [
             (
                 f"hardware/fpga/vivado/iob_aes_ku040_db_g/{ku040_sdc}",
