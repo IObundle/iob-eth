@@ -110,14 +110,27 @@ module iob_eth #(
    //
    // SYNCHRONIZERS
    //
-
+   
    // arst synchronizers
+   wire rx_clk_arst;
+   iob_reset_sync rx_reset_sync (
+       .clk_i (mii_rx_clk_i),
+       .arst_i(arst_i),
+       .arst_o(rx_clk_arst)
+   );
+   wire tx_clk_arst;
+   iob_reset_sync tx_reset_sync (
+       .clk_i (mii_tx_clk_i),
+       .arst_i(arst_i),
+       .arst_o(tx_clk_arst)
+   );
+
    wire rx_arst;
    iob_sync #(
       .DATA_W(1)
    ) rx_arst_sync (
       .clk_i   (mii_rx_clk_i),
-      .arst_i  (arst_i),
+      .arst_i  (rx_clk_arst),
       .signal_i(phy_rst),
       .signal_o(rx_arst)
    );
@@ -127,7 +140,7 @@ module iob_eth #(
       .DATA_W(1)
    ) tx_arst_sync (
       .clk_i   (mii_tx_clk_i),
-      .arst_i  (arst_i),
+      .arst_i  (tx_clk_arst),
       .signal_i(phy_rst),
       .signal_o(tx_arst)
    );

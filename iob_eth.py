@@ -963,6 +963,10 @@ def setup(py_params_dict):
                 "instantiate": False,
             },
             {
+                "core_name": "iob_reset_sync",
+                "instantiate": False,
+            },
+            {
                 "core_name": "iob_ram_at2p",
                 "instantiate": False,
             },
