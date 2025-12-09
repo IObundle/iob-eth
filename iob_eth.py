@@ -122,7 +122,7 @@ def setup(py_params_dict):
             {
                 "name": "AXI_ID_W",
                 "type": "P",
-                "val": "0",
+                "val": "1",
                 "min": "0",
                 "max": "32",
                 "descr": "AXI ID bus width",
@@ -967,6 +967,12 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_tasks",
                 "instantiate": False,
+            },
+        ],
+        "sw_modules": [
+            {
+                "core_name": "iob_coverage_analyze",
+                "instance_name": "iob_coverage_analyze_inst",
             },
         ],
         "comb": {
