@@ -41,7 +41,7 @@ jobs:
 
   synth:
     runs-on: self-hosted
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: ${{ !cancelled() }}
 
     steps:
@@ -52,6 +52,8 @@ jobs:
         run: git clean -ffdx
       - name: run yosys synthesis
         run: make syn-build
+      - name: run KU040 synthesis
+        run: make fpga-test
 
   reuse:
     runs-on: self-hosted
