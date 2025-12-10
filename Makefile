@@ -72,7 +72,7 @@ fpga-test:
 .PHONY: fpga-build fpga-test
 
 #------------------------------------------------------------
-# FPGA
+# SYNTHESIS
 #------------------------------------------------------------
 syn-build: clean setup
 	nix-shell --run "make -C $(BUILD_DIR) syn-build SYNTHESIZER=$(SYNTHESIZER)"
