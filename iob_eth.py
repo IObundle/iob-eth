@@ -12,6 +12,7 @@ from gen_custom_config_build import gen_custom_config_build
 
 
 def setup(py_params_dict):
+    CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
     gen_custom_config_build(py_params_dict)
 
     # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
@@ -605,6 +606,7 @@ def setup(py_params_dict):
                 "instance_description": "Control/Status Registers",
                 "autoaddr": False,
                 "rw_overlap": True,
+                "csr_if": CSR_IF,
                 "csrs": [
                     {
                         "name": "iob_eth",
@@ -1042,6 +1044,7 @@ def setup(py_params_dict):
         {
             "core_name": "iob_eth_sim",
             "dest_dir": "hardware/simulation/src",
+            "csr_if": CSR_IF,
         },
     ]
 

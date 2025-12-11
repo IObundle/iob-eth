@@ -290,6 +290,15 @@ def setup(py_params_dict):
                 "ADDR_W": 12,
             },
         },
+        {
+            "name": "eth_cbus",
+            "descr": "Testbench uart csrs bus",
+            "signals": {
+                "type": params["csr_if"],
+                "prefix": "converted_eth_csrs_",
+                "ADDR_W": 12,
+            },
+        },
         # DMA
         {
             "name": "dma_csrs",
@@ -426,7 +435,25 @@ def setup(py_params_dict):
     #
     # Blocks
     #
+    converter_connect = {
+        "s_s": "eth_csrs",
+        "m_m": "eth_cbus",
+    }
+    if params["csr_if"] != "iob":
+        converter_connect["clk_en_rst_s"] = "clk_en_rst_s"
     attributes_dict["subblocks"] = [
+        {
+            "core_name": "iob_universal_converter",
+            "instance_name": "iob_universal_converter",
+            "instance_description": "Convert IOb port from testbench into correct interface for Eth CSRs bus",
+            "subordinate_if": "iob",
+            "manager_if": params["csr_if"],
+            "parameters": {
+                "ADDR_W": 12,
+                "DATA_W": "DATA_W",
+            },
+            "connect": converter_connect,
+        },
         {
             "core_name": "iob_counter",
             "instance_name": "mii_counter_inst",
@@ -512,10 +539,10 @@ def setup(py_params_dict):
                 "AXI_ID_W": "AXI_ID_W",
                 "AXI_LEN_W": "AXI_LEN_W",
             },
-            "csr_if": "iob",
+            "csr_if": params["csr_if"],
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "iob_csrs_cbus_s": "eth_csrs",
+                "iob_csrs_cbus_s": "eth_cbus",
                 "axi_m": "eth_axi",
                 "inta_o": "inta",
                 "phy_rstn_o": "phy_rstn",
