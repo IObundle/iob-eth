@@ -105,14 +105,27 @@ module iob_eth #(
    //
    // SYNCHRONIZERS
    //
-
+   
    // arst synchronizers
+   wire rx_clk_arst;
+   iob_reset_sync rx_reset_sync (
+       .clk_i (mii_rx_clk_i),
+       .arst_i(arst_i),
+       .arst_o(rx_clk_arst)
+   );
+   wire tx_clk_arst;
+   iob_reset_sync tx_reset_sync (
+       .clk_i (mii_tx_clk_i),
+       .arst_i(arst_i),
+       .arst_o(tx_clk_arst)
+   );
+
    wire rx_arst;
    iob_sync #(
       .DATA_W(1)
    ) rx_arst_sync (
       .clk_i   (mii_rx_clk_i),
-      .arst_i  (arst_i),
+      .arst_i  (rx_clk_arst),
       .signal_i(phy_rst),
       .signal_o(rx_arst)
    );
@@ -122,13 +135,12 @@ module iob_eth #(
       .DATA_W(1)
    ) tx_arst_sync (
       .clk_i   (mii_tx_clk_i),
-      .arst_i  (arst_i),
+      .arst_i  (tx_clk_arst),
       .signal_i(phy_rst),
       .signal_o(tx_arst)
    );
 
    // clk to mii_rx_clk_i (f2s)
-   wire rcv_ack;
    wire eth_rcv_ack;
    iob_sync #(
       .DATA_W(1)
@@ -186,7 +198,6 @@ module iob_eth #(
       .signal_o(crc_err)
    );
 
-   wire [`IOB_ETH_BUFFER_W-1:0] rx_nbytes;
    iob_sync #(
       .DATA_W(`IOB_ETH_BUFFER_W)
    ) rx_nbytes_sync (
@@ -197,7 +208,6 @@ module iob_eth #(
    );
 
    wire eth_rx_data_rcvd;
-   wire rx_data_rcvd;
    iob_sync #(
       .DATA_W(1)
    ) rx_data_rcvd_sync (
