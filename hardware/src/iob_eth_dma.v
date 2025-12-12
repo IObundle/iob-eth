@@ -359,9 +359,9 @@ module iob_eth_dma #(
             4: begin  // Start frame transfer from external memory
                axi_araddr_o_reg = tx_buffer_ptr + tx_buffer_byte_counter[AXI_ADDR_W-1:0];
                if(AXI_MAX_BURST_LEN < tx_buffer_diff) begin
-                   axi_arlen_nxt = AXI_MAX_BURST_LEN[AXI_LEN_W-1:0];
+                   axi_arlen_nxt = AXI_MAX_BURST_LEN[AXI_LEN_W-1:0] - 1;
                end else begin
-                   axi_arlen_nxt = tx_buffer_diff[AXI_LEN_W-1:0];
+                   axi_arlen_nxt = tx_buffer_diff[AXI_LEN_W-1:0] - 1;
                end
                axi_arvalid_o_reg = 1;
                axi_rready_o_reg = 0;
