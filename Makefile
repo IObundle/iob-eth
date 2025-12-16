@@ -68,6 +68,7 @@ fpga-build: clean setup
 
 fpga-test:
 	make clean setup fpga-build BOARD=iob_aes_ku040_db_g
+	make clean setup fpga-build BOARD=iob_cyclonev_gt_dk
 
 .PHONY: fpga-build fpga-test
 
