@@ -4,6 +4,3 @@
 
 software/python/__pycache__/*
 scripts/pyRawWrapper/pyRawWrapper
-
-hardware/fpga/quartus/**/iob_eth_dev.sdc
-hardware/fpga/vivado/**/iob_eth_dev.sdc
