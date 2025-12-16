@@ -148,7 +148,7 @@ def setup(py_params_dict):
             {
                 "name": "AXI_DATA_W",
                 "type": "P",
-                "val": "DATA_W",
+                "val": "32",
                 "min": "1",
                 "max": "32",
                 "descr": "AXI data bus width",
