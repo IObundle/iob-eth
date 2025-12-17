@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 # IOb_Eth Example Constrain File
 #
-# This file contains the ethernet core constraints for the CYCLONEV-DT-DK board.
+# This file contains the ethernet core constraints for the CYCLONEV-GT-DK board.
 # ----------------------------------------------------------------------------
 
 #Constraint Clock Transitions
