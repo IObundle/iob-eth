@@ -24,3 +24,6 @@ UMC130_ASIC=
 
 #Set DOXYGEN to 1 to include software documentation section from Doxygen
 DOXYGEN?=1
+
+# Select if doc is confidential
+CONFIDENTIAL=0

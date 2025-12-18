@@ -180,4 +180,4 @@ void eth_wait_phy_rst();
  * @brief Prints the status of the Ethernet core.
  *
  */
-void eth_print_status(void);
+void eth_print_status();

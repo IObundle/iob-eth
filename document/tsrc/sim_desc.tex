@@ -1,0 +1,27 @@
+% SPDX-FileCopyrightText: 2025 IObundle
+%
+% SPDX-License-Identifier: MIT
+
+The Ethernet testbench is configured to connect the IOb-Eth core's MII interface in loopback mode. The testbench architecture involves the following components and data flow:
+
+\begin{itemize}
+  \item The IOb-Eth core's transmit and receive data is transferred to an external memory via its DMA/Memory interface.
+  \item The external memory is populated with test frames using an axistream\_out peripheral and a DMA core.
+  \item The received frames are stored in the memory and read out using the DMA core and an axistream\_in peripheral.
+\end{itemize}
+
+The testbench controller orchestrates the test sequence as follows:
+
+\begin{enumerate}
+  \item Initializes all components.
+  \item Writes test frames to the axistream\_out peripheral via its IOb CSRs interface.
+  \item Commands the DMA core to transfer the test frames to the memory.
+  \item Commands the Ethernet core to transmit the test frames from the memory via its AXI memory interface.
+  \item Receives the loopback test frames into a new location in the memory.
+  \item Commands the DMA core to transfer the received frames from the memory to the axistream\_in peripheral.
+  \item Reads the frames from the axistream\_in peripheral and verifies that the data matches the original test frames sent.
+\end{enumerate}
+
+% Ensure that testbench figure is placed in this section
+\FloatBarrier
+

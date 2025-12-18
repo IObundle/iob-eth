@@ -205,14 +205,18 @@ def setup(py_params_dict):
             },
             {
                 "name": "inta_o",
-                "descr": "Interrupt Output A",
+                "descr": "Interrupt Output",
                 "signals": [
-                    {"name": "inta_o", "width": 1},
+                    {
+                        "name": "inta_o",
+                        "width": 1,
+                        "descr": "Interrupt Output A",
+                    },
                 ],
             },
             {
                 "name": "phy_rstn_o",
-                "descr": "",
+                "descr": "Reset signal",
                 "signals": [
                     {
                         "name": "phy_rstn_o",
