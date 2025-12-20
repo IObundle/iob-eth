@@ -292,7 +292,7 @@ def setup(py_params_dict):
         },
         {
             "name": "eth_cbus",
-            "descr": "Testbench uart csrs bus",
+            "descr": "Testbench ethernet csrs bus",
             "signals": {
                 "type": params["csr_if"],
                 "prefix": "converted_eth_csrs_",
