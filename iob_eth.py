@@ -216,7 +216,7 @@ def setup(py_params_dict):
             },
             {
                 "name": "phy_rstn_o",
-                "descr": "Reset signal",
+                "descr": "PHY reset output (active low)",
                 "signals": [
                     {
                         "name": "phy_rstn_o",
