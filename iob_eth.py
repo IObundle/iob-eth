@@ -165,11 +165,12 @@ def setup(py_params_dict):
             # Ethernet
             {
                 "name": "PHY_RST_CNT",
+                "descr": "PHY reset counter value. Sets the duration of the PHY reset signal. Suggest smaller value during simulation, like 20'h00100.",
                 "type": "P",
+                # For simulation, use a smaller value, like 20'h00100
                 "val": "20'hFFFFF",
                 "min": "NA",
                 "max": "NA",
-                "descr": "PHY reset counter value. Sets the duration of the PHY reset signal",
             },
             {
                 "name": "BD_NUM_LOG2",
@@ -1228,7 +1229,6 @@ def setup(py_params_dict):
                 "parameters": {
                     "DATA_W": "21",
                     "RST_VAL": "21'h100000 | (PHY_RST_CNT - 1)",
-                    # "RST_VAL": "21'h1000FF",  # Shorter reset for simulation
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
@@ -1502,6 +1502,7 @@ def setup(py_params_dict):
    assign dma_csrs_control_rx_en = moder_wr[0];
    assign dma_csrs_control_tx_en = moder_wr[1];
    assign dma_csrs_control_tx_bd_num = tx_bd_num_wr[BD_NUM_LOG2-1:0];
+
 """,
             },
         ],
