@@ -47,13 +47,17 @@ def setup(py_params_dict):
     if py_params_dict.get("py2hwsw_target", "") == "setup":
         # check if eth is top module
         if py_params_dict["issuer"]:
-            ku040_sdc = "iob_eth_dev_periph.sdc"
+            dev_sdc = "iob_eth_dev_periph.sdc"
         else:
-            ku040_sdc = "iob_eth_dev_top.sdc"
+            dev_sdc = "iob_eth_dev_top.sdc"
         paths = [
             (
-                f"hardware/fpga/vivado/iob_aes_ku040_db_g/{ku040_sdc}",
+                f"hardware/fpga/vivado/iob_aes_ku040_db_g/{dev_sdc}",
                 "hardware/fpga/vivado/iob_aes_ku040_db_g/iob_eth_dev.sdc",
+            ),
+            (
+                f"hardware/fpga/quartus/iob_cyclonev_gt_dk/{dev_sdc}",
+                "hardware/fpga/quartus/iob_cyclonev_gt_dk/iob_eth_dev.sdc",
             ),
         ]
 
@@ -81,7 +85,7 @@ def setup(py_params_dict):
         "generate_hw": True,
         "description": "IObundle's ethernet core. Driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.",
         "version": "0.1",
-        "board_list": ["iob_aes_ku040_db_g"],
+        "board_list": ["iob_aes_ku040_db_g", "iob_cyclonev_gt_dk"],
         "confs": [
             # Macros
             {
@@ -145,7 +149,7 @@ def setup(py_params_dict):
             {
                 "name": "AXI_DATA_W",
                 "type": "P",
-                "val": "DATA_W",
+                "val": "32",
                 "min": "1",
                 "max": "32",
                 "descr": "AXI data bus width",
