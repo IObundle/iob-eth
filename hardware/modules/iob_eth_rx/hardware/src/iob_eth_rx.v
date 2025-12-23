@@ -7,22 +7,23 @@
 `include "iob_eth_conf.vh"
 
 module iob_eth_rx (
-   input arst_i,
+   `include "iob_eth_rx_io.vs"
+   // input arst_i,
 
-   // Buffer interface
-   output reg        wr_o,
-   output reg [10:0] addr_o,
-   output reg [ 7:0] data_o,
+   // // Buffer interface
+   // output reg        wr_o,
+   // output reg [10:0] addr_o,
+   // output reg [ 7:0] data_o,
 
-   // DMA control interface
-   input             rcv_ack_i,
-   output reg data_rcvd_o,
-   output            crc_err_o,
+   // // DMA control interface
+   // input             rcv_ack_i,
+   // output reg data_rcvd_o,
+   // output            crc_err_o,
 
-   // MII interface
-   input       rx_clk_i,
-   input       rx_dv_i,
-   input [3:0] rx_data_i
+   // // MII interface
+   // input       rx_clk_i,
+   // input       rx_dv_i,
+   // input [3:0] rx_data_i
 );
 
    // Register MII inputs

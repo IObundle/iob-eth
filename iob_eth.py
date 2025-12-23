@@ -602,6 +602,282 @@ def setup(py_params_dict):
                     {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
                 ],
             },
+            # internal wires
+            {
+                "name": "internal_wires",
+                "signals": [
+                    {"name": "phy_rst_cnt_o", "width": 21},
+                    {"name": "phy_rst", "width": 1},
+                ],
+            },
+            # Synchronizer wires
+            {
+                "name": "sync_wires",
+                "signals": [
+                    {"name": "rx_arst", "width": 1},
+                    {"name": "tx_arst", "width": 1},
+                    {"name": "eth_rcv_ack", "width": 1},
+                    {"name": "eth_send", "width": 1},
+                    {"name": "send", "width": 1},
+                    {"name": "eth_crc_en", "width": 1},
+                    {"name": "crc_en", "width": 1},
+                    {"name": "eth_tx_nbytes", "width": 11},
+                    {"name": "tx_nbytes", "width": 11},
+                    {"name": "eth_crc_err", "width": 1},
+                    {"name": "crc_err", "width": 1},
+                    {"name": "eth_rx_data_rcvd", "width": 1},
+                    {"name": "eth_tx_ready", "width": 1},
+                    {"name": "tx_ready", "width": 1},
+                ],
+            },
+            # DMA
+            {
+                "name": "dma_wires",
+                "signals": [
+                    # DMA buffer descriptor wires
+                    {"name": "dma_bd_en", "width": 1},
+                    {"name": "dma_bd_addr", "width": 8},
+                    {"name": "dma_bd_wen", "width": 1},
+                    {"name": "dma_bd_i", "width": 32},
+                    {"name": "dma_bd_o", "width": 32},
+                    # DMA interrupt wires
+                    {"name": "rx_irq", "width": 1},
+                    {"name": "tx_irq", "width": 1},
+                ],
+            },
+            # iob_acc
+            {
+                "name": "iob_acc_en_rst",
+                "signals": [
+                    {"name": "phy_rst"},
+                    {"name": "iob_acc_rst", "width": 1},
+                ],
+            },
+            {
+                "name": "iob_acc_incr",
+                "signals": [
+                    {"name": "iob_acc_incr", "width": 21},
+                ],
+            },
+            {
+                "name": "iob_acc_data",
+                "signals": [
+                    {"name": "phy_rst_cnt_o"},
+                ],
+            },
+            # Reset synchronizer wires
+            {
+                "name": "rx_reset_sync_clk_rst",
+                "signals": [
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "arst_i"},
+                ],
+            },
+            {
+                "name": "rx_reset_sync_arst_o",
+                "signals": [
+                    {"name": "rx_clk_arst"},
+                ],
+            },
+            {
+                "name": "tx_reset_sync_clk_rst",
+                "signals": [
+                    {"name": "mii_tx_clk_i"},
+                    {"name": "arst_i"},
+                ],
+            },
+            {
+                "name": "tx_reset_sync_arst_o",
+                "signals": [
+                    {"name": "tx_clk_arst"},
+                ],
+            },
+            # Transmitter
+            {
+                "name": "tx_arst",
+                "signals": [
+                    {"name": "tx_arst"},
+                ],
+            },
+            {
+                "name": "tx_buffer",
+                "signals": [
+                    {"name": "iob_eth_tx_buffer_addrB"},
+                    {"name": "iob_eth_tx_buffer_doutB"},
+                ],
+            },
+            {
+                "name": "tx_dma",
+                "signals": [
+                    {"name": "eth_send"},
+                    {"name": "eth_tx_ready"},
+                    {"name": "eth_tx_nbytes"},
+                    {"name": "eth_crc_en"},
+                ],
+            },
+            {
+                "name": "tx_mii",
+                "signals": [
+                    {"name": "mii_tx_clk_i"},
+                    {"name": "mii_tx_en_o"},
+                    {"name": "mii_txd_o"},
+                ],
+            },
+            # Receiver
+            {
+                "name": "rx_arst",
+                "signals": [
+                    {"name": "rx_arst"},
+                ],
+            },
+            {
+                "name": "rx_buffer",
+                "signals": [
+                    {"name": "iob_eth_rx_buffer_enA"},
+                    {"name": "iob_eth_rx_buffer_addrA"},
+                    {"name": "iob_eth_rx_buffer_dinA"},
+                ],
+            },
+            {
+                "name": "rx_dma",
+                "signals": [
+                    {"name": "eth_rcv_ack"},
+                    {"name": "eth_rx_data_rcvd"},
+                    {"name": "eth_crc_err"},
+                ],
+            },
+            {
+                "name": "rx_mii",
+                "signals": [
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "mii_rx_dv_i"},
+                    {"name": "mii_rxd_i"},
+                ],
+            },
+            # at2p wires
+            {
+                "name": "tx_ram_at2p",
+                "signals": [
+                    {"name": "mii_tx_clk_i"},
+                    {"name": "tx_ram_at2p_en"},
+                    {"name": "iob_eth_tx_buffer_addrB"},
+                    {"name": "iob_eth_tx_buffer_doutB"},
+                    {"name": "clk_i"},
+                    {"name": "iob_eth_tx_buffer_enA"},
+                    {"name": "iob_eth_tx_buffer_addrA"},
+                    {"name": "iob_eth_tx_buffer_dinA"},
+                ],
+            },
+            {
+                "name": "rx_ram_at2p",
+                "signals": [
+                    {"name": "clk_i"},
+                    {"name": "iob_eth_rx_buffer_enB"},
+                    {"name": "iob_eth_rx_buffer_addrB"},
+                    {"name": "iob_eth_rx_buffer_doutB"},
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "iob_eth_rx_buffer_enA"},
+                    {"name": "iob_eth_rx_buffer_addrA"},
+                    {"name": "iob_eth_rx_buffer_dinA"},
+                ],
+            },
+            # tdp wires
+            {
+                "name": "bd_ram_clk",
+                "descr": "clock",
+                "signals": [
+                    {"name": "clk_i"},
+                ],
+            },
+            {
+                "name": "bd_ram_port_a",
+                "descr": "Port A",
+                "signals": [
+                    {"name": "bd_valid_wrrd"},
+                    {"name": "internal_bd_wen"},
+                    {"name": "bd_ram_port_a_addr", "width": "BD_NUM_LOG2+1"},
+                    {"name": "bd_wdata_wrrd"},
+                    {"name": "bd_rdata_wrrd"},
+                ],
+            },
+            {
+                "name": "bd_ram_port_b",
+                "descr": "Port B",
+                "signals": [
+                    {"name": "dma_bd_en"},
+                    {"name": "dma_bd_wen"},
+                    {"name": "dma_bd_addr"},
+                    {"name": "dma_bd_o"},
+                    {"name": "dma_bd_i"},
+                ],
+            },
+            # DMA block wires
+            {
+                "name": "dma_csrs_control",
+                "signals": [
+                    {"name": "dma_csrs_control_rx_en", "width": 1},
+                    {"name": "dma_csrs_control_tx_en", "width": 1},
+                    {"name": "dma_csrs_control_tx_bd_num", "width": "BD_NUM_LOG2"},
+                ],
+            },
+            {
+                "name": "dma_buffer_descriptors",
+                "signals": [
+                    {"name": "dma_bd_en"},
+                    {"name": "dma_bd_addr"},
+                    {"name": "dma_bd_wen"},
+                    {"name": "dma_bd_i"},
+                    {"name": "dma_bd_o"},
+                ],
+            },
+            {
+                "name": "dma_tx_front_end",
+                "signals": [
+                    {"name": "iob_eth_tx_buffer_enA"},
+                    {"name": "iob_eth_tx_buffer_addrA"},
+                    {"name": "iob_eth_tx_buffer_dinA"},
+                    {"name": "tx_ready"},
+                    {"name": "crc_en"},
+                    {"name": "tx_nbytes"},
+                    {"name": "send"},
+                ],
+            },
+            {
+                "name": "dma_rx_back_end",
+                "signals": [
+                    {"name": "iob_eth_rx_buffer_enB"},
+                    {"name": "iob_eth_rx_buffer_addrB"},
+                    {"name": "iob_eth_rx_buffer_doutB"},
+                    {"name": "rx_data_rcvd"},
+                    {"name": "crc_err"},
+                    {"name": "rx_nbytes"},
+                    {"name": "rcv_ack"},
+                ],
+            },
+            {
+                "name": "dma_no_dma",
+                "signals": [
+                    {"name": "tx_bd_cnt_rdata_rd"},
+                    {"name": "tx_word_cnt_rdata_rd"},
+                    {"name": "internal_frame_word_wen"},
+                    {"name": "frame_word_wdata_wrrd"},
+                    {"name": "internal_frame_word_ready_wr"},
+                    {"name": "rx_bd_cnt_rdata_rd"},
+                    {"name": "rx_word_cnt_rdata_rd"},
+                    {"name": "internal_frame_word_ren"},
+                    {"name": "frame_word_rdata_wrrd"},
+                    {"name": "frame_word_rvalid_wrrd"},
+                    {"name": "internal_frame_word_ready_rd"},
+                ],
+            },
+            {
+                "name": "dma_interrupts",
+                "signals": [
+                    {"name": "tx_irq"},
+                    {"name": "rx_irq"},
+                ],
+            },
+            # Other
         ],
         "subblocks": [
             {
@@ -940,6 +1216,136 @@ def setup(py_params_dict):
                     "bd_io": "bd",
                 },
             },
+            # PHY reset counter
+            {
+                "core_name": "iob_acc",
+                "instance_name": "phy_rst_cnt_acc",
+                "instance_description": "PHY reset counter accumulator",
+                "parameters": {
+                    "DATA_W": "21",
+                    "RST_VAL": "21'h100000 | (PHY_RST_CNT - 1)",
+                    # "RST_VAL": "21'h1000FF",  # Shorter reset for simulation
+                },
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "en_rst_i": "iob_acc_en_rst",
+                    "incr_i": "iob_acc_incr",
+                    "data_o": "iob_acc_data",
+                },
+            },
+            # Reset Synchronizers
+            {
+                "core_name": "iob_reset_sync",
+                "instance_name": "rx_reset_sync",
+                "instance_description": "Async reset synchronizer for RX",
+                "connect": {
+                    "clk_rst_s": "rx_reset_sync_clk_rst",
+                    "arst_o": "rx_reset_sync_arst_o",
+                },
+            },
+            {
+                "core_name": "iob_reset_sync",
+                "instance_name": "tx_reset_sync",
+                "instance_description": "Async reset synchronizer for TX",
+                "connect": {
+                    "clk_rst_s": "tx_reset_sync_clk_rst",
+                    "arst_o": "tx_reset_sync_arst_o",
+                },
+            },
+            # Synchronizers (generated below)
+            # Transmitter
+            {
+                "core_name": "iob_eth_tx",
+                "instance_name": "tx",
+                "instance_description": "Transmitter",
+                "connect": {
+                    "arst_i": "tx_arst",
+                    "buffer_io": "tx_buffer",
+                    "dma_io": "tx_dma",
+                    "mii_io": "tx_mii",
+                },
+            },
+            # Receiver
+            {
+                "core_name": "iob_eth_rx",
+                "instance_name": "rx",
+                "instance_description": "Receiver",
+                "connect": {
+                    "arst_i": "rx_arst",
+                    "buffer_o": "rx_buffer",
+                    "dma_io": "rx_dma",
+                    "mii_i": "rx_mii",
+                },
+            },
+            # Buffer memories
+            {
+                "core_name": "iob_ram_at2p",
+                "instance_name": "tx_buffer",
+                "instance_description": "TX buffer memory",
+                "parameters": {
+                    # Note: the tx buffer also includes PREAMBLE+SFD,
+                    # maybe we should increase this size to acount for
+                    # this.
+                    "ADDR_W": "`IOB_ETH_BUFFER_W",
+                    "DATA_W": 8,
+                },
+                "connect": {
+                    "ram_at2p_s": "tx_ram_at2p",
+                },
+            },
+            {
+                "core_name": "iob_ram_at2p",
+                "instance_name": "rx_buffer",
+                "instance_description": "RX buffer memory",
+                "parameters": {
+                    "ADDR_W": "`IOB_ETH_BUFFER_W",
+                    "DATA_W": 8,
+                },
+                "connect": {
+                    "ram_at2p_s": "rx_ram_at2p",
+                },
+            },
+            {
+                "core_name": "iob_ram_tdp",
+                "instance_name": "bd_ram",
+                "instance_description": "Buffer descriptors memory",
+                "parameters": {
+                    "ADDR_W": "BD_NUM_LOG2 + 1",
+                    "DATA_W": 32,
+                    "MEM_NO_READ_ON_WRITE": 1,
+                },
+                "connect": {
+                    "clk_i": "bd_ram_clk",
+                    "port_a_io": "bd_ram_port_a",
+                    "port_b_io": "bd_ram_port_b",
+                },
+            },
+            # DMA
+            {
+                "core_name": "iob_eth_dma",
+                "instance_name": "dma_inst",
+                "instance_description": "DMA block",
+                "parameters": {
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ID_W": "AXI_ID_W",
+                    # "BURST_W": "BURST_W",
+                    "BUFFER_W": "`IOB_ETH_BUFFER_W",
+                    "BD_ADDR_W": "BD_NUM_LOG2 + 1",
+                },
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "csrs_control_i": "dma_csrs_control",
+                    "buffer_descriptors_io": "dma_buffer_descriptors",
+                    "tx_front_end_io": "dma_tx_front_end",
+                    "rx_back_end_io": "dma_rx_back_end",
+                    "axi_m": "axi_m",
+                    "no_dma_io": "dma_no_dma",
+                    "interrupts_o": "dma_interrupts",
+                },
+            },
+            # Old. TODO: Remove later
             {
                 "core_name": "iob_reg",
                 "instantiate": False,
@@ -955,42 +1361,13 @@ def setup(py_params_dict):
                 "core_name": "iob_reg",
                 "instantiate": False,
                 "port_params": {
-                    "clk_en_rst_s": "c_a",
-                },
-            },
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
                     "clk_en_rst_s": "c_a_r",
                 },
             },
-            {
-                "core_name": "iob_acc",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_sync",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_reset_sync",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_ram_at2p",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_ram_tdp",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_arbiter",
-                "instantiate": False,
-            },
+            # For simulation
             {
                 "core_name": "iob_tasks",
+                "dest_dir": "hardware/simulation/src",
                 "instantiate": False,
             },
         ],
@@ -1041,6 +1418,89 @@ def setup(py_params_dict):
    // bd_rdata_wrrd already delayed due to RAM
 """,
         },
+        "snippets": [
+            {
+                "verilog_code": """
+   // Connect write outputs to read
+   assign moder_rd         = moder_wr;
+   assign int_source_rd    = int_source_wr;
+   assign int_mask_rd      = int_mask_wr;
+   assign ipgt_rd          = ipgt_wr;
+   assign ipgr1_rd         = ipgr1_wr;
+   assign ipgr2_rd         = ipgr2_wr;
+   assign packetlen_rd     = packetlen_wr;
+   assign collconf_rd      = collconf_wr;
+   assign tx_bd_num_rd     = tx_bd_num_wr;
+   assign ctrlmoder_rd     = ctrlmoder_wr;
+   assign miimoder_rd      = miimoder_wr;
+   assign miicommand_rd    = miicommand_wr;
+   assign miiaddress_rd    = miiaddress_wr;
+   assign miitx_data_rd    = miitx_data_wr;
+   assign miirx_data_rd    = miirx_data_wr;
+   assign miistatus_rd     = miistatus_wr;
+   assign mac_addr0_rd     = mac_addr0_wr;
+   assign mac_addr1_rd     = mac_addr1_wr;
+   assign eth_hash0_adr_rd = eth_hash0_adr_wr;
+   assign eth_hash1_adr_rd = eth_hash1_adr_wr;
+   assign eth_txctrl_rd    = eth_txctrl_wr;
+
+   // signals are never written from core
+   assign moder_wstrb         = 4'h0;
+   assign int_source_wstrb    = 4'h0;
+   assign int_mask_wstrb      = 4'h0;
+   assign ipgt_wstrb          = 4'h0;
+   assign ipgr1_wstrb         = 4'h0;
+   assign ipgr2_wstrb         = 4'h0;
+   assign packetlen_wstrb     = 4'h0;
+   assign collconf_wstrb      = 4'h0;
+   assign tx_bd_num_wstrb     = 4'h0;
+   assign ctrlmoder_wstrb     = 4'h0;
+   assign miimoder_wstrb      = 4'h0;
+   assign miicommand_wstrb    = 4'h0;
+   assign miiaddress_wstrb    = 4'h0;
+   assign miitx_data_wstrb    = 4'h0;
+   assign miirx_data_wstrb    = 4'h0;
+   assign miistatus_wstrb     = 4'h0;
+   assign mac_addr0_wstrb     = 4'h0;
+   assign mac_addr1_wstrb     = 4'h0;
+   assign eth_hash0_adr_wstrb = 4'h0;
+   assign eth_hash1_adr_wstrb = 4'h0;
+   assign eth_txctrl_wstrb    = 4'h0;
+
+   assign mii_tx_er_o      = 1'b0;  //TODO
+   //assign ... = mii_rx_er_i;  //TODO
+
+   //assign ... = mii_col_i;  //TODO
+   //assign ... = mii_crs_i;  //TODO
+
+   assign mii_mdc_o        = 1'b0;  //TODO
+   //assign mii_mdio_io   = 1'b0;  //TODO
+
+
+
+   // iob_acc i/o
+   assign iob_acc_rst = 1'b0;
+   assign iob_acc_incr = -21'd1;
+
+   assign phy_rst = phy_rst_cnt_o[20];
+   assign phy_rstn_o     = ~phy_rst;
+   assign phy_rst_val_rd = phy_rst;
+
+   // Synchronizers
+
+   // DMA
+   assign inta_o = rx_irq | tx_irq;
+
+
+
+   assign tx_ram_at2p_en = 1'b1;
+   assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
+   assign dma_csrs_control_rx_en = moder_wr[0];
+   assign dma_csrs_control_tx_en = moder_wr[1];
+   assign dma_csrs_control_tx_bd_num = tx_bd_num_wr[BD_NUM_LOG2-1:0];
+""",
+            },
+        ],
     }
 
     attributes_dict["superblocks"] = [
@@ -1051,5 +1511,67 @@ def setup(py_params_dict):
             "csr_if": CSR_IF,
         },
     ]
+
+    #
+    # Synchronizers
+    #
+
+    synchronizers = {
+        # Name: (data_w, clk, arst, input, output)
+        "rx_arst_sync": (1, "mii_rx_clk_i", "rx_clk_arst", "phy_rst", "rx_arst"),
+        "tx_arst_sync": (1, "mii_tx_clk_i", "tx_clk_arst", "phy_rst", "tx_arst"),
+        "rcv_f2s_sync": (1, "mii_rx_clk_i", "rx_arst", "rcv_ack", "eth_rcv_ack"),
+        "send_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "send", "eth_send"),
+        "crc_en_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "crc_en", "eth_crc_en"),
+        "tx_nbytes_f2s_sync": (
+            11,
+            "mii_tx_clk_i",
+            "tx_arst",
+            "tx_nbytes",
+            "eth_tx_nbytes",
+        ),
+        "crc_err_sync": (1, "clk_i", "arst_i", "eth_crc_err", "crc_err"),
+        "rx_nbytes_sync": (
+            "`IOB_ETH_BUFFER_W",
+            "clk_i",
+            "arst_i",
+            "iob_eth_rx_buffer_addrA",
+            "rx_nbytes",
+        ),
+        "rx_data_rcvd_sync": (1, "clk_i", "arst_i", "eth_rx_data_rcvd", "rx_data_rcvd"),
+        "tx_ready_sync": (1, "clk_i", "arst_i", "eth_tx_ready", "tx_ready"),
+    }
+    for k, v in synchronizers.items():
+        attributes_dict["wires"] += [
+            # Create internal wires for synchronizer ports
+            {
+                "name": f"{k}_clk_rst",
+                "signals": [{"name": v[1]}, {"name": v[2]}],
+            },
+            {
+                "name": f"{k}_signal_i",
+                "signals": [{"name": v[3]}],
+            },
+            {
+                "name": f"{k}_signal_o",
+                "signals": [{"name": v[4]}],
+            },
+        ]
+        # Create synchronizer
+        attributes_dict["subblocks"].append(
+            {
+                "core_name": "iob_sync",
+                "instance_name": f"{k}_sync",
+                "instance_description": f"Synchronizer for {v[4]}",
+                "parameters": {
+                    "DATA_W": v[0],
+                },
+                "connect": {
+                    "clk_rst_s": f"{k}_clk_rst",
+                    "signal_i": f"{k}_signal_i",
+                    "signal_o": f"{k}_signal_o",
+                },
+            },
+        )
 
     return attributes_dict
