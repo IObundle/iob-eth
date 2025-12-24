@@ -22,7 +22,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "dma_io",
+                "name": "dt_io",
                 "signals": [
                     {"name": "rcv_ack_i", "width": 1},
                     {"name": "data_rcvd_o", "isvar": True, "width": 1},

@@ -21,7 +21,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "dma_io",
+                "name": "dt_io",
                 "signals": [
                     {"name": "send_i", "width": 1},
                     {"name": "ready_o", "isvar": True, "width": 1},

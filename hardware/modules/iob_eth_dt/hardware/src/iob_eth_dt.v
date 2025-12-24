@@ -5,78 +5,14 @@
 `timescale 1ns / 1ps
 
 `include "iob_eth_conf.vh"
-`include "iob_eth_dma_conf.vh"
+`include "iob_eth_dt_conf.vh"
 
 `define IOB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-module iob_eth_dma #(
-   //parameter AXI_ADDR_W = 0,
-   //parameter AXI_DATA_W = 32,  // We currently only support 4 byte transfers
-   //parameter AXI_LEN_W  = 8,
-   //parameter AXI_ID_W   = 1,
-   //parameter BUFFER_W   = 11,
-   //parameter BD_ADDR_W  = 8    // 128 buffers = 256 addresses (2x 32-bit words each buffer)
-   `include "iob_eth_dma_params.vs"
+module iob_eth_dt #(
+   `include "iob_eth_dt_params.vs"
 ) (
-   `include "iob_eth_dma_io.vs"
-   // // Control interface
-   // input                 rx_en_i,
-   // input                 tx_en_i,
-   // input [BD_ADDR_W-2:0] tx_bd_num_i,
-   // //TODO: What should happen if the value of `tx_bd_num_i` changes? Should
-   // //the RX state machine be reset to this buffer descriptor?
-   // //For example, if the state machine is reading BD number 64, and the value
-   // //changes to 65, should the state machine be reset to BD number 65? Or keep
-   // //reading 64?
-
-   // // Buffer descriptors
-   // output                 bd_en_o,
-   // output [BD_ADDR_W-1:0] bd_addr_o,
-   // output                 bd_wen_o,
-   // input  [       32-1:0] bd_i,
-   // output [       32-1:0] bd_o,
-
-   // // TX Front-End
-   // output reg                eth_data_wr_wen_o,
-   // output reg [BUFFER_W-1:0] eth_data_wr_addr_o,
-   // output reg [       8-1:0] eth_data_wr_wdata_o,
-   // input                     tx_ready_i,
-   // output                    crc_en_o,
-   // output     [      11-1:0] tx_nbytes_o,
-   // output                    send_o,
-
-   // // RX Back-End
-   // output                    eth_data_rd_ren_o,
-   // output reg [BUFFER_W-1:0] eth_data_rd_addr_o,
-   // input      [       8-1:0] eth_data_rd_rdata_i,
-   // input                     rx_data_rcvd_i,
-   // input                     crc_err_i,
-   // input      [      11-1:0] rx_nbytes_i,
-   // output                    rcv_ack_o,
-
-   // // AXI manager interface
-   // include "iob_eth_axi_m_port.vs"
-
-   // // Interrupts
-   // output reg tx_irq_o,
-   // output reg rx_irq_o,
-
-   // // No-DMA interface
-   // output reg [BD_ADDR_W-2:0] tx_bd_cnt_o,
-   // output reg [       11-1:0] tx_word_cnt_o,
-   // input                      tx_frame_word_wen_i,
-   // input      [        8-1:0] tx_frame_word_wdata_i,
-   // output reg                 tx_frame_word_ready_o,
-   // output reg [BD_ADDR_W-2:0] rx_bd_cnt_o,
-   // output reg [       11-1:0] rx_word_cnt_o,
-   // input                      rx_frame_word_ren_i,
-   // output reg [        8-1:0] rx_frame_word_rdata_o,
-   // output reg                 rx_frame_word_rvalid_o,
-   // output reg                 rx_frame_word_ready_o,
-
-   // input clk_i,
-   // input cke_i,
-   // input arst_i
+   `include "iob_eth_dt_io.vs"
 );
 
    localparam AXI_MAX_BURST_LEN = 16;

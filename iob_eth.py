@@ -643,17 +643,17 @@ def setup(py_params_dict):
                     {"name": "tx_ready", "width": 1},
                 ],
             },
-            # DMA
+            # Data Transfer wires
             {
-                "name": "dma_wires",
+                "name": "dt_wires",
                 "signals": [
-                    # DMA buffer descriptor wires
-                    {"name": "dma_bd_en", "width": 1},
-                    {"name": "dma_bd_addr", "width": 8},
-                    {"name": "dma_bd_wen", "width": 1},
-                    {"name": "dma_bd_i", "width": 32},
-                    {"name": "dma_bd_o", "width": 32},
-                    # DMA interrupt wires
+                    # buffer descriptor wires
+                    {"name": "dt_bd_en", "width": 1},
+                    {"name": "dt_bd_addr", "width": 8},
+                    {"name": "dt_bd_wen", "width": 1},
+                    {"name": "dt_bd_i", "width": 32},
+                    {"name": "dt_bd_o", "width": 32},
+                    # interrupt wires
                     {"name": "rx_irq", "width": 1},
                     {"name": "tx_irq", "width": 1},
                 ],
@@ -720,7 +720,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "tx_dma",
+                "name": "tx_dt",
                 "signals": [
                     {"name": "eth_send"},
                     {"name": "eth_tx_ready"},
@@ -752,7 +752,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "rx_dma",
+                "name": "rx_dt",
                 "signals": [
                     {"name": "eth_rcv_ack"},
                     {"name": "eth_rx_data_rcvd"},
@@ -817,34 +817,34 @@ def setup(py_params_dict):
                 "name": "bd_ram_port_b",
                 "descr": "Port B",
                 "signals": [
-                    {"name": "dma_bd_en"},
-                    {"name": "dma_bd_wen"},
-                    {"name": "dma_bd_addr"},
-                    {"name": "dma_bd_o"},
-                    {"name": "dma_bd_i"},
+                    {"name": "dt_bd_en"},
+                    {"name": "dt_bd_wen"},
+                    {"name": "dt_bd_addr"},
+                    {"name": "dt_bd_o"},
+                    {"name": "dt_bd_i"},
                 ],
             },
-            # DMA block wires
+            # Data transfer block wires
             {
-                "name": "dma_csrs_control",
+                "name": "dt_csrs_control",
                 "signals": [
-                    {"name": "dma_csrs_control_rx_en", "width": 1},
-                    {"name": "dma_csrs_control_tx_en", "width": 1},
-                    {"name": "dma_csrs_control_tx_bd_num", "width": "BD_NUM_LOG2"},
+                    {"name": "dt_csrs_control_rx_en", "width": 1},
+                    {"name": "dt_csrs_control_tx_en", "width": 1},
+                    {"name": "dt_csrs_control_tx_bd_num", "width": "BD_NUM_LOG2"},
                 ],
             },
             {
-                "name": "dma_buffer_descriptors",
+                "name": "dt_buffer_descriptors",
                 "signals": [
-                    {"name": "dma_bd_en"},
-                    {"name": "dma_bd_addr"},
-                    {"name": "dma_bd_wen"},
-                    {"name": "dma_bd_i"},
-                    {"name": "dma_bd_o"},
+                    {"name": "dt_bd_en"},
+                    {"name": "dt_bd_addr"},
+                    {"name": "dt_bd_wen"},
+                    {"name": "dt_bd_i"},
+                    {"name": "dt_bd_o"},
                 ],
             },
             {
-                "name": "dma_tx_front_end",
+                "name": "dt_tx_front_end",
                 "signals": [
                     {"name": "iob_eth_tx_buffer_enA"},
                     {"name": "iob_eth_tx_buffer_addrA"},
@@ -856,7 +856,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "dma_rx_back_end",
+                "name": "dt_rx_back_end",
                 "signals": [
                     {"name": "iob_eth_rx_buffer_enB"},
                     {"name": "iob_eth_rx_buffer_addrB"},
@@ -868,7 +868,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "dma_no_dma",
+                "name": "dt_no_dma",
                 "signals": [
                     {"name": "tx_bd_cnt_rdata_rd"},
                     {"name": "tx_word_cnt_rdata_rd"},
@@ -884,7 +884,7 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "dma_interrupts",
+                "name": "dt_interrupts",
                 "signals": [
                     {"name": "tx_irq"},
                     {"name": "rx_irq"},
@@ -1273,7 +1273,7 @@ def setup(py_params_dict):
                 "connect": {
                     "arst_i": "tx_arst",
                     "buffer_io": "tx_buffer",
-                    "dma_io": "tx_dma",
+                    "dt_io": "tx_dt",
                     "mii_io": "tx_mii",
                 },
             },
@@ -1285,7 +1285,7 @@ def setup(py_params_dict):
                 "connect": {
                     "arst_i": "rx_arst",
                     "buffer_o": "rx_buffer",
-                    "dma_io": "rx_dma",
+                    "dt_io": "rx_dt",
                     "mii_i": "rx_mii",
                 },
             },
@@ -1332,11 +1332,11 @@ def setup(py_params_dict):
                     "port_b_io": "bd_ram_port_b",
                 },
             },
-            # DMA
+            # Data transfer
             {
-                "core_name": "iob_eth_dma",
-                "instance_name": "dma_inst",
-                "instance_description": "DMA block",
+                "core_name": "iob_eth_dt",
+                "instance_name": "data_transfer",
+                "instance_description": "Data Transfer block",
                 "parameters": {
                     "AXI_ADDR_W": "AXI_ADDR_W",
                     "AXI_DATA_W": "AXI_DATA_W",
@@ -1348,13 +1348,13 @@ def setup(py_params_dict):
                 },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
-                    "csrs_control_i": "dma_csrs_control",
-                    "buffer_descriptors_io": "dma_buffer_descriptors",
-                    "tx_front_end_io": "dma_tx_front_end",
-                    "rx_back_end_io": "dma_rx_back_end",
+                    "csrs_control_i": "dt_csrs_control",
+                    "buffer_descriptors_io": "dt_buffer_descriptors",
+                    "tx_front_end_io": "dt_tx_front_end",
+                    "rx_back_end_io": "dt_rx_back_end",
                     "axi_m": "axi_m",
-                    "no_dma_io": "dma_no_dma",
-                    "interrupts_o": "dma_interrupts",
+                    "no_dma_io": "dt_no_dma",
+                    "interrupts_o": "dt_interrupts",
                 },
             },
             # MII Management
@@ -1514,9 +1514,9 @@ def setup(py_params_dict):
 
    assign tx_ram_at2p_en = 1'b1;
    assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
-   assign dma_csrs_control_rx_en = moder_wr[0];
-   assign dma_csrs_control_tx_en = moder_wr[1];
-   assign dma_csrs_control_tx_bd_num = tx_bd_num_wr[BD_NUM_LOG2-1:0];
+   assign dt_csrs_control_rx_en = moder_wr[0];
+   assign dt_csrs_control_tx_en = moder_wr[1];
+   assign dt_csrs_control_tx_bd_num = tx_bd_num_wr[BD_NUM_LOG2-1:0];
 
 """,
             },
