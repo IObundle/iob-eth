@@ -8,8 +8,19 @@ SIMULATOR ?= icarus
 SYNTHESIZER ?= yosys
 LINTER ?= spyglass
 BOARD ?= iob_ku040_db_g
+CSR_IF ?= iob
 
-BUILD_DIR ?= $(shell nix-shell --run "py2hwsw $(CORE) print_build_dir")
+#
+# Fill PY_PARAMS if not defined
+ifeq ($(PY_PARAMS),)
+ifneq ($(CSR_IF),)
+PY_PARAMS:=$(PY_PARAMS):csr_if=$(CSR_IF)
+endif
+# Remove first char (:) from PY_PARAMS
+PY_PARAMS:=$(shell echo $(PY_PARAMS) | cut -c2-)
+endif # ifndef PY_PARAMS
+
+BUILD_DIR ?= $(shell nix-shell --run "py2hwsw $(CORE) print_build_dir --py_params '$(PY_PARAMS)'")
 VERSION ?=$(shell cat $(CORE).py | grep version | cut -d '"' -f 4)
 
 #------------------------------------------------------------
@@ -17,7 +28,7 @@ VERSION ?=$(shell cat $(CORE).py | grep version | cut -d '"' -f 4)
 #------------------------------------------------------------
 
 setup:
-	nix-shell --run "py2hwsw $(CORE) setup --no_verilog_lint $(EXTRA_ARGS)"
+	nix-shell --run "py2hwsw $(CORE) setup --no_verilog_lint --py_params '$(PY_PARAMS)' $(EXTRA_ARGS)"
 
 .PHONY: setup
 
@@ -112,7 +123,7 @@ clean:
 .PHONY: clean
 
 fusesoc-export: clean setup
-	nix-shell --run "py2hwsw $(CORE) export_fusesoc --build_dir '$(BUILD_DIR)'"
+	nix-shell --run "py2hwsw $(CORE) export_fusesoc --build_dir '$(BUILD_DIR)' --py_params '$(PY_PARAMS)'"
 
 .PHONY: fusesoc-export
 

@@ -7,22 +7,7 @@
 `include "iob_eth_conf.vh"
 
 module iob_eth_rx (
-   input arst_i,
-
-   // Buffer interface
-   output reg        wr_o,
-   output reg [10:0] addr_o,
-   output reg [ 7:0] data_o,
-
-   // DMA control interface
-   input             rcv_ack_i,
-   output reg data_rcvd_o,
-   output            crc_err_o,
-
-   // MII interface
-   input       rx_clk_i,
-   input       rx_dv_i,
-   input [3:0] rx_data_i
+   `include "iob_eth_rx_io.vs"
 );
 
    // Register MII inputs
@@ -68,13 +53,13 @@ module iob_eth_rx (
 
       if (arst_i) begin
          pc            <= 0;
-         addr_o          <= 0;
+         addr_o        <= 0;
          dest_mac_addr <= 0;
-         wr_o            <= 0;
-         data_rcvd_o     <= 0;
+         wr_o          <= 0;
+         data_rcvd_o   <= 0;
       end else begin
 
-         pc   <= pc + 1'b1;
+         pc     <= pc + 1'b1;
          addr_o <= addr_o + {10'b0, pc[0]};
          wr_o   <= 0;
 
@@ -86,7 +71,7 @@ module iob_eth_rx (
 
             2: begin
                dest_mac_addr <= {dest_mac_addr[39:0], data_int};
-               wr_o            <= 1;
+               wr_o          <= 1;
             end
 
             3:
@@ -102,10 +87,10 @@ module iob_eth_rx (
             end
 
             6: begin
-               pc        <= pc;
+               pc          <= pc;
                data_rcvd_o <= 1;
                if (rcv_ack_i) begin
-                  pc        <= 0;
+                  pc          <= 0;
                   addr_o      <= 0;
                   data_rcvd_o <= 0;
                end
@@ -131,14 +116,14 @@ module iob_eth_rx (
    // CRC MODULE
    //
    iob_eth_crc crc_rx (
-      .clk_i(rx_clk_i),
+      .clk_i (rx_clk_i),
       .arst_i(arst_i),
 
       .start_i(pc == 0),
 
-      .data_i(data_o),
+      .data_i   (data_o),
       .data_en_i(wr_o),
-      .crc_o(crc_sum)
+      .crc_o    (crc_sum)
    );
 
    wire crc_err = crc_sum != 32'hc704dd7b;

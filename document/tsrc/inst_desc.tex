@@ -1,0 +1,14 @@
+% SPDX-FileCopyrightText: 2025 IObundle
+%
+% SPDX-License-Identifier: MIT
+
+The CSRs bus (IOb native by default) should be connected to the desired manager component (e.g. a CPU), along with the ethernet interrupt output.
+
+The memory bus can optionally be connected to a memory controller.
+
+The MII interface and management signals connect to the PHY, along with the phy negated reset signal.
+
+The clock, clock enable, and reset ports can be connected to the desired clock and reset generator.
+
+% Ensure that instantiation figure is placed in this section
+\FloatBarrier

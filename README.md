@@ -405,7 +405,7 @@ unsigned int eth_send_variable_file(char *data, int size);
 void eth_wait_phy_rst();
 
 // Print ethernet status
-void eth_print_status(void);
+void eth_print_status();
 ```
 
 ## Generate Quartus IP
