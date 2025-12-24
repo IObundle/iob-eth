@@ -1269,7 +1269,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_tx",
                 "instance_name": "tx",
-                "instance_description": "Transmitter",
+                "instance_description": "Transmitter module",
                 "connect": {
                     "arst_i": "tx_arst",
                     "buffer_io": "tx_buffer",
@@ -1281,7 +1281,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_rx",
                 "instance_name": "rx",
-                "instance_description": "Receiver",
+                "instance_description": "Receiver module",
                 "connect": {
                     "arst_i": "rx_arst",
                     "buffer_o": "rx_buffer",
@@ -1361,7 +1361,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_mii_management",
                 "instance_name": "mii_management",
-                "instance_description": "MII management block",
+                "instance_description": "MII management module",
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "management_io": "mii_management",
