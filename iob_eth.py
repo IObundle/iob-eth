@@ -607,6 +607,14 @@ def setup(py_params_dict):
                     {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
                 ],
             },
+            # MII management
+            {
+                "name": "mii_management",
+                "signals": [
+                    {"name": "mii_mdc_o"},
+                    {"name": "mii_mdio_io"},
+                ],
+            },
             # internal wires
             {
                 "name": "internal_wires",
@@ -1349,6 +1357,16 @@ def setup(py_params_dict):
                     "interrupts_o": "dma_interrupts",
                 },
             },
+            # MII Management
+            {
+                "core_name": "iob_eth_mii_management",
+                "instance_name": "mii_management",
+                "instance_description": "MII management block",
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "management_io": "mii_management",
+                },
+            },
             # Old. TODO: Remove later
             {
                 "core_name": "iob_reg",
@@ -1476,9 +1494,6 @@ def setup(py_params_dict):
 
    //assign ... = mii_col_i;  //TODO
    //assign ... = mii_crs_i;  //TODO
-
-   assign mii_mdc_o        = 1'b0;  //TODO
-   //assign mii_mdio_io   = 1'b0;  //TODO
 
 
 

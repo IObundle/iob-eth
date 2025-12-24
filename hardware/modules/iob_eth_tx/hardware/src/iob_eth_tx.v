@@ -8,22 +8,6 @@
 
 module iob_eth_tx (
    `include "iob_eth_tx_io.vs"
-   // input             arst_i,
-
-   // // Buffer interface
-   // output reg [10:0] addr_o,
-   // input [ 7:0]      data_i,
-
-   // // DMA control interface
-   // input             send_i,
-   // output reg        ready_o,
-   // input [10:0]      nbytes_i,
-   // input             crc_en_i,
-
-   // // MII interface
-   // input             tx_clk_i,
-   // output reg        tx_en_o,
-   // output reg [ 3:0] tx_data_o
 );
 
    function automatic [7:0] reverse_byte;
