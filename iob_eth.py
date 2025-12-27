@@ -624,23 +624,65 @@ def setup(py_params_dict):
                 ],
             },
             # Synchronizer wires
+            # {
+            #     "name": "sync_wires",
+            #     "signals": [
+            #         {"name": "rx_phy_rst", "width": 1},
+            #         {"name": "tx_phy_rst", "width": 1},
+            #         {"name": "eth_rcv_ack", "width": 1},
+            #         {"name": "eth_send", "width": 1},
+            #         {"name": "send", "width": 1},
+            #         {"name": "eth_crc_en", "width": 1},
+            #         {"name": "crc_en", "width": 1},
+            #         {"name": "eth_tx_nbytes", "width": 11},
+            #         {"name": "tx_nbytes", "width": 11},
+            #         {"name": "eth_crc_err", "width": 1},
+            #         {"name": "crc_err", "width": 1},
+            #         {"name": "eth_rx_data_rcvd", "width": 1},
+            #         {"name": "eth_tx_ready", "width": 1},
+            #         {"name": "tx_ready", "width": 1},
+            #     ],
+            # },
+            # CDC wires
             {
-                "name": "sync_wires",
+                "name": "cdc_clks",
                 "signals": [
-                    {"name": "rx_arst", "width": 1},
-                    {"name": "tx_arst", "width": 1},
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "mii_tx_clk_i"},
+                ],
+            },
+            {
+                "name": "cdc_phy_rst",
+                "signals": [
+                    {"name": "phy_rst"},
+                    {"name": "rx_phy_rst", "width": 1},
+                    {"name": "tx_phy_rst", "width": 1},
+                ],
+            },
+            {
+                "name": "cdc_system",
+                "signals": [
+                    {"name": "rcv_ack"},
+                    {"name": "send", "width": 1},
+                    {"name": "crc_en", "width": 1},
+                    {"name": "tx_nbytes", "width": 11},
+                    {"name": "crc_err", "width": 1},
+                    {"name": "rx_nbytes"},
+                    {"name": "rx_data_rcvd"},
+                    {"name": "tx_ready", "width": 1},
+                ],
+            },
+            {
+                "name": "cdc_eth",
+                "signals": [
                     {"name": "eth_rcv_ack", "width": 1},
                     {"name": "eth_send", "width": 1},
-                    {"name": "send", "width": 1},
                     {"name": "eth_crc_en", "width": 1},
-                    {"name": "crc_en", "width": 1},
                     {"name": "eth_tx_nbytes", "width": 11},
-                    {"name": "tx_nbytes", "width": 11},
                     {"name": "eth_crc_err", "width": 1},
-                    {"name": "crc_err", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrA"},  # eth_rx_nbytes
                     {"name": "eth_rx_data_rcvd", "width": 1},
                     {"name": "eth_tx_ready", "width": 1},
-                    {"name": "tx_ready", "width": 1},
                 ],
             },
             # Data Transfer wires
@@ -679,37 +721,37 @@ def setup(py_params_dict):
                 ],
             },
             # Reset synchronizer wires
-            {
-                "name": "rx_reset_sync_clk_rst",
-                "signals": [
-                    {"name": "mii_rx_clk_i"},
-                    {"name": "arst_i"},
-                ],
-            },
-            {
-                "name": "rx_reset_sync_arst_o",
-                "signals": [
-                    {"name": "rx_clk_arst"},
-                ],
-            },
-            {
-                "name": "tx_reset_sync_clk_rst",
-                "signals": [
-                    {"name": "mii_tx_clk_i"},
-                    {"name": "arst_i"},
-                ],
-            },
-            {
-                "name": "tx_reset_sync_arst_o",
-                "signals": [
-                    {"name": "tx_clk_arst"},
-                ],
-            },
+            # {
+            #     "name": "rx_reset_sync_clk_rst",
+            #     "signals": [
+            #         {"name": "mii_rx_clk_i"},
+            #         {"name": "arst_i"},
+            #     ],
+            # },
+            # {
+            #     "name": "rx_reset_sync_arst_o",
+            #     "signals": [
+            #         {"name": "rx_clk_arst"},
+            #     ],
+            # },
+            # {
+            #     "name": "tx_reset_sync_clk_rst",
+            #     "signals": [
+            #         {"name": "mii_tx_clk_i"},
+            #         {"name": "arst_i"},
+            #     ],
+            # },
+            # {
+            #     "name": "tx_reset_sync_arst_o",
+            #     "signals": [
+            #         {"name": "tx_clk_arst"},
+            #     ],
+            # },
             # Transmitter
             {
-                "name": "tx_arst",
+                "name": "tx_phy_rst",
                 "signals": [
-                    {"name": "tx_arst"},
+                    {"name": "tx_phy_rst"},
                 ],
             },
             {
@@ -738,9 +780,9 @@ def setup(py_params_dict):
             },
             # Receiver
             {
-                "name": "rx_arst",
+                "name": "rx_phy_rst",
                 "signals": [
-                    {"name": "rx_arst"},
+                    {"name": "rx_phy_rst"},
                 ],
             },
             {
@@ -1245,25 +1287,38 @@ def setup(py_params_dict):
                     "data_o": "iob_acc_data",
                 },
             },
+            # CDC block
+            {
+                "core_name": "iob_eth_cdc",
+                "instance_name": "iob_eth_cdc",
+                "instance_description": "Clock domain crossing block",
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "tx_rx_clk_i": "cdc_clks",
+                    "phy_rst_io": "cdc_phy_rst",
+                    "system_io": "cdc_system",
+                    "eth_io": "cdc_eth",
+                },
+            },
             # Reset Synchronizers
-            {
-                "core_name": "iob_reset_sync",
-                "instance_name": "rx_reset_sync",
-                "instance_description": "Async reset synchronizer for RX",
-                "connect": {
-                    "clk_rst_s": "rx_reset_sync_clk_rst",
-                    "arst_o": "rx_reset_sync_arst_o",
-                },
-            },
-            {
-                "core_name": "iob_reset_sync",
-                "instance_name": "tx_reset_sync",
-                "instance_description": "Async reset synchronizer for TX",
-                "connect": {
-                    "clk_rst_s": "tx_reset_sync_clk_rst",
-                    "arst_o": "tx_reset_sync_arst_o",
-                },
-            },
+            # {
+            #     "core_name": "iob_reset_sync",
+            #     "instance_name": "rx_reset_sync",
+            #     "instance_description": "Async reset synchronizer for RX",
+            #     "connect": {
+            #         "clk_rst_s": "rx_reset_sync_clk_rst",
+            #         "arst_o": "rx_reset_sync_arst_o",
+            #     },
+            # },
+            # {
+            #     "core_name": "iob_reset_sync",
+            #     "instance_name": "tx_reset_sync",
+            #     "instance_description": "Async reset synchronizer for TX",
+            #     "connect": {
+            #         "clk_rst_s": "tx_reset_sync_clk_rst",
+            #         "arst_o": "tx_reset_sync_arst_o",
+            #     },
+            # },
             # Synchronizers (generated below)
             # Transmitter
             {
@@ -1271,7 +1326,7 @@ def setup(py_params_dict):
                 "instance_name": "tx",
                 "instance_description": "Transmitter module",
                 "connect": {
-                    "arst_i": "tx_arst",
+                    "arst_i": "tx_phy_rst",
                     "buffer_io": "tx_buffer",
                     "dt_io": "tx_dt",
                     "mii_io": "tx_mii",
@@ -1283,7 +1338,7 @@ def setup(py_params_dict):
                 "instance_name": "rx",
                 "instance_description": "Receiver module",
                 "connect": {
-                    "arst_i": "rx_arst",
+                    "arst_i": "rx_phy_rst",
                     "buffer_o": "rx_buffer",
                     "dt_io": "rx_dt",
                     "mii_i": "rx_mii",
@@ -1505,12 +1560,8 @@ def setup(py_params_dict):
    assign phy_rstn_o     = ~phy_rst;
    assign phy_rst_val_rd = phy_rst;
 
-   // Synchronizers
-
    // DMA
    assign inta_o = rx_irq | tx_irq;
-
-
 
    assign tx_ram_at2p_en = 1'b1;
    assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
@@ -1532,66 +1583,66 @@ def setup(py_params_dict):
         },
     ]
 
-    #
-    # Synchronizers
-    #
+    # #
+    # # Synchronizers
+    # #
 
-    synchronizers = {
-        # Name: (data_w, clk, arst, input, output)
-        "rx_arst_sync": (1, "mii_rx_clk_i", "rx_clk_arst", "phy_rst", "rx_arst"),
-        "tx_arst_sync": (1, "mii_tx_clk_i", "tx_clk_arst", "phy_rst", "tx_arst"),
-        "rcv_f2s_sync": (1, "mii_rx_clk_i", "rx_arst", "rcv_ack", "eth_rcv_ack"),
-        "send_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "send", "eth_send"),
-        "crc_en_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "crc_en", "eth_crc_en"),
-        "tx_nbytes_f2s_sync": (
-            11,
-            "mii_tx_clk_i",
-            "tx_arst",
-            "tx_nbytes",
-            "eth_tx_nbytes",
-        ),
-        "crc_err_sync": (1, "clk_i", "arst_i", "eth_crc_err", "crc_err"),
-        "rx_nbytes_sync": (
-            "`IOB_ETH_BUFFER_W",
-            "clk_i",
-            "arst_i",
-            "iob_eth_rx_buffer_addrA",
-            "rx_nbytes",
-        ),
-        "rx_data_rcvd_sync": (1, "clk_i", "arst_i", "eth_rx_data_rcvd", "rx_data_rcvd"),
-        "tx_ready_sync": (1, "clk_i", "arst_i", "eth_tx_ready", "tx_ready"),
-    }
-    for k, v in synchronizers.items():
-        attributes_dict["wires"] += [
-            # Create internal wires for synchronizer ports
-            {
-                "name": f"{k}_clk_rst",
-                "signals": [{"name": v[1]}, {"name": v[2]}],
-            },
-            {
-                "name": f"{k}_signal_i",
-                "signals": [{"name": v[3]}],
-            },
-            {
-                "name": f"{k}_signal_o",
-                "signals": [{"name": v[4]}],
-            },
-        ]
-        # Create synchronizer
-        attributes_dict["subblocks"].append(
-            {
-                "core_name": "iob_sync",
-                "instance_name": f"{k}_sync",
-                "instance_description": f"Synchronizer for {v[4]}",
-                "parameters": {
-                    "DATA_W": v[0],
-                },
-                "connect": {
-                    "clk_rst_s": f"{k}_clk_rst",
-                    "signal_i": f"{k}_signal_i",
-                    "signal_o": f"{k}_signal_o",
-                },
-            },
-        )
+    # synchronizers = {
+    #     # Name: (data_w, clk, arst, input, output)
+    #     "rx_arst_sync": (1, "mii_rx_clk_i", "rx_clk_arst", "phy_rst", "rx_phy_rst"),
+    #     "tx_arst_sync": (1, "mii_tx_clk_i", "tx_clk_arst", "phy_rst", "tx_phy_rst"),
+    #     "rcv_f2s_sync": (1, "mii_rx_clk_i", "rx_phy_rst", "rcv_ack", "eth_rcv_ack"),
+    #     "send_f2s_sync": (1, "mii_tx_clk_i", "tx_phy_rst", "send", "eth_send"),
+    #     "crc_en_f2s_sync": (1, "mii_tx_clk_i", "tx_phy_rst", "crc_en", "eth_crc_en"),
+    #     "tx_nbytes_f2s_sync": (
+    #         11,
+    #         "mii_tx_clk_i",
+    #         "tx_phy_rst",
+    #         "tx_nbytes",
+    #         "eth_tx_nbytes",
+    #     ),
+    #     "crc_err_sync": (1, "clk_i", "arst_i", "eth_crc_err", "crc_err"),
+    #     "rx_nbytes_sync": (
+    #         "`IOB_ETH_BUFFER_W",
+    #         "clk_i",
+    #         "arst_i",
+    #         "iob_eth_rx_buffer_addrA",
+    #         "rx_nbytes",
+    #     ),
+    #     "rx_data_rcvd_sync": (1, "clk_i", "arst_i", "eth_rx_data_rcvd", "rx_data_rcvd"),
+    #     "tx_ready_sync": (1, "clk_i", "arst_i", "eth_tx_ready", "tx_ready"),
+    # }
+    # for k, v in synchronizers.items():
+    #     attributes_dict["wires"] += [
+    #         # Create internal wires for synchronizer ports
+    #         {
+    #             "name": f"{k}_clk_rst",
+    #             "signals": [{"name": v[1]}, {"name": v[2]}],
+    #         },
+    #         {
+    #             "name": f"{k}_signal_i",
+    #             "signals": [{"name": v[3]}],
+    #         },
+    #         {
+    #             "name": f"{k}_signal_o",
+    #             "signals": [{"name": v[4]}],
+    #         },
+    #     ]
+    #     # Create synchronizer
+    #     attributes_dict["subblocks"].append(
+    #         {
+    #             "core_name": "iob_sync",
+    #             "instance_name": f"{k}_sync",
+    #             "instance_description": f"Synchronizer for {v[4]}",
+    #             "parameters": {
+    #                 "DATA_W": v[0],
+    #             },
+    #             "connect": {
+    #                 "clk_rst_s": f"{k}_clk_rst",
+    #                 "signal_i": f"{k}_signal_i",
+    #                 "signal_o": f"{k}_signal_o",
+    #             },
+    #         },
+    #     )
 
     return attributes_dict
