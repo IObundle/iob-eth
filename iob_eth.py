@@ -1422,6 +1422,16 @@ def setup(py_params_dict):
                     "management_io": "mii_management",
                 },
             },
+            # No-auto csrs logic
+            # {
+            #     "core_name": "iob_eth_logic",
+            #     "instance_name": "iob_eth_logic",
+            #     "instance_description": "Extra ethernet CSRs logic",
+            #     "connect": {
+            #         "clk_en_rst_s": "clk_en_rst_s",
+            #         # TODO:
+            #     },
+            # },
             # Old. TODO: Remove later
             {
                 "core_name": "iob_reg",
