@@ -547,7 +547,7 @@ void eth_wait_phy_rst() {
     ;
 }
 
-void eth_print_status(void) {
+void eth_print_status() {
   printf("tx_ready = %x\n", eth_tx_ready(0));
   printf("rx_ready = %x\n", eth_rx_ready(0));
   printf("Bad CRC = %x\n", eth_bad_crc(0));
