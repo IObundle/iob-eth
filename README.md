@@ -461,6 +461,20 @@ The core's Verilog sources are available in the `iob_eth/hardware/src/` director
 
 To use this pre-built core in FuseSoC, extract the compressed tar.gz files to a [FuseSoC library directory](https://fusesoc.readthedocs.io/en/stable/user/overview.html#discover-cores-the-package-manager).
 
+## Linux driver
+
+The IOb-Eth core is driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.
+The following links provide more information about the [ethmac](https://opencores.org/projects/ethmac) driver.
+
+Source code of the driver in c (upstream, no kernel Linux):
+https://github.com/torvalds/linux/blob/master/drivers/net/ethernet/ethoc.c
+
+Device-tree documentation for the driver:
+https://github.com/torvalds/linux/blob/master/Documentation/devicetree/bindings/net/opencores-ethoc.txt
+
+Linux kernel compilation configuration used:
+https://cateee.net/lkddb/web-lkddb/ETHOC.html
+
 # Acknowledgement
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
 with financial support from the European Commission's Next Generation Internet

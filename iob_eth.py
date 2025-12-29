@@ -951,6 +951,7 @@ def setup(py_params_dict):
                         "descr": "IOb_Eth Software Accessible Registers",
                         "regs": [
                             {
+                                # NOTE: The Linux ethmac driver from opencores does not support half-duplex. Only full-duplex. Therefore there is no need to implement half-duplex mode.
                                 "name": "moder",
                                 "mode": "RW",
                                 "n_bits": 32,
