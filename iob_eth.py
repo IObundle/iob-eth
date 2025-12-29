@@ -13,6 +13,7 @@ from gen_custom_config_build import gen_custom_config_build
 
 def setup(py_params_dict):
     CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
+    VERSION = "0.1"
     gen_custom_config_build(py_params_dict)
 
     # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
@@ -45,11 +46,15 @@ def setup(py_params_dict):
 
     # Copy utility files
     if py_params_dict.get("py2hwsw_target", "") == "setup":
+        build_dir = py_params_dict["build_dir"]
         # check if eth is top module
         if py_params_dict["issuer"]:
             dev_sdc = "iob_eth_dev_periph.sdc"
         else:
             dev_sdc = "iob_eth_dev_top.sdc"
+            # Py2hwsw does not usually give build dir python parameter for top module (only if user defines it via args)
+            if not build_dir:
+                build_dir = f"../iob_eth_V{VERSION}"
         paths = [
             (
                 f"hardware/fpga/vivado/iob_aes_ku040_db_g/{dev_sdc}",
@@ -62,17 +67,15 @@ def setup(py_params_dict):
         ]
 
         for src, dst in paths:
-            dst = os.path.join(py_params_dict["build_dir"], dst)
+            dst = os.path.join(build_dir, dst)
             dst_dir = os.path.dirname(dst)
             os.makedirs(dst_dir, exist_ok=True)
             shutil.copy2(f"{os.path.dirname(__file__)}/{src}", dst)
             # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
             os.system("chmod -R ug+w " + dst)
 
-        if py_params_dict["build_dir"]:
-
             # Copy all scripts
-            dst = os.path.join(py_params_dict["build_dir"], "scripts")
+            dst = os.path.join(build_dir, "scripts")
             shutil.copytree(
                 f"{os.path.dirname(__file__)}/scripts",
                 dst,
@@ -84,7 +87,7 @@ def setup(py_params_dict):
     attributes_dict = {
         "generate_hw": True,
         "description": "IObundle's ethernet core. Driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.",
-        "version": "0.1",
+        "version": VERSION,
         "board_list": ["iob_aes_ku040_db_g", "iob_cyclonev_gt_dk"],
         "confs": [
             # Macros
