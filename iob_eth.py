@@ -1292,6 +1292,9 @@ def setup(py_params_dict):
                 "core_name": "iob_eth_cdc",
                 "instance_name": "iob_eth_cdc",
                 "instance_description": "Clock domain crossing block",
+                "parameters": {
+                    "BUFFER_W": "BUFFER_W",
+                },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "tx_rx_clk_i": "cdc_clks",
