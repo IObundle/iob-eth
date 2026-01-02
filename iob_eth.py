@@ -940,7 +940,7 @@ def setup(py_params_dict):
         "subblocks": [
             {
                 "core_name": "iob_csrs",
-                "instance_name": "iob_csrs",
+                "instance_name": "csrs",
                 "instance_description": "Control/Status Registers",
                 "autoaddr": False,
                 "rw_overlap": True,
@@ -1278,7 +1278,7 @@ def setup(py_params_dict):
             # PHY reset counter
             {
                 "core_name": "iob_acc",
-                "instance_name": "phy_rst_cnt_acc",
+                "instance_name": "phy_reset_counter",
                 "instance_description": "PHY reset counter accumulator",
                 "parameters": {
                     "DATA_W": "21",
@@ -1294,7 +1294,7 @@ def setup(py_params_dict):
             # CDC block
             {
                 "core_name": "iob_eth_cdc",
-                "instance_name": "iob_eth_cdc",
+                "instance_name": "cdc",
                 "instance_description": "Clock domain crossing block",
                 "parameters": {
                     "BUFFER_W": "BUFFER_W",
@@ -1381,7 +1381,7 @@ def setup(py_params_dict):
             },
             {
                 "core_name": "iob_ram_tdp",
-                "instance_name": "bd_ram",
+                "instance_name": "buffer_descriptors",
                 "instance_description": "Buffer descriptors memory",
                 "parameters": {
                     "ADDR_W": "BD_NUM_LOG2 + 1",
@@ -1432,7 +1432,7 @@ def setup(py_params_dict):
             # No-auto csrs logic
             # {
             #     "core_name": "iob_eth_logic",
-            #     "instance_name": "iob_eth_logic",
+            #     "instance_name": "eth_logic",
             #     "instance_description": "Extra ethernet CSRs logic",
             #     "connect": {
             #         "clk_en_rst_s": "clk_en_rst_s",
