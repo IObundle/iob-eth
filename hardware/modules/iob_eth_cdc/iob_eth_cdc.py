@@ -65,31 +65,6 @@ def setup(py_params_dict):
                     {"name": "eth_tx_ready_i", "width": 1},
                 ],
             },
-            # Synchronizer ports
-            # {
-            #     "name": "buffer_o",
-            #     "signals": [
-            #         {"name": "wr_o", "isvar": True, "width": 1},
-            #         {"name": "addr_o", "isvar": True, "width": 11},
-            #         {"name": "data_o", "isvar": True, "width": 8},
-            #     ],
-            # },
-            # {
-            #     "name": "dt_io",
-            #     "signals": [
-            #         {"name": "rcv_ack_i", "width": 1},
-            #         {"name": "data_rcvd_o", "isvar": True, "width": 1},
-            #         {"name": "crc_err_o", "width": 1},
-            #     ],
-            # },
-            # {
-            #     "name": "mii_i",
-            #     "signals": [
-            #         {"name": "rx_clk_i", "width": 1},
-            #         {"name": "rx_dv_i", "width": 1},
-            #         {"name": "rx_data_i", "width": 4},
-            #     ],
-            # },
         ],
         "wires": [
             # Reset synchronizer wires
@@ -142,11 +117,6 @@ def setup(py_params_dict):
             },
             # Synchronizers (generated below)
         ],
-        # "snippets": [
-        #     {
-        #         "verilog_code": """""",
-        #     },
-        # ],
     }
 
     #
