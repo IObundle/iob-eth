@@ -6,6 +6,16 @@
 def setup(py_params_dict):
     attributes_dict = {
         "generate_hw": True,
+        "confs": [
+            {
+                "name": "BUFFER_W",
+                "type": "P",
+                "val": "11",
+                "min": "0",
+                "max": "32",
+                "descr": "Buffer size",
+            },
+        ],
         "ports": [
             {
                 "name": "clk_en_rst_s",
@@ -15,7 +25,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "name": "",
+                "name": "eth_logic_io",
                 "signals": [
                     # CSRs IO
                     # tx_bd_cnt
@@ -38,7 +48,7 @@ def setup(py_params_dict):
                     {"name": "rx_nbytes_valid_rd_i", "width": 1},
                     {"name": "rx_nbytes_ready_rd_o", "width": 1},
                     {"name": "rx_nbytes_rvalid_rd_o", "width": 1},
-                    {"name": "rx_nbytes_rdata_rd_o", "width": 1},
+                    {"name": "rx_nbytes_rdata_rd_o", "width": "BUFFER_W"},
                     # frame_word
                     {"name": "frame_word_ready_wrrd_o", "width": 1},
                     {"name": "frame_word_wstrb_wrrd_i", "width": 1},
@@ -50,7 +60,7 @@ def setup(py_params_dict):
                     # bd
                     {"name": "internal_bd_wen_o", "width": 1},
                     {"name": "bd_valid_wrrd_i", "width": 1},
-                    {"name": "bd_wstrb_wrrd_i", "width": 1},
+                    {"name": "bd_wstrb_wrrd_i", "width": 32 // 8},
                     {"name": "bd_ready_wrrd_o", "width": 1},
                     {"name": "bd_rvalid_wrrd_o", "width": 1},
                     # Status signals
@@ -99,11 +109,11 @@ def setup(py_params_dict):
 
    // rx nbytes logic
    rx_nbytes_ready_rd_o = ~rcv_ack_i;  // Wait for ack complete
-   rx_nbytes_rvalid_rd_en = rx_nbytes_valid_rd_i & rx_nbytes_ready_rd_o;
-   rx_nbytes_rvalid_rd_rst = rx_nbytes_rvalid_rd_o; // Enable for one clock cycle
+   rx_nbytes_rvalid_rd_o_en = rx_nbytes_valid_rd_i & rx_nbytes_ready_rd_o;
+   rx_nbytes_rvalid_rd_o_rst = rx_nbytes_rvalid_rd_o; // Enable for one clock cycle
    rx_nbytes_rvalid_rd_o_nxt = 1'b1;
    // same logic for rdata
-   rx_nbytes_rdata_rd_en = rx_nbytes_rvalid_rd_en;
+   rx_nbytes_rdata_rd_o_en = rx_nbytes_rvalid_rd_o_en;
    rx_nbytes_rdata_rd_o_nxt = rx_data_rcvd_i ? rx_nbytes_i : 0;
 
    // frame word logic
