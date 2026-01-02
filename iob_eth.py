@@ -601,15 +601,6 @@ def setup(py_params_dict):
                     {"name": "iob_eth_rx_buffer_doutB", "width": 8},
                 ],
             },
-            # {
-            #     "name": "comb_wires",
-            #     "descr": "",
-            #     "signals": [
-            #         {"name": "rcv_ack"},
-            #         {"name": "rx_data_rcvd"},
-            #         {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
-            #     ],
-            # },
             # MII management
             {
                 "name": "mii_management",
@@ -1421,25 +1412,6 @@ def setup(py_params_dict):
                     "eth_logic_io": "eth_logic",
                 },
             },
-            # Old. TODO: Remove later
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
-                    "clk_en_rst_s": "c_a_e",
-                },
-            },
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
-                    "clk_en_rst_s": "c_a_r",
-                },
-            },
             # For simulation
             {
                 "core_name": "iob_tasks",
@@ -1453,47 +1425,6 @@ def setup(py_params_dict):
                 "instance_name": "iob_coverage_analyze_inst",
             },
         ],
-        #         "comb": {
-        #             "code": """
-        #    // Delay rvalid and rdata signals of NOAUTO CSRs by one clock cycle, since they must come after valid & ready handshake
-        #
-        #    // tx bd cnt logic
-        #    tx_bd_cnt_ready_rd = 1'b1;
-        #    tx_bd_cnt_rvalid_rd_nxt = tx_bd_cnt_valid_rd & tx_bd_cnt_ready_rd;
-        #
-        #    // rx bd cnt logic
-        #    rx_bd_cnt_ready_rd = 1'b1;
-        #    rx_bd_cnt_rvalid_rd_nxt = rx_bd_cnt_valid_rd & rx_bd_cnt_ready_rd;
-        #
-        #    // tx word cnt logic
-        #    tx_word_cnt_ready_rd = 1'b1;
-        #    tx_word_cnt_rvalid_rd_nxt = tx_word_cnt_valid_rd & tx_word_cnt_ready_rd;
-        #
-        #    // rx word cnt logic
-        #    rx_word_cnt_ready_rd = 1'b1;
-        #    rx_word_cnt_rvalid_rd_nxt = rx_word_cnt_valid_rd & rx_word_cnt_ready_rd;
-        #
-        #    // rx nbytes logic
-        #    rx_nbytes_ready_rd = ~rcv_ack;  // Wait for ack complete
-        #    rx_nbytes_rvalid_rd_en = rx_nbytes_valid_rd & rx_nbytes_ready_rd;
-        #    rx_nbytes_rvalid_rd_rst = rx_nbytes_rvalid_rd; // Enable for one clock cycle
-        #    rx_nbytes_rvalid_rd_nxt = 1'b1;
-        #    // same logic for rdata
-        #    rx_nbytes_rdata_rd_en = rx_nbytes_rvalid_rd_en;
-        #    rx_nbytes_rdata_rd_nxt = rx_data_rcvd ? rx_nbytes : 0;
-        #
-        #    // frame word logic
-        #    frame_word_ready_wrrd = internal_frame_word_wen ? internal_frame_word_ready_wr : internal_frame_word_ready_rd;
-        #    internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
-        #    internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
-        #
-        #    // BD logic
-        #    internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
-        #    bd_ready_wrrd = 1'b1;
-        #    bd_rvalid_wrrd_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
-        #    // bd_rdata_wrrd already delayed due to RAM
-        # """,
-        #         },
         "snippets": [
             {
                 "verilog_code": """
