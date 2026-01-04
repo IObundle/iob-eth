@@ -931,7 +931,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_csrs",
                 "instance_name": "csrs",
-                "instance_description": "Control/Status Registers",
+                "instance_description": "The Control and Status Register block contains registers accessible by the software for controlling the IP core attached as a peripheral.",
                 "autoaddr": False,
                 "rw_overlap": True,
                 "csr_if": CSR_IF,
@@ -1269,7 +1269,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_acc",
                 "instance_name": "phy_reset_counter",
-                "instance_description": "PHY reset counter accumulator",
+                "instance_description": "Counter to generate initial PHY reset signal. Configurable duration based on counter reset value.",
                 "parameters": {
                     "DATA_W": "21",
                     "RST_VAL": "21'h100000 | (PHY_RST_CNT - 1)",
@@ -1285,7 +1285,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_cdc",
                 "instance_name": "cdc",
-                "instance_description": "Clock domain crossing block",
+                "instance_description": "Clock domain crossing block, using internal synchronizers.",
                 "parameters": {
                     "BUFFER_W": "BUFFER_W",
                 },
@@ -1300,8 +1300,8 @@ def setup(py_params_dict):
             # Transmitter
             {
                 "core_name": "iob_eth_tx",
-                "instance_name": "tx",
-                "instance_description": "Transmitter module",
+                "instance_name": "transmitter",
+                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes to a host interface, and validates the frame with a CRC check; it produces a ready/received indication for higher-level logic.",
                 "connect": {
                     "arst_i": "tx_phy_rst",
                     "buffer_io": "tx_buffer",
@@ -1312,8 +1312,8 @@ def setup(py_params_dict):
             # Receiver
             {
                 "core_name": "iob_eth_rx",
-                "instance_name": "rx",
-                "instance_description": "Receiver module",
+                "instance_name": "receiver",
+                "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
                 "connect": {
                     "arst_i": "rx_phy_rst",
                     "buffer_o": "rx_buffer",
@@ -1325,7 +1325,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_ram_at2p",
                 "instance_name": "tx_buffer",
-                "instance_description": "TX buffer memory",
+                "instance_description": "Buffer memory for data to be transmitted.",
                 "parameters": {
                     # Note: the tx buffer also includes PREAMBLE+SFD,
                     # maybe we should increase this size to acount for
@@ -1340,7 +1340,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_ram_at2p",
                 "instance_name": "rx_buffer",
-                "instance_description": "RX buffer memory",
+                "instance_description": "Buffer memory for data received.",
                 "parameters": {
                     "ADDR_W": "`IOB_ETH_BUFFER_W",
                     "DATA_W": 8,
@@ -1352,7 +1352,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_ram_tdp",
                 "instance_name": "buffer_descriptors",
-                "instance_description": "Buffer descriptors memory",
+                "instance_description": "Buffer descriptors memory.",
                 "parameters": {
                     "ADDR_W": "BD_NUM_LOG2 + 1",
                     "DATA_W": 32,
@@ -1368,7 +1368,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_dt",
                 "instance_name": "data_transfer",
-                "instance_description": "Data Transfer block",
+                "instance_description": "Manages data transfers between ethernet modules and interfaces.",
                 "parameters": {
                     "AXI_ADDR_W": "AXI_ADDR_W",
                     "AXI_DATA_W": "AXI_DATA_W",
@@ -1393,7 +1393,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_mii_management",
                 "instance_name": "mii_management",
-                "instance_description": "MII management module",
+                "instance_description": "Controls MII management sinagls.",
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "management_io": "mii_management",
@@ -1403,7 +1403,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_logic",
                 "instance_name": "eth_logic",
-                "instance_description": "Extra ethernet CSRs logic",
+                "instance_description": "Extra ethernet logic for interface between CSRs and Data Transfer block.",
                 "parameters": {
                     "BUFFER_W": "BUFFER_W",
                 },
