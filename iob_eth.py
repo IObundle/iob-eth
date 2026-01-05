@@ -13,6 +13,7 @@ from gen_custom_config_build import gen_custom_config_build
 
 def setup(py_params_dict):
     CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
+    VERSION = "0.1"
     gen_custom_config_build(py_params_dict)
 
     # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
@@ -45,11 +46,15 @@ def setup(py_params_dict):
 
     # Copy utility files
     if py_params_dict.get("py2hwsw_target", "") == "setup":
+        build_dir = py_params_dict["build_dir"]
         # check if eth is top module
         if py_params_dict["issuer"]:
             dev_sdc = "iob_eth_dev_periph.sdc"
         else:
             dev_sdc = "iob_eth_dev_top.sdc"
+            # Py2hwsw does not usually give build dir python parameter for top module (only if user defines it via args)
+            if not build_dir:
+                build_dir = f"../iob_eth_V{VERSION}"
         paths = [
             (
                 f"hardware/fpga/vivado/iob_aes_ku040_db_g/{dev_sdc}",
@@ -62,29 +67,27 @@ def setup(py_params_dict):
         ]
 
         for src, dst in paths:
-            dst = os.path.join(py_params_dict["build_dir"], dst)
+            dst = os.path.join(build_dir, dst)
             dst_dir = os.path.dirname(dst)
             os.makedirs(dst_dir, exist_ok=True)
             shutil.copy2(f"{os.path.dirname(__file__)}/{src}", dst)
             # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
             os.system("chmod -R ug+w " + dst)
 
-        if py_params_dict["build_dir"]:
-
-            # Copy all scripts
-            dst = os.path.join(py_params_dict["build_dir"], "scripts")
-            shutil.copytree(
-                f"{os.path.dirname(__file__)}/scripts",
-                dst,
-                dirs_exist_ok=True,
-            )
-            # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
-            os.system("chmod -R ug+w " + dst)
+        # Copy all scripts
+        dst = os.path.join(build_dir, "scripts")
+        shutil.copytree(
+            f"{os.path.dirname(__file__)}/scripts",
+            dst,
+            dirs_exist_ok=True,
+        )
+        # Hack for Nix: Files copied from Nix's py2hwsw package do not contain write permissions
+        os.system("chmod -R ug+w " + dst)
 
     attributes_dict = {
         "generate_hw": True,
         "description": "IObundle's ethernet core. Driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.",
-        "version": "0.1",
+        "version": VERSION,
         "board_list": ["iob_aes_ku040_db_g", "iob_cyclonev_gt_dk"],
         "confs": [
             # Macros
@@ -598,15 +601,6 @@ def setup(py_params_dict):
                     {"name": "iob_eth_rx_buffer_doutB", "width": 8},
                 ],
             },
-            {
-                "name": "comb_wires",
-                "descr": "",
-                "signals": [
-                    {"name": "rcv_ack", "width": 1},
-                    {"name": "rx_data_rcvd", "width": 1},
-                    {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
-                ],
-            },
             # MII management
             {
                 "name": "mii_management",
@@ -623,24 +617,92 @@ def setup(py_params_dict):
                     {"name": "phy_rst", "width": 1},
                 ],
             },
-            # Synchronizer wires
+            # CDC wires
             {
-                "name": "sync_wires",
+                "name": "cdc_clks",
                 "signals": [
-                    {"name": "rx_arst", "width": 1},
-                    {"name": "tx_arst", "width": 1},
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "mii_tx_clk_i"},
+                ],
+            },
+            {
+                "name": "cdc_phy_rst",
+                "signals": [
+                    {"name": "phy_rst"},
+                    {"name": "rx_phy_rst", "width": 1},
+                    {"name": "tx_phy_rst", "width": 1},
+                ],
+            },
+            {
+                "name": "cdc_system",
+                "signals": [
+                    {"name": "rcv_ack", "width": 1},
+                    {"name": "send", "width": 1},
+                    {"name": "crc_en", "width": 1},
+                    {"name": "tx_nbytes", "width": 11},
+                    {"name": "crc_err", "width": 1},
+                    {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
+                    {"name": "rx_data_rcvd", "width": 1},
+                    {"name": "tx_ready", "width": 1},
+                ],
+            },
+            {
+                "name": "cdc_eth",
+                "signals": [
                     {"name": "eth_rcv_ack", "width": 1},
                     {"name": "eth_send", "width": 1},
-                    {"name": "send", "width": 1},
                     {"name": "eth_crc_en", "width": 1},
-                    {"name": "crc_en", "width": 1},
                     {"name": "eth_tx_nbytes", "width": 11},
-                    {"name": "tx_nbytes", "width": 11},
                     {"name": "eth_crc_err", "width": 1},
-                    {"name": "crc_err", "width": 1},
+                    {"name": "iob_eth_rx_buffer_addrA"},  # eth_rx_nbytes
                     {"name": "eth_rx_data_rcvd", "width": 1},
                     {"name": "eth_tx_ready", "width": 1},
-                    {"name": "tx_ready", "width": 1},
+                ],
+            },
+            # Eth logic wires
+            {
+                "name": "eth_logic",
+                "signals": [
+                    # CSRs IO
+                    # tx_bd_cnt
+                    {"name": "tx_bd_cnt_valid_rd"},
+                    {"name": "tx_bd_cnt_ready_rd"},
+                    {"name": "tx_bd_cnt_rvalid_rd"},
+                    # rx_bd_cnt
+                    {"name": "rx_bd_cnt_valid_rd"},
+                    {"name": "rx_bd_cnt_ready_rd"},
+                    {"name": "rx_bd_cnt_rvalid_rd"},
+                    # tx_word_cnt
+                    {"name": "tx_word_cnt_valid_rd"},
+                    {"name": "tx_word_cnt_ready_rd"},
+                    {"name": "tx_word_cnt_rvalid_rd"},
+                    # rx_word_cnt
+                    {"name": "rx_word_cnt_valid_rd"},
+                    {"name": "rx_word_cnt_ready_rd"},
+                    {"name": "rx_word_cnt_rvalid_rd"},
+                    # rx_nbytes
+                    {"name": "rx_nbytes_valid_rd"},
+                    {"name": "rx_nbytes_ready_rd"},
+                    {"name": "rx_nbytes_rvalid_rd"},
+                    {"name": "rx_nbytes_rdata_rd"},
+                    # frame_word
+                    {"name": "frame_word_ready_wrrd"},
+                    {"name": "frame_word_wstrb_wrrd"},
+                    {"name": "frame_word_valid_wrrd"},
+                    {"name": "internal_frame_word_wen"},
+                    {"name": "internal_frame_word_ren"},
+                    {"name": "internal_frame_word_ready_wr"},
+                    {"name": "internal_frame_word_ready_rd"},
+                    # bd
+                    {"name": "internal_bd_wen"},
+                    {"name": "bd_valid_wrrd"},
+                    {"name": "bd_wstrb_wrrd"},
+                    {"name": "bd_ready_wrrd"},
+                    {"name": "bd_rvalid_wrrd"},
+                    # Status signals
+                    {"name": "rcv_ack"},
+                    {"name": "rx_data_rcvd"},
+                    {"name": "rx_nbytes"},
                 ],
             },
             # Data Transfer wires
@@ -678,38 +740,11 @@ def setup(py_params_dict):
                     {"name": "phy_rst_cnt_o"},
                 ],
             },
-            # Reset synchronizer wires
-            {
-                "name": "rx_reset_sync_clk_rst",
-                "signals": [
-                    {"name": "mii_rx_clk_i"},
-                    {"name": "arst_i"},
-                ],
-            },
-            {
-                "name": "rx_reset_sync_arst_o",
-                "signals": [
-                    {"name": "rx_clk_arst"},
-                ],
-            },
-            {
-                "name": "tx_reset_sync_clk_rst",
-                "signals": [
-                    {"name": "mii_tx_clk_i"},
-                    {"name": "arst_i"},
-                ],
-            },
-            {
-                "name": "tx_reset_sync_arst_o",
-                "signals": [
-                    {"name": "tx_clk_arst"},
-                ],
-            },
             # Transmitter
             {
-                "name": "tx_arst",
+                "name": "tx_phy_rst",
                 "signals": [
-                    {"name": "tx_arst"},
+                    {"name": "tx_phy_rst"},
                 ],
             },
             {
@@ -738,9 +773,9 @@ def setup(py_params_dict):
             },
             # Receiver
             {
-                "name": "rx_arst",
+                "name": "rx_phy_rst",
                 "signals": [
-                    {"name": "rx_arst"},
+                    {"name": "rx_phy_rst"},
                 ],
             },
             {
@@ -895,8 +930,8 @@ def setup(py_params_dict):
         "subblocks": [
             {
                 "core_name": "iob_csrs",
-                "instance_name": "iob_csrs",
-                "instance_description": "Control/Status Registers",
+                "instance_name": "csrs",
+                "instance_description": "The Control and Status Register block contains registers accessible by the software for controlling the IP core attached as a peripheral.",
                 "autoaddr": False,
                 "rw_overlap": True,
                 "csr_if": CSR_IF,
@@ -906,6 +941,7 @@ def setup(py_params_dict):
                         "descr": "IOb_Eth Software Accessible Registers",
                         "regs": [
                             {
+                                # NOTE: The Linux ethmac driver from opencores does not support half-duplex. Only full-duplex. Therefore there is no need to implement half-duplex mode.
                                 "name": "moder",
                                 "mode": "RW",
                                 "n_bits": 32,
@@ -1232,8 +1268,8 @@ def setup(py_params_dict):
             # PHY reset counter
             {
                 "core_name": "iob_acc",
-                "instance_name": "phy_rst_cnt_acc",
-                "instance_description": "PHY reset counter accumulator",
+                "instance_name": "phy_reset_counter",
+                "instance_description": "Counter to generate initial PHY reset signal. Configurable duration based on counter reset value.",
                 "parameters": {
                     "DATA_W": "21",
                     "RST_VAL": "21'h100000 | (PHY_RST_CNT - 1)",
@@ -1245,33 +1281,29 @@ def setup(py_params_dict):
                     "data_o": "iob_acc_data",
                 },
             },
-            # Reset Synchronizers
+            # CDC block
             {
-                "core_name": "iob_reset_sync",
-                "instance_name": "rx_reset_sync",
-                "instance_description": "Async reset synchronizer for RX",
+                "core_name": "iob_eth_cdc",
+                "instance_name": "cdc",
+                "instance_description": "Clock domain crossing block, using internal synchronizers.",
+                "parameters": {
+                    "BUFFER_W": "BUFFER_W",
+                },
                 "connect": {
-                    "clk_rst_s": "rx_reset_sync_clk_rst",
-                    "arst_o": "rx_reset_sync_arst_o",
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "tx_rx_clk_i": "cdc_clks",
+                    "phy_rst_io": "cdc_phy_rst",
+                    "system_io": "cdc_system",
+                    "eth_io": "cdc_eth",
                 },
             },
-            {
-                "core_name": "iob_reset_sync",
-                "instance_name": "tx_reset_sync",
-                "instance_description": "Async reset synchronizer for TX",
-                "connect": {
-                    "clk_rst_s": "tx_reset_sync_clk_rst",
-                    "arst_o": "tx_reset_sync_arst_o",
-                },
-            },
-            # Synchronizers (generated below)
             # Transmitter
             {
                 "core_name": "iob_eth_tx",
-                "instance_name": "tx",
-                "instance_description": "Transmitter module",
+                "instance_name": "transmitter",
+                "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
                 "connect": {
-                    "arst_i": "tx_arst",
+                    "arst_i": "tx_phy_rst",
                     "buffer_io": "tx_buffer",
                     "dt_io": "tx_dt",
                     "mii_io": "tx_mii",
@@ -1280,10 +1312,10 @@ def setup(py_params_dict):
             # Receiver
             {
                 "core_name": "iob_eth_rx",
-                "instance_name": "rx",
-                "instance_description": "Receiver module",
+                "instance_name": "receiver",
+                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes to a host interface, and validates the frame with a CRC check; it produces a ready/received indication for higher-level logic.",
                 "connect": {
-                    "arst_i": "rx_arst",
+                    "arst_i": "rx_phy_rst",
                     "buffer_o": "rx_buffer",
                     "dt_io": "rx_dt",
                     "mii_i": "rx_mii",
@@ -1293,7 +1325,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_ram_at2p",
                 "instance_name": "tx_buffer",
-                "instance_description": "TX buffer memory",
+                "instance_description": "Buffer memory for data to be transmitted.",
                 "parameters": {
                     # Note: the tx buffer also includes PREAMBLE+SFD,
                     # maybe we should increase this size to acount for
@@ -1308,7 +1340,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_ram_at2p",
                 "instance_name": "rx_buffer",
-                "instance_description": "RX buffer memory",
+                "instance_description": "Buffer memory for data received.",
                 "parameters": {
                     "ADDR_W": "`IOB_ETH_BUFFER_W",
                     "DATA_W": 8,
@@ -1319,8 +1351,8 @@ def setup(py_params_dict):
             },
             {
                 "core_name": "iob_ram_tdp",
-                "instance_name": "bd_ram",
-                "instance_description": "Buffer descriptors memory",
+                "instance_name": "buffer_descriptors",
+                "instance_description": "Buffer descriptors memory.",
                 "parameters": {
                     "ADDR_W": "BD_NUM_LOG2 + 1",
                     "DATA_W": 32,
@@ -1336,7 +1368,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_dt",
                 "instance_name": "data_transfer",
-                "instance_description": "Data Transfer block",
+                "instance_description": "Manages data transfers between ethernet modules and interfaces.",
                 "parameters": {
                     "AXI_ADDR_W": "AXI_ADDR_W",
                     "AXI_DATA_W": "AXI_DATA_W",
@@ -1361,29 +1393,23 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_mii_management",
                 "instance_name": "mii_management",
-                "instance_description": "MII management module",
+                "instance_description": "Controls MII management signals.",
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "management_io": "mii_management",
                 },
             },
-            # Old. TODO: Remove later
+            # No-auto csrs logic
             {
-                "core_name": "iob_reg",
-                "instantiate": False,
-            },
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
-                    "clk_en_rst_s": "c_a_e",
+                "core_name": "iob_eth_logic",
+                "instance_name": "eth_logic",
+                "instance_description": "Extra ethernet logic for interface between CSRs and Data Transfer block.",
+                "parameters": {
+                    "BUFFER_W": "BUFFER_W",
                 },
-            },
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
-                    "clk_en_rst_s": "c_a_r",
+                "connect": {
+                    "clk_en_rst_s": "clk_en_rst_s",
+                    "eth_logic_io": "eth_logic",
                 },
             },
             # For simulation
@@ -1399,47 +1425,6 @@ def setup(py_params_dict):
                 "instance_name": "iob_coverage_analyze_inst",
             },
         ],
-        "comb": {
-            "code": """
-   // Delay rvalid and rdata signals of NOAUTO CSRs by one clock cycle, since they must come after valid & ready handshake
-
-   // tx bd cnt logic
-   tx_bd_cnt_ready_rd = 1'b1;
-   tx_bd_cnt_rvalid_rd_nxt = tx_bd_cnt_valid_rd & tx_bd_cnt_ready_rd;
-
-   // rx bd cnt logic
-   rx_bd_cnt_ready_rd = 1'b1;
-   rx_bd_cnt_rvalid_rd_nxt = rx_bd_cnt_valid_rd & rx_bd_cnt_ready_rd;
-
-   // tx word cnt logic
-   tx_word_cnt_ready_rd = 1'b1;
-   tx_word_cnt_rvalid_rd_nxt = tx_word_cnt_valid_rd & tx_word_cnt_ready_rd;
-
-   // rx word cnt logic
-   rx_word_cnt_ready_rd = 1'b1;
-   rx_word_cnt_rvalid_rd_nxt = rx_word_cnt_valid_rd & rx_word_cnt_ready_rd;
-
-   // rx nbytes logic
-   rx_nbytes_ready_rd = ~rcv_ack;  // Wait for ack complete
-   rx_nbytes_rvalid_rd_en = rx_nbytes_valid_rd & rx_nbytes_ready_rd;
-   rx_nbytes_rvalid_rd_rst = rx_nbytes_rvalid_rd; // Enable for one clock cycle
-   rx_nbytes_rvalid_rd_nxt = 1'b1;
-   // same logic for rdata
-   rx_nbytes_rdata_rd_en = rx_nbytes_rvalid_rd_en;
-   rx_nbytes_rdata_rd_nxt = rx_data_rcvd ? rx_nbytes : 0;
-
-   // frame word logic
-   frame_word_ready_wrrd = internal_frame_word_wen ? internal_frame_word_ready_wr : internal_frame_word_ready_rd;
-   internal_frame_word_wen = frame_word_valid_wrrd & (|frame_word_wstrb_wrrd);
-   internal_frame_word_ren = frame_word_valid_wrrd & (~(|frame_word_wstrb_wrrd));
-
-   // BD logic
-   internal_bd_wen = bd_valid_wrrd & (|bd_wstrb_wrrd);
-   bd_ready_wrrd = 1'b1;
-   bd_rvalid_wrrd_nxt = bd_valid_wrrd && (~(|bd_wstrb_wrrd));
-   // bd_rdata_wrrd already delayed due to RAM
-""",
-        },
         "snippets": [
             {
                 "verilog_code": """
@@ -1505,12 +1490,8 @@ def setup(py_params_dict):
    assign phy_rstn_o     = ~phy_rst;
    assign phy_rst_val_rd = phy_rst;
 
-   // Synchronizers
-
    // DMA
    assign inta_o = rx_irq | tx_irq;
-
-
 
    assign tx_ram_at2p_en = 1'b1;
    assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
@@ -1531,67 +1512,5 @@ def setup(py_params_dict):
             "csr_if": CSR_IF,
         },
     ]
-
-    #
-    # Synchronizers
-    #
-
-    synchronizers = {
-        # Name: (data_w, clk, arst, input, output)
-        "rx_arst_sync": (1, "mii_rx_clk_i", "rx_clk_arst", "phy_rst", "rx_arst"),
-        "tx_arst_sync": (1, "mii_tx_clk_i", "tx_clk_arst", "phy_rst", "tx_arst"),
-        "rcv_f2s_sync": (1, "mii_rx_clk_i", "rx_arst", "rcv_ack", "eth_rcv_ack"),
-        "send_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "send", "eth_send"),
-        "crc_en_f2s_sync": (1, "mii_tx_clk_i", "tx_arst", "crc_en", "eth_crc_en"),
-        "tx_nbytes_f2s_sync": (
-            11,
-            "mii_tx_clk_i",
-            "tx_arst",
-            "tx_nbytes",
-            "eth_tx_nbytes",
-        ),
-        "crc_err_sync": (1, "clk_i", "arst_i", "eth_crc_err", "crc_err"),
-        "rx_nbytes_sync": (
-            "`IOB_ETH_BUFFER_W",
-            "clk_i",
-            "arst_i",
-            "iob_eth_rx_buffer_addrA",
-            "rx_nbytes",
-        ),
-        "rx_data_rcvd_sync": (1, "clk_i", "arst_i", "eth_rx_data_rcvd", "rx_data_rcvd"),
-        "tx_ready_sync": (1, "clk_i", "arst_i", "eth_tx_ready", "tx_ready"),
-    }
-    for k, v in synchronizers.items():
-        attributes_dict["wires"] += [
-            # Create internal wires for synchronizer ports
-            {
-                "name": f"{k}_clk_rst",
-                "signals": [{"name": v[1]}, {"name": v[2]}],
-            },
-            {
-                "name": f"{k}_signal_i",
-                "signals": [{"name": v[3]}],
-            },
-            {
-                "name": f"{k}_signal_o",
-                "signals": [{"name": v[4]}],
-            },
-        ]
-        # Create synchronizer
-        attributes_dict["subblocks"].append(
-            {
-                "core_name": "iob_sync",
-                "instance_name": f"{k}_sync",
-                "instance_description": f"Synchronizer for {v[4]}",
-                "parameters": {
-                    "DATA_W": v[0],
-                },
-                "connect": {
-                    "clk_rst_s": f"{k}_clk_rst",
-                    "signal_i": f"{k}_signal_i",
-                    "signal_o": f"{k}_signal_o",
-                },
-            },
-        )
 
     return attributes_dict

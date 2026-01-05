@@ -485,7 +485,7 @@ def setup(py_params_dict):
                 "interrupt_o": "axistream_in_interrupt",
                 "axistream_io": "axistream_in_axis",
                 "sys_axis_io": "dma_axis_in",
-                "iob_csrs_cbus_s": (
+                "csrs_cbus_s": (
                     "axistream_in_csrs",
                     ["axistream_in_csrs_iob_addr[4:0]"],
                 ),
@@ -506,7 +506,7 @@ def setup(py_params_dict):
                 "interrupt_o": "axistream_out_interrupt",
                 "axistream_io": "axistream_out_axis",
                 "sys_axis_io": "dma_axis_out",
-                "iob_csrs_cbus_s": (
+                "csrs_cbus_s": (
                     "axistream_out_csrs",
                     ["axistream_out_csrs_iob_addr[4:0]"],
                 ),
@@ -544,7 +544,7 @@ def setup(py_params_dict):
             "csr_if": params["csr_if"],
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "iob_csrs_cbus_s": "eth_cbus",
+                "csrs_cbus_s": "eth_cbus",
                 "axi_m": "eth_axi",
                 "inta_o": "inta",
                 "phy_rstn_o": "phy_rstn",
@@ -565,7 +565,7 @@ def setup(py_params_dict):
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
                 "rst_i": "rst",
-                "iob_csrs_cbus_s": ("dma_csrs", ["dma_csrs_iob_addr[4:0]"]),
+                "csrs_cbus_s": ("dma_csrs", ["dma_csrs_iob_addr[4:0]"]),
                 "dma_input_io": "dma_axis_in",
                 "dma_output_io": "dma_axis_out",
                 "axi_m": "dma_axi",
