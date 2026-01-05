@@ -31,7 +31,7 @@ let
               rev = py2hwsw_commit;
               sha256 = py2hwsw_sha256;
               fetchSubmodules = true;
-	      # Generate shortHash.tex based on commit
+              # Generate shortHash.tex based on commit
               postFetch = ''
                 echo "Creating shortHash.tex"
                 echo "${builtins.substring 0 7 py2hwsw_commit}" > "$out/py2hwsw/shortHash.tex"

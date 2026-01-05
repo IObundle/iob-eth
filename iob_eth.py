@@ -1301,7 +1301,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_tx",
                 "instance_name": "transmitter",
-                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes to a host interface, and validates the frame with a CRC check; it produces a ready/received indication for higher-level logic.",
+                "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
                 "connect": {
                     "arst_i": "tx_phy_rst",
                     "buffer_io": "tx_buffer",
@@ -1313,7 +1313,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_rx",
                 "instance_name": "receiver",
-                "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
+                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes to a host interface, and validates the frame with a CRC check; it produces a ready/received indication for higher-level logic.",
                 "connect": {
                     "arst_i": "rx_phy_rst",
                     "buffer_o": "rx_buffer",
@@ -1393,7 +1393,7 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_mii_management",
                 "instance_name": "mii_management",
-                "instance_description": "Controls MII management sinagls.",
+                "instance_description": "Controls MII management signals.",
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
                     "management_io": "mii_management",
