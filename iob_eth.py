@@ -1424,6 +1424,9 @@ def setup(py_params_dict):
                 "core_name": "iob_coverage_analyze",
                 "instance_name": "iob_coverage_analyze_inst",
             },
+            {
+                "core_name": "iob_linux_device_drivers",
+            },
         ],
         "snippets": [
             {
