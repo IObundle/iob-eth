@@ -16,6 +16,12 @@ def setup(py_params_dict):
     VERSION = "0.1"
     gen_custom_config_build(py_params_dict)
 
+    IF_DISPLAY_NAME = {
+        "iob": "IOb",
+        "axil": "AXI-Lite",
+        "wb": "Wishbone",
+    }
+
     # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
     # # Check if pyRawWrapper exists
     # if py_params_dict.get("py2hwsw_target", "") == "setup" and not os.path.exists(pyRawWrapper_path):
@@ -301,6 +307,28 @@ def setup(py_params_dict):
                 ],
             },
         ],
+    }
+    # Document all supported CSR interfaces
+    for supported_if in ["iob", "axil", "wb"]:
+        # CSR_IF has already been documented previously. Only document other supported interfaces.
+        if CSR_IF != supported_if:
+            attributes_dict["ports"].append(
+                {
+                    "name": f"csrs_cbus_{supported_if}_s",
+                    "doc_only": True,
+                    "descr": f"Control and status interface, when selecting the {IF_DISPLAY_NAME[supported_if]} CSR interface.",
+                    "signals": {
+                        "type": supported_if,
+                        "ADDR_W": 12,
+                        "prefix": "csrs_",
+                    },
+                },
+            )
+
+    #
+    # Wires
+    #
+    attributes_dict |= {
         "wires": [
             {
                 "name": "moder",
