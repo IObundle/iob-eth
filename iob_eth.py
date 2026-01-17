@@ -320,6 +320,7 @@ def setup(py_params_dict):
                     "signals": {
                         "type": supported_if,
                         "ADDR_W": 12,
+                        "DATA_W": "DATA_W",
                         "prefix": "csrs_",
                     },
                 },
