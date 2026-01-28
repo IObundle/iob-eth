@@ -12,20 +12,23 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MODER (Mode Register)}
+  \endlastfoot
 
-  31-17   &   & Reserved \\ \hline
+  31-17   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   16      & RW & RECSMALL - Receive Small Packets. 
 
               0 = Packets smaller than MINFL are ignored; 
 
-              1 = Packets smaller than MINFL are accepted. \\ \hline
+              1 = Packets smaller than MINFL are accepted. \\* \nobreakhline
   15      & RW &   PAD - Padding enabled. 
 
               0 = do not add pads to short frames; 
 
-              1 = add pads to short frames (until the minimum frame length is equal to MINFL). \\ \hline
-  \endfirsthead
+              1 = add pads to short frames (until the minimum frame length is equal to MINFL). \\* \nobreakhline
   \rowcolor{iob-blue}
   14      & RW &   HUGEN = Huge Packets Enable. 
 
@@ -110,7 +113,6 @@ This section presents a detailed description of the Control and Status Registers
 
               If the value, written to the TX\_BD\_NUM register, is equal to 0x80 (all buffer descriptors are used for transmit buffer descriptors, so there is no receive BD), then the receiver is automatically disabled regardless of the RXEN bit.
   \\ \hline
-  \caption{MODER (Mode Register)}
 \end{xltabular}
 \label{csr_details:moder}
 
@@ -119,20 +121,23 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{INT\_SOURCE (Interrupt Source Register)}
+  \endlastfoot
 
-  31-7   &   & Reserved \\ \hline
+  31-7   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   6      & RW & RXC - Receive Control Frame
 
               This bit indicates that the control frame was received. It is
               cleared by writting 1 to it. Bit RXFLOW (CTRLMODER register)
-              must be set to 1 in order to get the RXC bit set. \\ \hline
+              must be set to 1 in order to get the RXC bit set. \\* \nobreakhline
   5      & RW & TXC - Transmit Control Frame
 
               This bit indicates that a control frame was transmitted. It is
               cleared by writting 1 to it. Bit RXFLOW (CTRLMODER register)
-              must be set to 1 in order to get the TXC bit set. \\ \hline
-  \endfirsthead
+              must be set to 1 in order to get the TXC bit set. \\* \nobreakhline
   \rowcolor{iob-blue}
   4      & RW & BUSY - Busy
 
@@ -167,7 +172,6 @@ This section presents a detailed description of the Control and Status Registers
               This bit indicates that a buffer has been transmitted. It is
               cleared by writing 1 to it. This bit appears only when IRQ bit
               is set in the Transmit Buffer Descriptor.\\ \hline
-  \caption{INT\_SOURCE (Interrupt Source Register)}
 \end{xltabular}
 \label{csr_details:int_source}
 
@@ -176,20 +180,23 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{INT\_MASK (Interrupt Mask Register)}
+  \endlastfoot
 
-  31-7   &   & Reserved \\ \hline
+  31-7   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   6      & RW & RXC\_M - Receive Control Frame Mask
               
               0 = Event masked
 
-              1 = Event causes an interrupt \\ \hline
+              1 = Event causes an interrupt \\* \nobreakhline
   5      & RW & TXC - Transmit Control Frame Mask
 
               0 = Event masked
 
-              1 = Event causes an interrupt \\ \hline
-  \endfirsthead
+              1 = Event causes an interrupt \\* \nobreakhline
   \rowcolor{iob-blue}
   4      & RW & BUSY - Busy Mask
 
@@ -218,7 +225,6 @@ This section presents a detailed description of the Control and Status Registers
               0 = Event masked
 
               1 = Event causes an interrupt \\ \hline
-  \caption{INT\_MASK (Interrupt Mask Register)}
 \end{xltabular}
 \label{csr_details:int_mask}
 
@@ -227,8 +233,12 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{IPGT (Back to Back Inter Packet Gap Register)}
+  \endlastfoot
 
-  31-7   &   & Reserved \\ \hline
+  31-7   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   6-0      & RW & IPGT - Back to Back Inter Packet Gap
 
@@ -240,9 +250,7 @@ This section presents a detailed description of the Control and Status Registers
               Half Duplex: The recommended value is 0x12, which equals
               $0.96\mu s$ IPG (100 Mbps) or $9.6\mu s$ (10 Mbps). The desired
               period in nibble times minus 3 should be written to the
-              register. \\ \hline
-  \endfirsthead
-  \caption{IPGT (Back to Back Inter Packet Gap Register)}
+              register. \\
 \end{xltabular}
 \label{csr_details:ipgt}
 
@@ -251,8 +259,12 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{IPGR1 (Non Back to Back Inter Packet Gap Register 1)}
+  \endlastfoot
 
-  31-7   &   & Reserved \\ \hline
+  31-7   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   6-0      & RW & IPGR1 - Non Back to Back Inter Packet Gap 1
 
@@ -260,9 +272,7 @@ This section presents a detailed description of the Control and Status Registers
               defers and the IPGR counter is reset. When a carrier sense
               appears later than the IPGR1 window, the IPGR counter continues
               counting. The recommended and default value for this register
-              is 0xC. It must be within the range [0,IPGR2]. \\ \hline
-  \endfirsthead
-  \caption{IPGR1 (Non Back to Back Inter Packet Gap Register 1)}
+              is 0xC. It must be within the range [0,IPGR2]. \\
 \end{xltabular}
 \label{csr_details:ipgr1}
 
@@ -271,15 +281,17 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{IPGR2 (Non Back to Back Inter Packet Gap Register 2)}
+  \endlastfoot
 
-  31-7   &   & Reserved \\ \hline
+  31-7   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   6-0      & RW & IPGR2 - Non Back to Back Inter Packet Gap 2
 
               The recommended and default value is 0x12, which equals to $0.96
-              \mu s$ IPG (100 Mbps) or $9.6 \mu s$ (10 Mbps).\\ \hline
-  \endfirsthead
-  \caption{IPGR2 (Non Back to Back Inter Packet Gap Register 2)}
+              \mu s$ IPG (100 Mbps) or $9.6 \mu s$ (10 Mbps).\\
 \end{xltabular}
 \label{csr_details:ipgr2}
 
@@ -288,6 +300,10 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{PACKETLEN (Packet Length Register)}
+  \endlastfoot
 
   31-16   & RW  & MINFL - Minimum Frame Length 
 
@@ -295,7 +311,7 @@ This section presents a detailed description of the Control and Status Registers
               smaller frames is needed, assert the RECSMALL bit (in the mode
               register MODER) or change the value of this register. To
               transmit small packets, assert the PAD bit or the MINFL value
-              (see the PAD bit description in the MODER register). \\ \hline
+              (see the PAD bit description in the MODER register). \\* \nobreakhline
   \rowcolor{iob-blue}
   15-0   & RW  & MAXFL - Maximum Frame Length 
 
@@ -304,9 +320,7 @@ This section presents a detailed description of the Control and Status Registers
               maximum packet length equals 1536 bytes (0x0600). If there is a
               need to support bigger packets, you can assert the HUGEN bit or
               increase the value of the MAXFL field (see the HUGEN bit
-              description in the MODER).\\ \hline
-  \endfirsthead
-  \caption{PACKETLEN (Packet Length Register)}
+              description in the MODER).\\
 \end{xltabular}
 \label{csr_details:packetlen}
 
@@ -315,8 +329,12 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{COLLCONF (Collision and Retry Configuration Register)}
+  \endlastfoot
 
-  31-20   &   & Reserved \\ \hline
+  31-20   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   19-16      & RW & MAXRET - Maximum Retry
 
@@ -325,8 +343,8 @@ This section presents a detailed description of the Control and Status Registers
               the maximum number has been reached, the Tx MAC reports an
               error and stops transmitting the current packet. According to
               the Ethernet standard, the MAXRET default value is set to 0xf
-              (15).\\ \hline
-  15-6      & RW &   Reserved \\ \hline
+              (15).\\* \nobreakhline
+  15-6      & RW &   Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   5-0       & RW &   COLLVALID - Collision Valid 
 
@@ -336,8 +354,6 @@ This section presents a detailed description of the Control and Status Registers
               The default value equals 0x3f (by default, a late collision is
               every collision that occurs 64 bytes ($63 + 1$) from the
               preamble) \\ \hline
-  \endfirsthead
-  \caption{COLLCONF (Collision and Retry Configuration Register)}
 \end{xltabular}
 \label{csr_details:collconf}
 
@@ -346,17 +362,19 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{TX\_BD\_NUM (Transmit BD Number Register)}
+  \endlastfoot
 
-  31-8   & RW  & Reserved \\ \hline
+  31-8   & RW  & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
     7-0   & RW  & Transmit Buffer Descriptor (Tx BD) Number
 
               Number of the Tx BD. Number of the Rx BD equals to the (0x80 –
               Tx BD number). Maximum number of the Tx BD is 0x80. Values
               greater then 0x80 cannot be written to this register
-              (ignored).\\ \hline
-  \endfirsthead
-  \caption{TX\_BD\_NUM (Transmit BD Number Register)}
+              (ignored).\\
 \end{xltabular}
 \label{csr_details:tx_bd_num}
 
@@ -365,22 +383,26 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{CTRLMODER (Control Module Mode Register)}
+  \endlastfoot
 
-  31-3   & RW  & Reserved \\ \hline
+  31-3   & RW  & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   2  & RW  & TXFLOW - Transmit Flow Control
 
               0 = PAUSE control frames are blocked. 
 
               1 = PAUSE control frames are allowed to be sent. This bit
-              enables the TXC bit in the INT\_SOURCE register.\\ \hline
+              enables the TXC bit in the INT\_SOURCE register.\\* \nobreakhline
   1  & RW  & RXFLOW - Receive Flow Control
 
               0 = Received PAUSE control frames are ignored.
 
               1 = The transmit function (Tx MAC) is blocked when a PAUSE
               control frame is received. This bit enables the RXC bit in the
-              INT\_SOURCE register.\\ \hline
+              INT\_SOURCE register.\\* \nobreakhline
   \rowcolor{iob-blue}
   0  & RW  & PASSALL - Pass All Receive Frames
 
@@ -388,8 +410,6 @@ This section presents a detailed description of the Control and Status Registers
               set to 1 in order to use PAUSE control frames.
 
               1 = All received frames are passed to the host.\\ \hline
-  \endfirsthead
-  \caption{CTRLMODER (Control Module Mode Register)}
 \end{xltabular}
 \label{csr_details:ctrlmoder}
 
@@ -398,23 +418,25 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf PASSALL \#} & {\bf RXFLOW} & {\bf Description} \\ \hline
+  \endfirsthead
+  \hline
+  \caption{PASSALL and RXFLOW Operation}
+  \endlastfoot
 
   0   & 0 &   When a PAUSE control frame is received, nothing happens. The
-              control frame is not stored to the memory.\\ \hline
+              control frame is not stored to the memory.\\* \nobreakhline
   \rowcolor{iob-blue}
   0   & 1 &   When a PAUSE control frame is received, RXC interrupt is set
               and pause timer is updated. The control frame is not stored to
-              the memory.\\ \hline
+              the memory.\\* \nobreakhline
   1   & 0 &   When a PAUSE control frame is received, it is stored to the
               memory as a normal data frame. RXB interrupt is set (if the
               related buffer descriptor has an IRQ bit set to 1). RXC
-              interrupt is not set and pause timer is not updated.\\ \hline
+              interrupt is not set and pause timer is not updated.\\* \nobreakhline
   \rowcolor{iob-blue}
   1   & 1 &   When a PAUSE control frame is received, RXC interrupt is set
               and pause timer is updated. Besides that the control frame is
               also stored to the memory as a normal data frame.\\ \hline
-  \endfirsthead
-  \caption{PASSALL and RXFLOW Operation}
 \end{xltabular}
 \label{csr_details:passall_rxflow}
 
@@ -423,21 +445,23 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MIIMODER (MII Mode Register)}
+  \endlastfoot
 
-  31-9   &   & Reserved \\ \hline
+  31-9   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   8      & RW & MIINOPRE - No Preamble
 
               0 = 32-bit premable sent
 
-              1 = No preamble sent\\ \hline
+              1 = No preamble sent\\* \nobreakhline
   7-0      & RW &   CLKDIV - Clock Divider
 
               The field is a host clock divider factor. The host clock can be
               divided by an even number, greater then 1. The default value is
-              0x64 (100).\\ \hline
-  \endfirsthead
-  \caption{MIIMODER (MII Mode Register)}
+              0x64 (100).\\
 \end{xltabular}
 \label{csr_details:miimoder}
 
@@ -446,15 +470,17 @@ This section presents a detailed description of the Control and Status Registers
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MIICOMMAND (MII Command Register)}
+  \endlastfoot
 
-  31-3   &   & Reserved \\ \hline
+  31-3   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
-  2      & RW & WCTRLDATA - Write Control Data \\ \hline
-  1      & RW & RSTAT - Read Status \\ \hline
+  2      & RW & WCTRLDATA - Write Control Data \\* \nobreakhline
+  1      & RW & RSTAT - Read Status \\* \nobreakhline
   \rowcolor{iob-blue}
   0      & RW & SCANSTAT - Scan Status \\ \hline
-  \endfirsthead
-  \caption{MIICOMMAND (MII Command Register)}
 \end{xltabular}
 \label{csr_details:miicommand}
 
@@ -467,16 +493,18 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MIIADDRESS (MII Address Register)}
+  \endlastfoot
 
-  31-13   &   & Reserved \\ \hline
+  31-13   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   12-8    & RW & RGAD - Register Address (within the PHY selected by the
-                      FIAD[4:0]) \\ \hline
-  7-5     & RW & Reserved \\ \hline
+                      FIAD[4:0]) \\* \nobreakhline
+  7-5     & RW & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   4-0     & RW & FIAD - PHY Address \\ \hline
-  \endfirsthead
-  \caption{MIIADDRESS (MII Address Register)}
 \end{xltabular}
 \label{csr_details:miiaddress}
 
@@ -485,13 +513,15 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MIITX\_DATA (MII Transmit Data)}
+  \endlastfoot
 
-  31-16   &   & Reserved \\ \hline
+  31-16   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
     15-0    & RW &  CTRLDATA - Control Data (data to be written to the PHY)
-                  \\ \hline
-  \endfirsthead
-  \caption{MIITX\_DATA (MII Transmit Data)}
+                  \\
 \end{xltabular}
 \label{csr_details:miitx_data}
 
@@ -500,12 +530,14 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
-
-  31-16   &   & Reserved \\ \hline
-  \rowcolor{iob-blue}
-  15-0    & R &  PRSD - Received Data (data to be read from PHY) \\ \hline
   \endfirsthead
+  \hline
   \caption{MIIRX\_DATA (MII Receive Data)}
+  \endlastfoot
+
+  31-16   &   & Reserved \\* \nobreakhline
+  \rowcolor{iob-blue}
+  15-0    & R &  PRSD - Received Data (data to be read from PHY) \\
 \end{xltabular}
 \label{csr_details:miirx_data}
 
@@ -514,8 +546,12 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MIISTATUS (MII Status Register)}
+  \endlastfoot
 
-  31-3   &   & Reserved \\ \hline
+  31-3   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   2      & R & NVALID - Invalid
 
@@ -524,12 +560,12 @@ finished (and BUSY signal cleared to zero).}
               1 = The data in the MSTATUS register is invalid. 
 
               This bit is only valid when the scan status operation is
-              active.\\ \hline
+              active.\\* \nobreakhline
   1      & R & BUSY
 
               0 = The MII is ready.
 
-              1 = The MII is bysy (operation in progress). \\ \hline
+              1 = The MII is bysy (operation in progress). \\* \nobreakhline
   \rowcolor{iob-blue}
   0      & R & LINKFAIL
 
@@ -539,8 +575,6 @@ finished (and BUSY signal cleared to zero).}
 
               The link fail condition occurred (now the link might be OK).
               Another status read gets a new status.\\ \hline
-  \endfirsthead
-  \caption{MIISTATUS (MII Status Register)}
 \end{xltabular}
 \label{csr_details:miistatus}
 
@@ -549,19 +583,18 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{MAC\_ADDR0 (MAC Address Register 0)}
+  \endlastfoot
 
-  31-24   & RW  & Byte 2 of the Ethernet MAC address (individual address) \\
-                  \hline
+  31-24   & RW  & Byte 2 of the Ethernet MAC address (individual address) \\* \nobreakhline
   \rowcolor{iob-blue}
-  23-16   & RW  & Byte 3 of the Ethernet MAC address (individual address) \\
-                  \hline
-  15-8    & RW  & Byte 4 of the Ethernet MAC address (individual address) \\
-                  \hline
+  23-16   & RW  & Byte 3 of the Ethernet MAC address (individual address) \\* \nobreakhline
+  15-8    & RW  & Byte 4 of the Ethernet MAC address (individual address) \\* \nobreakhline
   \rowcolor{iob-blue}
   7-0     & RW  & Byte 5 of the Ethernet MAC address (individual address) \\
                   \hline
-  \endfirsthead
-  \caption{MAC\_ADDR0 (MAC Address Register 0)}
 \end{xltabular}
 \label{csr_details:mac_addr0}
 
@@ -570,15 +603,15 @@ finished (and BUSY signal cleared to zero).}
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
-
-  31-16   & RW  & Reserved \\ \hline
-  \rowcolor{iob-blue}
-  15-8    & RW  & Byte 0 of the Ethernet MAC address (individual address) \\
-                  \hline
-  7-0     & RW  & Byte 1 of the Ethernet MAC address (individual address) \\
-                  \hline
   \endfirsthead
+  \hline
   \caption{MAC\_ADDR1 (MAC Address Register 1)}
+  \endlastfoot
+
+  31-16   & RW  & Reserved \\* \nobreakhline
+  \rowcolor{iob-blue}
+  15-8    & RW  & Byte 0 of the Ethernet MAC address (individual address) \\* \nobreakhline
+  7-0     & RW  & Byte 1 of the Ethernet MAC address (individual address) \\
 \end{xltabular}
 \label{csr_details:mac_addr1}
 
@@ -589,10 +622,12 @@ Note: When an address is transmitted, byte 0 is sent first and byte 5 last.
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{HASH0 (HASH Register 0)}
+  \endlastfoot
 
   31-0   & RW  & Hash0 value \\ \hline
-  \endfirsthead
-  \caption{HASH0 (HASH Register 0)}
 \end{xltabular}
 \label{csr_details:hash0}
 
@@ -601,10 +636,12 @@ Note: When an address is transmitted, byte 0 is sent first and byte 5 last.
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{HASH1 (HASH Register 1)}
+  \endlastfoot
 
   31-0   & RW  & Hash1 value \\ \hline
-  \endfirsthead
-  \caption{HASH1 (HASH Register 1)}
 \end{xltabular}
 \label{csr_details:hash1}
 
@@ -613,18 +650,20 @@ Note: When an address is transmitted, byte 0 is sent first and byte 5 last.
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{TXCTRL (Tx Control Register)}
+  \endlastfoot
 
-  31-17   &   & Reserved \\ \hline
+  31-17   &   & Reserved \\* \nobreakhline
   \rowcolor{iob-blue}
   16      & RW & TXPAUSERQ - Tx Pause Request
 
               Writing 1 to this bit starts sending control frame procedure.
-              Bit is automatically cleared to zero. \\ \hline
+              Bit is automatically cleared to zero. \\* \nobreakhline
   15-0    & RW & TXPAUSETV - Tx Pause Timer Value
 
-               The value that is send in the pause control frame.\\ \hline
-  \endfirsthead
-  \caption{TXCTRL (Tx Control Register)}
+               The value that is send in the pause control frame.\\
 \end{xltabular}
 \label{csr_details:txctrl}
 
@@ -650,16 +689,19 @@ once its transmission/reception is finished.
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{Tx Buffer Descriptor}
+  \endlastfoot
 
   63-32   & RW  & TXPNT - Transmit Pointer
 
               This is the buffer pointer when the associated frame is
-              stored.\\ \hline
+              stored.\\* \nobreakhline
   \rowcolor{iob-blue}
   31-16   & RW & LEN - Length
 
-               Number of bytes associated with the BD to be transmitted.\\
-               \hline
+               Number of bytes associated with the BD to be transmitted.\\* \nobreakhline
   15      & RW & RD - Tx BD Ready
 
               0 = The buffer associated with this buffer descriptor is not
@@ -669,8 +711,7 @@ once its transmission/reception is finished.
 
               1 = The data buffer is ready for transmission or is currently
               being transmitted. You are not allowed to manipulate this
-              descriptor once this bit is set. \\ \hline
-  \endfirsthead
+              descriptor once this bit is set. \\* \nobreakhline
   \rowcolor{iob-blue}
   14      & RW & IRQ - Interrupt Request Enable
 
@@ -733,7 +774,6 @@ once its transmission/reception is finished.
               This bit is set when Carrier Sense is lost during a frame
               transmission. The Ethernet controller writes CS after it
               finishes sending the buffer.\\ \hline
-  \caption{Tx Buffer Descriptor}
 \end{xltabular}
 \label{buffer_descriptors:tx}
 
@@ -744,16 +784,19 @@ once its transmission/reception is finished.
   \hline
   \rowcolor{iob-green}
   {\bf Bit \#} & {\bf R/W} & {\bf Description} \\ \hline \hline
+  \endfirsthead
+  \hline
+  \caption{Rx Buffer Descriptor}
+  \endlastfoot
 
   63-32   & RW  & RXPNT - Receive Pointer
 
               This is the pointer to the buffer storing the associated
-              frame.\\ \hline
+              frame.\\* \nobreakhline
   \rowcolor{iob-blue}
   31-16   & RW & LEN - Length
 
-               Number of bytes associated with the BD to be transmitted.\\
-               \hline
+               Number of bytes associated with the BD to be transmitted.\\* \nobreakhline
   15      & RW & E - Empty
 
               0 = The data buffer associated with this buffer descriptor has
@@ -762,8 +805,7 @@ once its transmission/reception is finished.
               zero, this buffer descriptor won’t be used.
 
               1 = The data buffer is empty (and ready for receiving data) or
-              currently receiving data.\\ \hline
-  \endfirsthead
+              currently receiving data.\\* \nobreakhline
   \rowcolor{iob-blue}
   14      & RW & IRQ - Interrupt Request Enable
 
@@ -832,6 +874,5 @@ once its transmission/reception is finished.
 
               This bit is set when a late collision occured while receiving a
               frame.\\ \hline
-  \caption{Rx Buffer Descriptor}
 \end{xltabular}
 \label{buffer_descriptors:rx}
