@@ -5,8 +5,8 @@
 { pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz") {} }:
 
 let
-  py2hwsw_commit = "7a3ede13dbc8e9054c32d761b1d99be7062e07e3"; # Replace with the desired commit.
-  py2hwsw_sha256 = "DelsZw+W+K2v4a5cFuhGXm8OtEBLHDTVU054xr11gU0="; # Replace with the actual SHA256 hash.
+  py2hwsw_commit = "ff53f4959462993c748de783acc1e1d1e60417ea"; # Replace with the desired commit.
+  py2hwsw_sha256 = "CF/KuGzRrVK+pHGhBOf1LhR7vw3ygDJQv+QpKhHpOyk="; # Replace with the actual SHA256 hash.
   # Get local py2hwsw root from `PY2HWSW_ROOT` env variable
   py2hwswRoot = builtins.getEnv "PY2HWSW_ROOT";
 
@@ -31,7 +31,7 @@ let
               rev = py2hwsw_commit;
               sha256 = py2hwsw_sha256;
               fetchSubmodules = true;
-	      # Generate shortHash.tex based on commit
+              # Generate shortHash.tex based on commit
               postFetch = ''
                 echo "Creating shortHash.tex"
                 echo "${builtins.substring 0 7 py2hwsw_commit}" > "$out/py2hwsw/shortHash.tex"
