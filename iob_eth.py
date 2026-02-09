@@ -22,34 +22,6 @@ def setup(py_params_dict):
         "wb": "Wishbone",
     }
 
-    # pyRawWrapper_path = f"{os.path.dirname(__file__)}/scripts/pyRawWrapper/pyRawWrapper"
-    # # Check if pyRawWrapper exists
-    # if py_params_dict.get("py2hwsw_target", "") == "setup" and not os.path.exists(pyRawWrapper_path):
-    #     print("Create pyRawWrapper for RAW access to ethernet frames")
-
-    #     # Run make compile
-    #     subprocess.run(
-    #         [
-    #             "make",
-    #             "-C",
-    #             f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-    #             "compile",
-    #         ],
-    #         check=True,
-    #     )
-    #
-    #     # Run sudo make set-capabilities
-    #     subprocess.run(
-    #         [
-    #             "sudo",
-    #             "make",
-    #             "-C",
-    #             f"{os.path.dirname(__file__)}/scripts/pyRawWrapper",
-    #             "set-capabilities",
-    #         ],
-    #         check=True,
-    #     )
-
     # Copy utility files
     if py_params_dict.get("py2hwsw_target", "") == "setup":
         build_dir = py_params_dict["build_dir"]
@@ -1452,6 +1424,9 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_coverage_analyze",
                 "instance_name": "iob_coverage_analyze_inst",
+            },
+            {
+                "core_name": "iob_linux_device_drivers",
             },
         ],
         "snippets": [
