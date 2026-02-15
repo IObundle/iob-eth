@@ -476,10 +476,10 @@ Linux kernel compilation configuration used:
 https://cateee.net/lkddb/web-lkddb/ETHOC.html
 
 # Acknowledgement
-The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project is funded through the NGI Assure Fund, a fund established by NLnet
+The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) and [SoCLinux](https://nlnet.nl/project/SoCLinux/#ack) projects are funded through the NGI Assure Fund, a fund established by NLnet
 with financial support from the European Commission's Next Generation Internet
 programme, under the aegis of DG Communications Networks, Content and Technology
-under grant agreement No 957073.
+under grant agreement Nos 957073 and 101092990.
 
 <table>
     <tr>
