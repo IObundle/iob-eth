@@ -54,7 +54,7 @@ Recognizing that adopting new IP cores can be challenging, IObundle offers profe
 
 IOb-Eth is released under the permissive MIT License, allowing unrestricted use in both commercial and non-commercial projects. The complete source code, documentation, and integration examples are available on GitHub.
 
-### Part of NGI-Funded OpenCryptoTester Initiative
+### Part of NGI-Funded OpenCryptoTester and SoCLinux Initiative
 
 The IOb-Eth core serves as a verification tool for the OpenCryptoTester project, which is funded through the NGI Assure Fund. This initiative, established by NLnet with financial support from the European Commission's Next Generation Internet programme, aims to advance secure and reliable open-source technologies.
 
@@ -66,11 +66,11 @@ For more information about IOb-Eth, technical documentation, or professional sup
 
 ### About IObundle
 
-IObundle, Lda is a technology company specializing in open-source semiconductor IP cores and FPGA solutions. The company is committed to providing high-quality, industrial-grade IP cores that enable developers and organizations to accelerate their hardware development while maintaining the freedom and flexibility of open-source licensing.
+IObundle, Lda is a technology company specializing in commercial and open-source semiconductor IP cores and FPGA solutions. The company is committed to providing high-quality, industrial-grade IP cores that enable developers and organizations to accelerate their hardware development while maintaining the freedom and flexibility of open-source licensing.
 
 ### Media Contact
 
-For press inquiries, please visit: https://github.com/IObundle/iob-eth
+For press inquiries, please visit: https://www.iobundle.com
 
 ---
 
