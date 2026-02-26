@@ -13,7 +13,7 @@ from gen_custom_config_build import gen_custom_config_build
 
 def setup(py_params_dict):
     CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
-    VERSION = "0.1"
+    VERSION = "0.1.0"
     gen_custom_config_build(py_params_dict)
 
     IF_DISPLAY_NAME = {
@@ -64,7 +64,7 @@ def setup(py_params_dict):
 
     attributes_dict = {
         "generate_hw": True,
-        "description": "IObundle's ethernet core. Driver-compatible with the [ethmac](https://opencores.org/projects/ethmac) core, containing a similar Control/Status Register interface.",
+        "description": "IObundle's ethernet core. Driver-compatible with the OpenCores ethmac core, containing a similar Control/Status Register interface. The original sources for this core and public key signature are available at: https://github.com/IObundle/iob-eth.",
         "version": VERSION,
         "board_list": ["iob_aes_ku040_db_g", "iob_cyclonev_gt_dk"],
         "confs": [

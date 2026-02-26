@@ -454,12 +454,15 @@ Running the following command with root privileges will set the capability:
 setcap cap_net_raw,cap_setpcap=p path/to/pyRawWrapper
 ```
 
-## Pre-built files
+## FuseSoC
 
-A [FuseSoC](https://github.com/olofk/fusesoc)-compatible pre-built version of IOb-Eth is available in the [repository's release page](https://github.com/IObundle/iob-eth/releases).
+A [FuseSoC](https://github.com/olofk/fusesoc)-compatible pre-built version of IOb-Eth is available in the official [FuseSoC Package Directory](https://cores.fusesoc.net/cores/?search=iob_eth).
+
+There is also a [FuseSoC](https://github.com/olofk/fusesoc)-compatible pre-built version of IOb-Eth available in the [repository's release page](https://github.com/IObundle/iob-eth/releases) and in the [iob-eth-fs](https://github.com/IObundle/iob-eth-fs) repository.
 The core's Verilog sources are available in the `iob_eth/hardware/src/` directory of the compressed tar.gz file in the release page.
 
-To use this pre-built core in FuseSoC, extract the compressed tar.gz files to a [FuseSoC library directory](https://fusesoc.readthedocs.io/en/stable/user/overview.html#discover-cores-the-package-manager).
+To use this pre-built core in FuseSoC, extract the compressed tar.gz file to a [FuseSoC library directory](https://fusesoc.readthedocs.io/en/stable/user/overview.html#discover-cores-the-package-manager).
+
 
 ## Linux driver
 
