@@ -21,7 +21,7 @@ PY_PARAMS:=$(shell echo $(PY_PARAMS) | cut -c2-)
 endif # ifndef PY_PARAMS
 
 BUILD_DIR ?= $(shell nix-shell --run "py2hwsw $(CORE) print_build_dir --py_params '$(PY_PARAMS)'")
-VERSION ?=$(shell cat $(CORE).py | grep version | cut -d '"' -f 4)
+VERSION ?= $(shell nix-shell --run "py2hwsw $(CORE) print_core_version --py_params '$(PY_PARAMS)'")
 
 #------------------------------------------------------------
 # SETUP
