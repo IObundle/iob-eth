@@ -6,14 +6,15 @@
 
 #include "iob_eth.h"
 #include "iob_eth_defines.h"
+#include <stddef.h>
 #include <stdio.h>
 
 // Frame template (includes every field of the frame before the payload)
 static char TEMPLATE[TEMPLATE_LEN];
 
-// Function to clear cache
-static void (*clear_cache)(void) = NULL;
-// Functions to alloc and clear memory
+// Function to flush cache (clean + invalidate)
+static void (*flush_cache)(void *, size_t) = NULL;
+// Functions to alloc and free memory
 static void *(*mem_alloc)(size_t) = &malloc;
 static void (*mem_free)(void *) = &free;
 
@@ -66,8 +67,8 @@ static void print_buffer(char *buffer, int size) {
 /*********** ETHERNET DRIVERS **************/
 /*******************************************/
 
-void eth_init(int base_address, void (*clear_cache_func)(void)) {
-  eth_init_clear_cache(clear_cache_func);
+void eth_init(int base_address, void (*flush_cache_func)(void *, size_t)) {
+  eth_init_flush_cache(flush_cache_func);
 #ifdef LOOPBACK
   eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
 #else
@@ -76,8 +77,8 @@ void eth_init(int base_address, void (*clear_cache_func)(void)) {
   eth_reset_bd_memory();
 }
 
-void eth_init_clear_cache(void (*clear_cache_func)(void)) {
-  clear_cache = clear_cache_func;
+void eth_init_flush_cache(void (*flush_cache_func)(void *, size_t)) {
+  flush_cache = flush_cache_func;
 }
 
 // Use custom memory allocator
@@ -192,6 +193,11 @@ void eth_send_frame(char *data, unsigned int size) {
   // Copy payload to frame
   for (i = 0; i < size; i++)
     frame_ptr[i + TEMPLATE_LEN] = data[i];
+
+  // Flush cache (clean + invalidate) if function is defined, to write-back dirty lines to memory so that DMA can read frame data.
+  // Tecnically we only need to clean cache here. But we will re-use the flush function since its already defined.
+  if (flush_cache)
+    (*flush_cache)(frame_ptr, TEMPLATE_LEN + size);
 
   /* Buffer descriptor configuration */
 
@@ -330,8 +336,11 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   int ignore;
 
   // Alloc memory for frame
-  volatile char *frame_ptr =
-      (volatile char *)(*mem_alloc)(HDR_LEN + ETH_NBYTES + 4);
+  char *frame_ptr = (char *)(*mem_alloc)(HDR_LEN + ETH_NBYTES + 4);
+
+  // Flush cache (clean + invalidate) if function is defined, to write-back dirty lines to memory, and afterwards fetch newly DMA written frame data
+  if (flush_cache)
+    (*flush_cache)(frame_ptr, HDR_LEN + ETH_NBYTES + 4);
 
   // Copy template to frame
   // for (i=0; i < TEMPLATE_LEN; i++)
@@ -369,9 +378,9 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     // Disable reception
     eth_receive(0);
 
-    // Clear cache if function is defined
-    if (clear_cache)
-      (*clear_cache)();
+    // Delay to ensure all DMA data is written to memory
+    for (unsigned int i = 0; i < 10; i++)
+      asm volatile("nop");
 
     // Check destination MAC address to see if should ignore frame
     ignore = 0;

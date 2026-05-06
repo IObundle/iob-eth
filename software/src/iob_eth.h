@@ -19,17 +19,17 @@
  * @brief Initializes the Ethernet core.
  *
  * @param base_address The base memory address of the Ethernet core.
- * @param clear_cache_func Function pointer to a function that clears the data
- * cache.
+ * @param flush_cache_func Function pointer to a function that flushes (cleans + invalidates) the data
+ * cache, based on given memory address and size.
  */
-void eth_init(int base_address, void (*clear_cache_func)(void));
+void eth_init(int base_address, void (*flush_cache_func)(void *start, size_t len));
 
 /**
- * @brief Set the cache clearing function.
- * @param clear_cache_func Function pointer to a function that clears the data
- * cache.
+ * @brief Set the cache flushing function.
+ * @param flush_cache_func Function pointer to a function that flushes  (cleans + invalidates) the data
+ * cache, based on given memory address and size.
  */
-void eth_init_clear_cache(void (*clear_cache_func)(void));
+void eth_init_flush_cache(void (*flush_cache_func)(void *start, size_t len));
 
 /**
  * @brief Set the memory allocation and free functions.
