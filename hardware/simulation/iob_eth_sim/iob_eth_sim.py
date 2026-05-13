@@ -465,8 +465,8 @@ def setup(py_params_dict):
             },
             "connect": {
                 "clk_en_rst_s": "clk_en_rst_s",
-                "counter_en_i": "mii_cnt_en",
-                "counter_rst_i": "mii_cnt_rst",
+                "en_i": "mii_cnt_en",
+                "rst_i": "mii_cnt_rst",
                 "data_o": "mii_cnt",
             },
         },
