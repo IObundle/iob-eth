@@ -14,6 +14,9 @@ This core is driver-compatible with the [ethmac](https://opencores.org/projects/
 
 This peripheral can be used as a verification tool for the [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project.
 
+An AI generated wiki for iob-eth is available [here](https://deepwiki.com/IObundle/iob-eth)
+
+
 ## Integrate in SoC ##
 
 * Check out [IOb-SoC-SUT](https://github.com/IObundle/iob-soc-sut)
