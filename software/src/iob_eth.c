@@ -194,8 +194,10 @@ void eth_send_frame(char *data, unsigned int size) {
   for (i = 0; i < size; i++)
     frame_ptr[i + TEMPLATE_LEN] = data[i];
 
-  // Flush cache (clean + invalidate) if function is defined, to write-back dirty lines to memory so that DMA can read frame data.
-  // Tecnically we only need to clean cache here. But we will re-use the flush function since its already defined.
+  // Flush cache (clean + invalidate) if function is defined, to write-back
+  // dirty lines to memory so that DMA can read frame data. Tecnically we only
+  // need to clean cache here. But we will re-use the flush function since its
+  // already defined.
   if (flush_cache)
     (*flush_cache)(frame_ptr, TEMPLATE_LEN + size);
 
@@ -338,7 +340,8 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
   // Alloc memory for frame
   char *frame_ptr = (char *)(*mem_alloc)(HDR_LEN + ETH_NBYTES + 4);
 
-  // Flush cache (clean + invalidate) if function is defined, to write-back dirty lines to memory, and afterwards fetch newly DMA written frame data
+  // Flush cache (clean + invalidate) if function is defined, to write-back
+  // dirty lines to memory, and afterwards fetch newly DMA written frame data
   if (flush_cache)
     (*flush_cache)(frame_ptr, HDR_LEN + ETH_NBYTES + 4);
 

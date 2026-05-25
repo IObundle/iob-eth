@@ -124,7 +124,7 @@ int iob_core_tb() {
     burstlen = 255;
   }
   iob_dma_csrs_set_w_burstlen(burstlen);
-  dma_write_transfer((uint32_t *)SEND_RAM_ADDR, axis_out_nwords);
+  dma_write_transfer((uint32_t)(uintptr_t)SEND_RAM_ADDR, axis_out_nwords);
 
   // 4. Wait for DMA transfer complete
   printf("4. Wait for DMA write transfer complete...\n");
@@ -158,7 +158,7 @@ int iob_core_tb() {
 
   printf("7.3. Configure DMA read transfer\n");
   iob_dma_csrs_set_r_burstlen(burstlen);
-  dma_read_transfer((uint32_t *)RCV_RAM_ADDR, axis_out_nwords);
+  dma_read_transfer((uint32_t)(uintptr_t)RCV_RAM_ADDR, axis_out_nwords);
 
   // 8. Wait for DMA transfer complete
   printf("8. Wait for DMA read transfer complete...");
