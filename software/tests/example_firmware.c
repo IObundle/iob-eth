@@ -33,7 +33,7 @@ int main() {
   int bufferAddress = 0;
 
   uart_init(UART_BASE, FREQ / BAUD);
-  eth_init(ETHERNET_BASE);
+  eth_init(ETHERNET_BASE, 0, NULL, &printf);
 
   uart_puts("\nSuccessful Init\n");
 
