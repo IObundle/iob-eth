@@ -21,6 +21,7 @@ module iob_eth_tx (
 
    // state
    reg  [ 3:0] pc;
+   reg  [10:0] addr;
 
    // crc
    reg         crc_en_int;
@@ -34,14 +35,14 @@ module iob_eth_tx (
       if (arst_i) begin
          pc         <= 0;
          crc_en_int <= 0;
-         addr_o     <= 0;
+         addr       <= 0;
          ready_o    <= 1;
          tx_en_o    <= 0;
          tx_data_o  <= 0;
       end else begin
 
          pc         <= pc + 1'b1;
-         addr_o     <= addr_o + {10'b0, pc[0]};
+         addr       <= addr + {10'b0, pc[0]};
          crc_en_int <= 0;
 
          case (pc)
@@ -57,7 +58,7 @@ module iob_eth_tx (
 
             2: begin  // Addr is different here, but data only changes in the next cycle
                tx_data_o <= data_i[7:4];
-               if (addr_o != (`IOB_ETH_PREAMBLE_LEN + 1)) pc <= pc - 1'b1;
+               if (addr != (`IOB_ETH_PREAMBLE_LEN + 1)) pc <= pc - 1'b1;
                else crc_en_int <= 1;
             end
 
@@ -65,7 +66,7 @@ module iob_eth_tx (
 
             4: begin
                tx_data_o <= data_i[7:4];
-               if (addr_o < nbytes_i) begin
+               if (addr < nbytes_i) begin
                   crc_en_int <= 1;
                   pc         <= pc - 1'b1;
                end else if (!crc_en_i) pc <= 13;
@@ -91,13 +92,13 @@ module iob_eth_tx (
                tx_en_o <= 0;
                pc      <= 0;
                ready_o <= 1;
-               addr_o  <= 0;
+               addr    <= 0;
             end
 
             default: begin
                pc         <= 0;
                crc_en_int <= 0;
-               addr_o     <= 0;
+               addr       <= 0;
                ready_o    <= 1;
                tx_en_o    <= 0;
                tx_data_o  <= 0;
@@ -105,6 +106,15 @@ module iob_eth_tx (
 
          endcase
       end
+
+   // Pop a byte from the data FIFO one cycle before it is consumed:
+   // - prefetch the first byte when the frame is requested (send_i)
+   // - fetch the next byte during the high-nibble states (2 and 4),
+   //   matching the 1-cycle registered read latency of the backing RAM.
+   // The pc==4 pop is gated on addr < nbytes_i so the last payload byte is
+   // not over-fetched (which would leave the FIFO read pointer one byte past
+   // the frame and skip the first byte of the next frame).
+   assign pop_en_o = (pc == 0 && send_i) || (pc == 2) || ((pc == 4) && (addr < nbytes_i));
 
    //
    // CRC MODULE

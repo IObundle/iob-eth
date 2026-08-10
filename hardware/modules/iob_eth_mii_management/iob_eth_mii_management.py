@@ -5,7 +5,17 @@
 
 def setup(py_params_dict):
     attributes_dict = {
-        "generate_hw": True,
+        "generate_hw": False,
+        "confs": [
+            {  # For iob_iobuf
+                "name": "FPGA_TOOL",
+                "descr": "Use IPs from fpga tool. Avaliable options: 'XILINX', 'other'.",
+                "type": "P",
+                "val": '"other"',
+                "min": "NA",
+                "max": "NA",
+            },
+        ],
         "ports": [
             {
                 "name": "clk_en_rst_s",
@@ -15,23 +25,38 @@ def setup(py_params_dict):
                 },
             },
             {
+                "name": "mii_reg_i",
+                "descr": "Register interface",
+                "signals": [
+                    {"name": "miimoder_i", "width": 32},
+                    {"name": "miicommand_i", "width": 32},
+                    {"name": "miiaddress_i", "width": 32},
+                    {"name": "miitx_data_i", "width": 32},
+                ],
+            },
+            {
+                "name": "mii_status_o",
+                "descr": "Data/status outputs",
+                "signals": [
+                    {"name": "miirx_data_o", "width": 32},
+                    {"name": "miistatus_o", "width": 32},
+                    {"name": "miicommand_clr_o", "width": 1},
+                ],
+            },
+            {
                 "name": "management_io",
-                "descr": "MII management interface",
+                "descr": "MII interface",
                 "signals": [
                     {"name": "mii_mdc_o", "width": 1},
                     {"name": "mii_mdio_io", "width": 1},
                 ],
             },
         ],
-        "subblocks": [],
-        "snippets": [
+        "subblocks": [
             {
-                "verilog_code": """
-   assign mii_mdc_o        = 1'b0;  //TODO
-   //assign mii_mdio_io   = 1'b0;  //TODO
-
-            """
-            }
+                "core_name": "iob_iobuf",
+                "instantiate": False,
+            },
         ],
     }
 

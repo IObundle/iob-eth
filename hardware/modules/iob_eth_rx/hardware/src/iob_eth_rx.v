@@ -40,6 +40,8 @@ module iob_eth_rx (
    // state
    reg  [ 2:0] pc;
    reg  [47:0] dest_mac_addr;
+   reg  [10:0] addr_o;
+   reg         info_pushed;
 
    // data
    wire [ 7:0] data_int;
@@ -56,12 +58,14 @@ module iob_eth_rx (
          addr_o        <= 0;
          dest_mac_addr <= 0;
          wr_o          <= 0;
-         data_rcvd_o   <= 0;
+         info_wen_o    <= 0;
+         info_pushed   <= 0;
       end else begin
 
-         pc     <= pc + 1'b1;
-         addr_o <= addr_o + {10'b0, pc[0]};
-         wr_o   <= 0;
+         pc         <= pc + 1'b1;
+         addr_o     <= addr_o + {10'b0, pc[0]};
+         wr_o       <= 0;
+         info_wen_o <= 0;
 
          case (pc)
 
@@ -86,15 +90,20 @@ module iob_eth_rx (
                pc <= pc - 1'b1;
             end
 
-            6: begin
-               pc          <= pc;
-               data_rcvd_o <= 1;
-               if (rcv_ack_i) begin
-                  pc          <= 0;
-                  addr_o      <= 0;
-                  data_rcvd_o <= 0;
-               end
-            end
+             // Frame complete: push frame info and wait for data FIFO to drain
+             6: begin
+                pc <= pc;
+                if (!info_w_full_i && !info_pushed) begin
+                   info_wen_o   <= 1;
+                   info_wdata_o <= {crc_err, addr_o[10:0]};
+                   info_pushed  <= 1;
+                end
+                if (w_empty_i) begin
+                   pc          <= 0;
+                   addr_o      <= 0;
+                   info_pushed <= 0;
+                end
+             end
 
             // Wait for DV to deassert
             7:
@@ -127,15 +136,5 @@ module iob_eth_rx (
    );
 
    wire crc_err = crc_sum != 32'hc704dd7b;
-   iob_reg_ca #(
-      .DATA_W (1),
-      .RST_VAL(0)
-   ) crc_err_reg (
-      .clk_i (rx_clk_i),
-      .arst_i(arst_i),
-      .cke_i (1'b1),
-      .data_i(crc_err),
-      .data_o(crc_err_o)
-   );
 
 endmodule

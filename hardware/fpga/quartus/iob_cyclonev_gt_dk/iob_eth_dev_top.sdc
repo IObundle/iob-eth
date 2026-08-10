@@ -6,8 +6,8 @@ create_clock -name "clk" -add -period 20.0 [get_ports clk_i]
 
 #Constraint Clock Transitions
 # RX_CLK is 25MHz for 100Mbps operation according to Texas Instruments DP83867 datasheet
-create_clock -name "tx_clk" -period 40 [get_ports {mii_tx_clk_i}]
-create_clock -name "rx_clk" -period 40 [get_ports {mii_rx_clk_i}]
+create_clock -name "tx_clk" -period 40 [get_ports {rgmii_tx_clk_i}]
+create_clock -name "rx_clk" -period 40 [get_ports {rgmii_rx_clk_i}]
 
 # Clock groups
 set_clock_groups -asynchronous -group {clk} -group {rx_clk} -group {tx_clk}

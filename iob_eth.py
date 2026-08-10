@@ -12,6 +12,7 @@ from gen_custom_config_build import gen_custom_config_build
 
 
 def setup(py_params_dict):
+    PLIC_SOURCE_ID = py_params_dict.get("plic_source_id", 1)
     CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
     VERSION = "0.1.0"
     gen_custom_config_build(py_params_dict)
@@ -75,77 +76,77 @@ def setup(py_params_dict):
             # Macros
             {
                 "name": "PREAMBLE",
+                "descr": "Ethernet packet preamble value",
                 "type": "M",
                 "val": "8'h55",
                 "min": "NA",
                 "max": "NA",
-                "descr": "Ethernet packet preamble value",
             },
             {
                 "name": "PREAMBLE_LEN",
+                "descr": "Ethernet packet preamble length",
                 "type": "M",
                 "val": "7",  # Should it be 7 + 2 bytes to align data transfers?
                 "max": "NA",
                 "min": "NA",
-                "descr": "Ethernet packet preamble length",
             },
             {
                 "name": "SFD",
+                "descr": "Start Frame Delimiter",
                 "type": "M",
                 "val": "8'hD5",
                 "min": "NA",
                 "max": "NA",
-                "descr": "Start Frame Delimiter",
             },
             {
                 "name": "MAC_ADDR_LEN",
+                "descr": "Ethernet MAC address length",
                 "type": "M",
                 "val": "6",
                 "min": "NA",
                 "max": "NA",
-                "descr": "Ethernet MAC address length",
             },
             # Parameters
             {
                 "name": "DATA_W",
+                "descr": "Data bus width",
                 "type": "P",
                 "val": "32",
                 "min": "NA",
                 "max": "128",
-                "descr": "Data bus width",
             },
             # External memory interface
             {
                 "name": "AXI_ID_W",
+                "descr": "AXI ID bus width",
                 "type": "P",
                 "val": "1",
                 "min": "0",
                 "max": "32",
-                "descr": "AXI ID bus width",
             },
             {
                 "name": "AXI_ADDR_W",
+                "descr": "AXI address bus width",
                 "type": "P",
                 "val": "24",
                 "min": "1",
                 "max": "32",
-                "descr": "AXI address bus width",
             },
             {
                 "name": "AXI_DATA_W",
+                "descr": "AXI data bus width",
                 "type": "P",
                 "val": "32",
                 "min": "1",
                 "max": "32",
-                "descr": "AXI data bus width",
             },
             {
                 "name": "AXI_LEN_W",
+                "descr": "AXI burst length width",
                 "type": "P",
                 "val": "4",
                 "min": "1",
                 "max": "4",
-                "descr": "AXI burst length width",
             },
             # Ethernet
             {
@@ -159,19 +160,27 @@ def setup(py_params_dict):
             },
             {
                 "name": "BD_NUM_LOG2",
+                "descr": "Log2 amount of buffer descriptors",
                 "type": "P",
                 "val": "7",
                 "min": "NA",
                 "max": "7",
-                "descr": "Log2 amount of buffer descriptors",
             },
             {
                 "name": "BUFFER_W",
+                "descr": "Buffer size",
                 "type": "P",
                 "val": "11",
                 "min": "0",
                 "max": "32",
-                "descr": "Buffer size",
+            },
+            {  # For iob_iobuf
+                "name": "FPGA_TOOL",
+                "descr": "Use IPs from fpga tool. Avaliable options: 'XILINX', 'other'.",
+                "type": "P",
+                "val": '"other"',
+                "min": "NA",
+                "max": "NA",
             },
         ],
         "ports": [
@@ -320,9 +329,12 @@ def setup(py_params_dict):
                 "name": "int_source",
                 "descr": "",
                 "signals": [
-                    {"name": "int_source_wr", "width": 32},
-                    {"name": "int_source_rd", "width": 32},
-                    {"name": "int_source_wstrb", "width": 32 // 8},
+                    {"name": "int_source_valid_wrrd", "width": 1},
+                    {"name": "int_source_wdata_wrrd", "width": 32},
+                    {"name": "int_source_wstrb_wrrd", "width": 4},
+                    {"name": "int_source_ready_wrrd", "width": 1},
+                    {"name": "int_source_rdata_wrrd", "width": 32},
+                    {"name": "int_source_rvalid_wrrd", "width": 1},
                 ],
             },
             {
@@ -446,9 +458,12 @@ def setup(py_params_dict):
                 "name": "miistatus",
                 "descr": "",
                 "signals": [
-                    {"name": "miistatus_wr", "width": 32},
-                    {"name": "miistatus_rd", "width": 32},
-                    {"name": "miistatus_wstrb", "width": 32 // 8},
+                    {"name": "miistatus_valid_wrrd", "width": 1},
+                    {"name": "miistatus_wdata_wrrd", "width": 32},
+                    {"name": "miistatus_wstrb_wrrd", "width": 4},
+                    {"name": "miistatus_ready_wrrd", "width": 1},
+                    {"name": "miistatus_rdata_wrrd", "width": 32},
+                    {"name": "miistatus_rvalid_wrrd", "width": 1},
                 ],
             },
             {
@@ -589,24 +604,25 @@ def setup(py_params_dict):
                     {"name": "internal_frame_word_ready_rd", "width": 1},
                 ],
             },
+            # MII management
             {
-                "name": "eth_clock_domain",
-                "descr": "",
+                "name": "mii_reg",
                 "signals": [
-                    {"name": "iob_eth_tx_buffer_enA", "width": 1},
-                    {"name": "iob_eth_tx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
-                    {"name": "iob_eth_tx_buffer_dinA", "width": 8},
-                    {"name": "iob_eth_tx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
-                    {"name": "iob_eth_tx_buffer_doutB", "width": 8},
-                    {"name": "iob_eth_rx_buffer_enA", "width": 1},
-                    {"name": "iob_eth_rx_buffer_addrA", "width": "`IOB_ETH_BUFFER_W"},
-                    {"name": "iob_eth_rx_buffer_dinA", "width": 8},
-                    {"name": "iob_eth_rx_buffer_enB", "width": 1},
-                    {"name": "iob_eth_rx_buffer_addrB", "width": "`IOB_ETH_BUFFER_W"},
-                    {"name": "iob_eth_rx_buffer_doutB", "width": 8},
+                    {"name": "miimoder_wr"},  # mii_moder_i
+                    {"name": "miicommand_wr"},  # miicommand_i
+                    {"name": "miiaddress_wr"},  # miiaddress_i
+                    {"name": "miitx_data_wr"},  # miitx_data_i
                 ],
             },
-            # MII management
+            {
+                "name": "mii_status",
+                "signals": [
+                    # Data/status output
+                    {"name": "mii_miirx_data", "width": 32},  # miirx_data_o
+                    {"name": "mii_miistatus", "width": 32},  # miistatus_o
+                    {"name": "mii_miicommand_clr", "width": 1},  # miicommand_clr_o
+                ],
+            },
             {
                 "name": "mii_management",
                 "signals": [
@@ -641,26 +657,18 @@ def setup(py_params_dict):
             {
                 "name": "cdc_system",
                 "signals": [
-                    {"name": "rcv_ack", "width": 1},
                     {"name": "send", "width": 1},
                     {"name": "crc_en", "width": 1},
                     {"name": "tx_nbytes", "width": 11},
-                    {"name": "crc_err", "width": 1},
-                    {"name": "rx_nbytes", "width": "`IOB_ETH_BUFFER_W"},
-                    {"name": "rx_data_rcvd", "width": 1},
                     {"name": "tx_ready", "width": 1},
                 ],
             },
             {
                 "name": "cdc_eth",
                 "signals": [
-                    {"name": "eth_rcv_ack", "width": 1},
                     {"name": "eth_send", "width": 1},
                     {"name": "eth_crc_en", "width": 1},
                     {"name": "eth_tx_nbytes", "width": 11},
-                    {"name": "eth_crc_err", "width": 1},
-                    {"name": "iob_eth_rx_buffer_addrA"},  # eth_rx_nbytes
-                    {"name": "eth_rx_data_rcvd", "width": 1},
                     {"name": "eth_tx_ready", "width": 1},
                 ],
             },
@@ -704,10 +712,9 @@ def setup(py_params_dict):
                     {"name": "bd_wstrb_wrrd"},
                     {"name": "bd_ready_wrrd"},
                     {"name": "bd_rvalid_wrrd"},
-                    # Status signals
-                    {"name": "rcv_ack"},
-                    {"name": "rx_data_rcvd"},
-                    {"name": "rx_nbytes"},
+                    # rx_nbytes status from Data Transfer block
+                    {"name": "rx_nbytes_valid"},
+                    {"name": "rx_nbytes", "width": "BUFFER_W"},
                 ],
             },
             # Data Transfer wires
@@ -745,18 +752,319 @@ def setup(py_params_dict):
                     {"name": "phy_rst_cnt_o"},
                 ],
             },
+            # TX data FIFO
+            {
+                "name": "tx_fifo_decl",
+                "descr": "TX data FIFO",
+                "signals": [
+                    {"name": "tx_fifo_w_en", "width": 1},
+                    {"name": "tx_fifo_w_data", "width": 8},
+                    {"name": "tx_fifo_w_full", "width": 1},
+                    {"name": "tx_fifo_w_empty", "width": 1},
+                    {"name": "tx_fifo_r_en", "width": 1},
+                    {"name": "tx_fifo_r_data", "width": 8},
+                    {"name": "tx_fifo_r_empty", "width": 1},
+                    {"name": "tx_fifo_ext_mem_w_clk", "width": 1},
+                    {"name": "tx_fifo_ext_mem_w_en", "width": 1},
+                    {"name": "tx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_w_data", "width": 8},
+                    {"name": "tx_fifo_ext_mem_r_clk", "width": 1},
+                    {"name": "tx_fifo_ext_mem_r_en", "width": 1},
+                    {"name": "tx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "tx_fifo_w_clk_en_rst_s",
+                "signals": [
+                    {"name": "clk_i"},
+                    {"name": "cke_i"},
+                    {"name": "arst_i"},
+                    {"name": "1'b0"},
+                    {"name": "tx_fifo_w_en"},
+                ],
+            },
+            {
+                "name": "tx_fifo_w_data",
+                "signals": [
+                    {"name": "tx_fifo_w_data", "width": 8},
+                ],
+            },
+            {
+                "name": "tx_fifo_w_full",
+                "signals": [
+                    {"name": "tx_fifo_w_full"},
+                ],
+            },
+            {
+                "name": "tx_fifo_w_empty",
+                "signals": [
+                    {"name": "tx_fifo_w_empty"},
+                ],
+            },
+            {
+                "name": "tx_fifo_r_clk_en_rst_s",
+                "signals": [
+                    {"name": "mii_tx_clk_i"},
+                    {"name": "1'b1"},
+                    {"name": "tx_phy_rst"},
+                    {"name": "1'b0"},
+                    {"name": "tx_fifo_r_en"},
+                ],
+            },
+            {
+                "name": "tx_fifo_r_data",
+                "signals": [
+                    {"name": "tx_fifo_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "tx_fifo_r_empty",
+                "signals": [
+                    {"name": "tx_fifo_r_empty"},
+                ],
+            },
+            {
+                "name": "tx_fifo_extmem",
+                "signals": [
+                    {"name": "tx_fifo_ext_mem_w_clk"},
+                    {"name": "tx_fifo_ext_mem_w_en"},
+                    {"name": "tx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_w_data", "width": 8},
+                    {"name": "tx_fifo_ext_mem_r_clk"},
+                    {"name": "tx_fifo_ext_mem_r_en"},
+                    {"name": "tx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "tx_fifo_ram",
+                "signals": [
+                    {"name": "tx_fifo_ext_mem_r_clk"},
+                    {"name": "tx_fifo_ext_mem_r_en"},
+                    {"name": "tx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_r_data", "width": 8},
+                    {"name": "tx_fifo_ext_mem_w_clk"},
+                    {"name": "tx_fifo_ext_mem_w_en"},
+                    {"name": "tx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "tx_fifo_ext_mem_w_data", "width": 8},
+                ],
+            },
+            {
+                "name": "tx_fifo_io",
+                "signals": [
+                    {"name": "tx_fifo_r_en"},
+                    {"name": "tx_fifo_r_data", "width": 8},
+                ],
+            },
+            # RX data FIFO
+            {
+                "name": "rx_fifo_decl",
+                "descr": "RX data FIFO",
+                "signals": [
+                    {"name": "rx_fifo_w_en", "width": 1},
+                    {"name": "rx_fifo_w_data", "width": 8},
+                    {"name": "rx_fifo_w_empty", "width": 1},
+                    {"name": "rx_fifo_r_en", "width": 1},
+                    {"name": "rx_fifo_r_data", "width": 8},
+                    {"name": "rx_fifo_r_empty", "width": 1},
+                    {"name": "rx_fifo_ext_mem_w_clk", "width": 1},
+                    {"name": "rx_fifo_ext_mem_w_en", "width": 1},
+                    {"name": "rx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_w_data", "width": 8},
+                    {"name": "rx_fifo_ext_mem_r_clk", "width": 1},
+                    {"name": "rx_fifo_ext_mem_r_en", "width": 1},
+                    {"name": "rx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_w_clk_en_rst_s",
+                "signals": [
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "1'b1"},
+                    {"name": "rx_phy_rst"},
+                    {"name": "1'b0"},
+                    {"name": "rx_fifo_w_en"},
+                ],
+            },
+            {
+                "name": "rx_fifo_w_data",
+                "signals": [
+                    {"name": "rx_fifo_w_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_w_empty",
+                "signals": [
+                    {"name": "rx_fifo_w_empty"},
+                ],
+            },
+            {
+                "name": "rx_fifo_r_clk_en_rst_s",
+                "signals": [
+                    {"name": "clk_i"},
+                    {"name": "cke_i"},
+                    {"name": "arst_i"},
+                    {"name": "1'b0"},
+                    {"name": "rx_fifo_r_en"},
+                ],
+            },
+            {
+                "name": "rx_fifo_r_data",
+                "signals": [
+                    {"name": "rx_fifo_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_r_empty",
+                "signals": [
+                    {"name": "rx_fifo_r_empty"},
+                ],
+            },
+            {
+                "name": "rx_fifo_extmem",
+                "signals": [
+                    {"name": "rx_fifo_ext_mem_w_clk"},
+                    {"name": "rx_fifo_ext_mem_w_en"},
+                    {"name": "rx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_w_data", "width": 8},
+                    {"name": "rx_fifo_ext_mem_r_clk"},
+                    {"name": "rx_fifo_ext_mem_r_en"},
+                    {"name": "rx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_r_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_ram",
+                "signals": [
+                    {"name": "rx_fifo_ext_mem_r_clk"},
+                    {"name": "rx_fifo_ext_mem_r_en"},
+                    {"name": "rx_fifo_ext_mem_r_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_r_data", "width": 8},
+                    {"name": "rx_fifo_ext_mem_w_clk"},
+                    {"name": "rx_fifo_ext_mem_w_en"},
+                    {"name": "rx_fifo_ext_mem_w_addr", "width": "BUFFER_W"},
+                    {"name": "rx_fifo_ext_mem_w_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_o",
+                "signals": [
+                    {"name": "rx_fifo_w_en"},
+                    {"name": "rx_fifo_w_data", "width": 8},
+                ],
+            },
+            {
+                "name": "rx_fifo_flow_control",
+                "signals": [
+                    {"name": "rx_fifo_w_empty"},
+                ],
+            },
+            # RX info FIFO
+            {
+                "name": "info_fifo_decl",
+                "descr": "RX info FIFO",
+                "signals": [
+                    {"name": "rx_info_w_en", "width": 1},
+                    {"name": "rx_info_w_data", "width": 12},
+                    {"name": "rx_info_w_full", "width": 1},
+                    {"name": "rx_info_r_en", "width": 1},
+                    {"name": "rx_info_r_data", "width": 12},
+                    {"name": "rx_info_r_empty", "width": 1},
+                    {"name": "rx_info_ext_mem_w_clk", "width": 1},
+                    {"name": "rx_info_ext_mem_w_en", "width": 1},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_data", "width": 12},
+                    {"name": "rx_info_ext_mem_r_clk", "width": 1},
+                    {"name": "rx_info_ext_mem_r_en", "width": 1},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_data", "width": 12},
+                ],
+            },
+            {
+                "name": "info_fifo_w_clk_en_rst_s",
+                "signals": [
+                    {"name": "mii_rx_clk_i"},
+                    {"name": "1'b1"},
+                    {"name": "rx_phy_rst"},
+                    {"name": "1'b0"},
+                    {"name": "rx_info_w_en"},
+                ],
+            },
+            {
+                "name": "info_fifo_w_data",
+                "signals": [
+                    {"name": "rx_info_w_data", "width": 12},
+                ],
+            },
+            {
+                "name": "info_fifo_w_full",
+                "signals": [
+                    {"name": "rx_info_w_full"},
+                ],
+            },
+            {
+                "name": "info_fifo_r_clk_en_rst_s",
+                "signals": [
+                    {"name": "clk_i"},
+                    {"name": "cke_i"},
+                    {"name": "arst_i"},
+                    {"name": "1'b0"},
+                    {"name": "rx_info_r_en"},
+                ],
+            },
+            {
+                "name": "info_fifo_r_data",
+                "signals": [
+                    {"name": "rx_info_r_data", "width": 12},
+                ],
+            },
+            {
+                "name": "info_fifo_r_empty",
+                "signals": [
+                    {"name": "rx_info_r_empty"},
+                ],
+            },
+            {
+                "name": "info_fifo_extmem",
+                "signals": [
+                    {"name": "rx_info_ext_mem_w_clk"},
+                    {"name": "rx_info_ext_mem_w_en"},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_data", "width": 12},
+                    {"name": "rx_info_ext_mem_r_clk"},
+                    {"name": "rx_info_ext_mem_r_en"},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_data", "width": 12},
+                ],
+            },
+            {
+                "name": "info_fifo_ram",
+                "signals": [
+                    {"name": "rx_info_ext_mem_r_clk"},
+                    {"name": "rx_info_ext_mem_r_en"},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_data", "width": 12},
+                    {"name": "rx_info_ext_mem_w_clk"},
+                    {"name": "rx_info_ext_mem_w_en"},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_data", "width": 12},
+                ],
+            },
+            {
+                "name": "rx_fifo_info",
+                "signals": [
+                    {"name": "rx_info_w_en"},
+                    {"name": "rx_info_w_data", "width": 12},
+                    {"name": "rx_info_w_full"},
+                ],
+            },
             # Transmitter
             {
                 "name": "tx_phy_rst",
                 "signals": [
                     {"name": "tx_phy_rst"},
-                ],
-            },
-            {
-                "name": "tx_buffer",
-                "signals": [
-                    {"name": "iob_eth_tx_buffer_addrB"},
-                    {"name": "iob_eth_tx_buffer_doutB"},
                 ],
             },
             {
@@ -784,54 +1092,11 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "rx_buffer",
-                "signals": [
-                    {"name": "iob_eth_rx_buffer_enA"},
-                    {"name": "iob_eth_rx_buffer_addrA"},
-                    {"name": "iob_eth_rx_buffer_dinA"},
-                ],
-            },
-            {
-                "name": "rx_dt",
-                "signals": [
-                    {"name": "eth_rcv_ack"},
-                    {"name": "eth_rx_data_rcvd"},
-                    {"name": "eth_crc_err"},
-                ],
-            },
-            {
                 "name": "rx_mii",
                 "signals": [
                     {"name": "mii_rx_clk_i"},
                     {"name": "mii_rx_dv_i"},
                     {"name": "mii_rxd_i"},
-                ],
-            },
-            # at2p wires
-            {
-                "name": "tx_ram_at2p",
-                "signals": [
-                    {"name": "mii_tx_clk_i"},
-                    {"name": "tx_ram_at2p_en"},
-                    {"name": "iob_eth_tx_buffer_addrB"},
-                    {"name": "iob_eth_tx_buffer_doutB"},
-                    {"name": "clk_i"},
-                    {"name": "iob_eth_tx_buffer_enA"},
-                    {"name": "iob_eth_tx_buffer_addrA"},
-                    {"name": "iob_eth_tx_buffer_dinA"},
-                ],
-            },
-            {
-                "name": "rx_ram_at2p",
-                "signals": [
-                    {"name": "clk_i"},
-                    {"name": "iob_eth_rx_buffer_enB"},
-                    {"name": "iob_eth_rx_buffer_addrB"},
-                    {"name": "iob_eth_rx_buffer_doutB"},
-                    {"name": "mii_rx_clk_i"},
-                    {"name": "iob_eth_rx_buffer_enA"},
-                    {"name": "iob_eth_rx_buffer_addrA"},
-                    {"name": "iob_eth_rx_buffer_dinA"},
                 ],
             },
             # tdp wires
@@ -886,9 +1151,9 @@ def setup(py_params_dict):
             {
                 "name": "dt_tx_front_end",
                 "signals": [
-                    {"name": "iob_eth_tx_buffer_enA"},
-                    {"name": "iob_eth_tx_buffer_addrA"},
-                    {"name": "iob_eth_tx_buffer_dinA"},
+                    {"name": "tx_fifo_w_en"},
+                    {"name": "tx_fifo_w_data", "width": 8},
+                    {"name": "tx_fifo_w_full"},
                     {"name": "tx_ready"},
                     {"name": "crc_en"},
                     {"name": "tx_nbytes"},
@@ -898,13 +1163,13 @@ def setup(py_params_dict):
             {
                 "name": "dt_rx_back_end",
                 "signals": [
-                    {"name": "iob_eth_rx_buffer_enB"},
-                    {"name": "iob_eth_rx_buffer_addrB"},
-                    {"name": "iob_eth_rx_buffer_doutB"},
-                    {"name": "rx_data_rcvd"},
-                    {"name": "crc_err"},
-                    {"name": "rx_nbytes"},
-                    {"name": "rcv_ack"},
+                    {"name": "rx_fifo_r_en"},
+                    {"name": "rx_fifo_r_data", "width": 8},
+                    {"name": "rx_info_r_en"},
+                    {"name": "rx_info_r_empty"},
+                    {"name": "rx_info_r_data", "width": 12},
+                    {"name": "rx_nbytes_valid"},
+                    {"name": "rx_nbytes", "width": "BUFFER_W"},
                 ],
             },
             {
@@ -948,192 +1213,194 @@ def setup(py_params_dict):
                             {
                                 # NOTE: The Linux ethmac driver from opencores does not support half-duplex. Only full-duplex. Therefore there is no need to implement half-duplex mode.
                                 "name": "moder",
+                                "descr": "Mode Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 40960,
                                 "addr": 0,
                                 "log2n_items": 0,
-                                "descr": "Mode Register",
                             },
                             {
                                 "name": "int_source",
+                                "descr": "Interrupt Source Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 4,
                                 "log2n_items": 0,
-                                "descr": "Interrupt Source Register",
+                                "type": "NOAUTO",
                             },
                             {
                                 "name": "int_mask",
+                                "descr": "Interrupt Mask Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 8,
                                 "log2n_items": 0,
-                                "descr": "Interrupt Mask Register",
                             },
                             {
                                 "name": "ipgt",
+                                "descr": "Back to Back Inter Packet Gap Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 18,
                                 "addr": 12,
                                 "log2n_items": 0,
-                                "descr": "Back to Back Inter Packet Gap Register",
                             },
                             {
                                 "name": "ipgr1",
+                                "descr": "Non Back to Back Inter Packet Gap Register 1",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 12,
                                 "addr": 16,
                                 "log2n_items": 0,
-                                "descr": "Non Back to Back Inter Packet Gap Register 1",
                             },
                             {
                                 "name": "ipgr2",
+                                "descr": "Non Back to Back Inter Packet Gap Register 2",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 18,
                                 "addr": 20,
                                 "log2n_items": 0,
-                                "descr": "Non Back to Back Inter Packet Gap Register 2",
                             },
                             {
                                 "name": "packetlen",
+                                "descr": "Packet Length (minimum and maximum) Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 4195840,
                                 "addr": 24,
                                 "log2n_items": 0,
-                                "descr": "Packet Length (minimum and maximum) Register",
                             },
                             {
                                 "name": "collconf",
+                                "descr": "Collision and Retry Configuration",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 61443,
                                 "addr": 28,
                                 "log2n_items": 0,
-                                "descr": "Collision and Retry Configuration",
                             },
                             {
                                 "name": "tx_bd_num",
+                                "descr": "Transmit Buffer Descriptor Number",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 64,
                                 "addr": 32,
                                 "log2n_items": 0,
-                                "descr": "Transmit Buffer Descriptor Number",
                             },
                             {
                                 "name": "ctrlmoder",
+                                "descr": "Control Module Mode Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 36,
                                 "log2n_items": 0,
-                                "descr": "Control Module Mode Register",
                             },
                             {
                                 "name": "miimoder",
+                                "descr": "MII Mode Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 100,
                                 "addr": 40,
                                 "log2n_items": 0,
-                                "descr": "MII Mode Register",
                             },
                             {
                                 "name": "miicommand",
+                                "descr": "MII Command Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 44,
                                 "log2n_items": 0,
-                                "descr": "MII Command Register",
                             },
                             {
                                 "name": "miiaddress",
+                                "descr": "MII Address Register. Contains the PHY address and the register within the PHY address",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 48,
                                 "log2n_items": 0,
-                                "descr": "MII Address Register. Contains the PHY address and the register within the PHY address",
                             },
                             {
                                 "name": "miitx_data",
+                                "descr": "MII Transmit Data. The data to be transmitted to the PHY",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 52,
                                 "log2n_items": 0,
-                                "descr": "MII Transmit Data. The data to be transmitted to the PHY",
                             },
                             {
                                 "name": "miirx_data",
+                                "descr": "MII Receive Data. The data received from the PHY",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 56,
                                 "log2n_items": 0,
-                                "descr": "MII Receive Data. The data received from the PHY",
                             },
                             {
                                 "name": "miistatus",
+                                "descr": "MII Status Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 60,
                                 "log2n_items": 0,
-                                "descr": "MII Status Register",
+                                "type": "NOAUTO",
                             },
                             {
                                 "name": "mac_addr0",
+                                "descr": "MAC Individual Address0. The LSB four bytes of the individual address are written to this register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 64,
                                 "log2n_items": 0,
-                                "descr": "MAC Individual Address0. The LSB four bytes of the individual address are written to this register",
                             },
                             {
                                 "name": "mac_addr1",
+                                "descr": "MAC Individual Address1. The MSB two bytes of the individual address are written to this register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 68,
                                 "log2n_items": 0,
-                                "descr": "MAC Individual Address1. The MSB two bytes of the individual address are written to this register",
                             },
                             {
                                 "name": "eth_hash0_adr",
+                                "descr": "HASH0 Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 72,
                                 "log2n_items": 0,
-                                "descr": "HASH0 Register",
                             },
                             {
                                 "name": "eth_hash1_adr",
+                                "descr": "HASH1 Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 76,
                                 "log2n_items": 0,
-                                "descr": "HASH1 Register",
                             },
                             {
                                 "name": "eth_txctrl",
+                                "descr": "Transmit Control Register",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 80,
                                 "log2n_items": 0,
-                                "descr": "Transmit Control Register",
                             },
                         ],
                     },
@@ -1143,63 +1410,63 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "tx_bd_cnt",
+                                "descr": "Buffer descriptor number of current TX frame",
                                 "mode": "R",
                                 "n_bits": "BD_NUM_LOG2",
                                 "rst_val": 0,
                                 "addr": 84,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Buffer descriptor number of current TX frame",
                             },
                             {
                                 "name": "rx_bd_cnt",
+                                "descr": "Buffer descriptor number of current RX frame",
                                 "mode": "R",
                                 "n_bits": "BD_NUM_LOG2",
                                 "rst_val": 0,
                                 "addr": 88,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Buffer descriptor number of current RX frame",
                             },
                             {
                                 "name": "tx_word_cnt",
+                                "descr": "Word number of current TX frame",
                                 "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 92,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Word number of current TX frame",
                             },
                             {
                                 "name": "rx_word_cnt",
+                                "descr": "Word number of current RX frame",
                                 "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 96,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Word number of current RX frame",
                             },
                             {
                                 "name": "rx_nbytes",
+                                "descr": "Size of received frame in bytes. Will be zero if no frame has been received. Will reset to zero when cpu completes reading the frame.",
                                 "mode": "R",
                                 "n_bits": "BUFFER_W",
                                 "rst_val": 0,
                                 "addr": 100,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Size of received frame in bytes. Will be zero if no frame has been received. Will reset to zero when cpu completes reading the frame.",
                             },
                             {
                                 "name": "frame_word",
+                                "descr": "Frame word to transfer to/from buffer",
                                 "mode": "RW",
                                 "n_bits": 8,
                                 "rst_val": 0,
                                 "addr": 104,
                                 "log2n_items": 0,
                                 "type": "NOAUTO",
-                                "descr": "Frame word to transfer to/from buffer",
                             },
                         ],
                     },
@@ -1209,12 +1476,12 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "phy_rst_val",
+                                "descr": "Current PHY reset signal value",
                                 "mode": "R",
                                 "n_bits": 1,
                                 "rst_val": 0,
                                 "addr": 108,
                                 "log2n_items": 0,
-                                "descr": "Current PHY reset signal value",
                             },
                         ],
                     },
@@ -1224,13 +1491,13 @@ def setup(py_params_dict):
                         "regs": [
                             {
                                 "name": "bd",
+                                "descr": "Buffer descriptors",
                                 "mode": "RW",
                                 "n_bits": 32,
                                 "rst_val": 0,
                                 "addr": 1024,
                                 "log2n_items": "BD_NUM_LOG2+1",
                                 "type": "NOAUTO",
-                                "descr": "Buffer descriptors",
                             },
                         ],
                     },
@@ -1309,7 +1576,7 @@ def setup(py_params_dict):
                 "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
                 "connect": {
                     "arst_i": "tx_phy_rst",
-                    "buffer_io": "tx_buffer",
+                    "fifo_io": "tx_fifo_io",
                     "dt_io": "tx_dt",
                     "mii_io": "tx_mii",
                 },
@@ -1318,40 +1585,121 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_eth_rx",
                 "instance_name": "receiver",
-                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes to a host interface, and validates the frame with a CRC check; it produces a ready/received indication for higher-level logic.",
+                "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes and a status info word to host FIFOs, and validates the frame with a CRC check.",
                 "connect": {
                     "arst_i": "rx_phy_rst",
-                    "buffer_o": "rx_buffer",
-                    "dt_io": "rx_dt",
+                    "fifo_o": "rx_fifo_o",
+                    "info_io": "rx_fifo_info",
+                    "flow_control_i": "rx_fifo_flow_control",
                     "mii_i": "rx_mii",
                 },
             },
-            # Buffer memories
+            # TX data FIFO
             {
-                "core_name": "iob_ram_at2p",
-                "instance_name": "tx_buffer",
-                "instance_description": "Buffer memory for data to be transmitted.",
+                "core_name": "iob_fifo_async",
+                "instance_name": "tx_data_fifo",
+                "instance_description": "TX data FIFO: written in the system clock domain (Data Transfer block), read in the MII TX clock domain (transmitter).",
                 "parameters": {
-                    # Note: the tx buffer also includes PREAMBLE+SFD,
-                    # maybe we should increase this size to acount for
-                    # this.
-                    "ADDR_W": "`IOB_ETH_BUFFER_W",
-                    "DATA_W": 8,
+                    "W_DATA_W": 8,
+                    "R_DATA_W": 8,
+                    "ADDR_W": "BUFFER_W",
                 },
                 "connect": {
-                    "ram_at2p_s": "tx_ram_at2p",
+                    "w_clk_en_rst_s": "tx_fifo_w_clk_en_rst_s",
+                    "w_data_i": "tx_fifo_w_data",
+                    "w_full_o": "tx_fifo_w_full",
+                    "w_empty_o": "tx_fifo_w_empty",
+                    "w_level_o": "z",
+                    "r_clk_en_rst_s": "tx_fifo_r_clk_en_rst_s",
+                    "r_data_o": "tx_fifo_r_data",
+                    "r_full_o": "z",
+                    "r_empty_o": "tx_fifo_r_empty",
+                    "r_level_o": "z",
+                    "extmem_io": "tx_fifo_extmem",
                 },
             },
             {
                 "core_name": "iob_ram_at2p",
-                "instance_name": "rx_buffer",
-                "instance_description": "Buffer memory for data received.",
+                "instance_name": "tx_data_fifo_ram",
+                "instance_description": "",
                 "parameters": {
-                    "ADDR_W": "`IOB_ETH_BUFFER_W",
+                    "ADDR_W": "BUFFER_W",
                     "DATA_W": 8,
                 },
                 "connect": {
-                    "ram_at2p_s": "rx_ram_at2p",
+                    "ram_at2p_s": "tx_fifo_ram",
+                },
+            },
+            # RX data FIFO
+            {
+                "core_name": "iob_fifo_async",
+                "instance_name": "rx_data_fifo",
+                "instance_description": "RX data FIFO: written in the MII RX clock domain (receiver), read in the system clock domain (Data Transfer block).",
+                "parameters": {
+                    "W_DATA_W": 8,
+                    "R_DATA_W": 8,
+                    "ADDR_W": "BUFFER_W",
+                },
+                "connect": {
+                    "w_clk_en_rst_s": "rx_fifo_w_clk_en_rst_s",
+                    "w_data_i": "rx_fifo_w_data",
+                    "w_full_o": "z",
+                    "w_empty_o": "rx_fifo_w_empty",
+                    "w_level_o": "z",
+                    "r_clk_en_rst_s": "rx_fifo_r_clk_en_rst_s",
+                    "r_data_o": "rx_fifo_r_data",
+                    "r_full_o": "z",
+                    "r_empty_o": "rx_fifo_r_empty",
+                    "r_level_o": "z",
+                    "extmem_io": "rx_fifo_extmem",
+                },
+            },
+            {
+                "core_name": "iob_ram_at2p",
+                "instance_name": "rx_data_fifo_ram",
+                "instance_description": "",
+                "parameters": {
+                    "ADDR_W": "BUFFER_W",
+                    "DATA_W": 8,
+                },
+                "connect": {
+                    "ram_at2p_s": "rx_fifo_ram",
+                },
+            },
+            # RX info FIFO
+            {
+                "core_name": "iob_fifo_async",
+                "instance_name": "rx_info_fifo",
+                "instance_description": "RX info FIFO: carries the frame info word {crc_err, length[10:0]} from the MII RX to the system clock domain.",
+                "parameters": {
+                    "W_DATA_W": 12,
+                    "R_DATA_W": 12,
+                    "ADDR_W": 1,
+                },
+                "connect": {
+                    "w_clk_en_rst_s": "info_fifo_w_clk_en_rst_s",
+                    "w_data_i": "info_fifo_w_data",
+                    "w_full_o": "info_fifo_w_full",
+                    "w_empty_o": "z",
+                    "w_level_o": "z",
+                    "r_clk_en_rst_s": "info_fifo_r_clk_en_rst_s",
+                    "r_data_o": "info_fifo_r_data",
+                    "r_full_o": "z",
+                    "r_empty_o": "info_fifo_r_empty",
+                    "r_level_o": "z",
+                    "extmem_io": "info_fifo_extmem",
+                },
+            },
+            {
+                "core_name": "iob_ram_at2p",
+                "instance_name": "rx_info_fifo_ram",
+                "instance_description": "",
+                "parameters": {
+                    "ADDR_W": 1,
+                    "DATA_W": 12,
+                },
+                "connect": {
+                    "ram_at2p_s": "info_fifo_ram",
                 },
             },
             {
@@ -1399,8 +1747,13 @@ def setup(py_params_dict):
                 "core_name": "iob_eth_mii_management",
                 "instance_name": "mii_management",
                 "instance_description": "Controls MII management signals.",
+                "parameters": {
+                    "FPGA_TOOL": "FPGA_TOOL",
+                },
                 "connect": {
                     "clk_en_rst_s": "clk_en_rst_s",
+                    "mii_reg_i": "mii_reg",
+                    "mii_status_o": "mii_status",
                     "management_io": "mii_management",
                 },
             },
@@ -1431,14 +1784,67 @@ def setup(py_params_dict):
             },
             {
                 "core_name": "iob_linux_device_drivers",
+                # The 'compatible' property is set as "opencores,ethoc" to match
+                # the Linux ethoc driver's of_match_table.
+                "compatible_str": "opencores,ethoc",
+                # Extra device tree properties specific to this peripheral.
+                # See: https://github.com/torvalds/linux/blob/master/Documentation/devicetree/bindings/net/opencores-ethoc.txt
+                #
+                # NOTE: The 'reg' property is auto-generated with a single memory region for the
+                # CSR registers. The opencores,ethoc binding also supports an optional second
+                # memory region for dedicated packet RAM. If your design has a separate memory
+                # region for packet buffers, it should be added as a second entry:
+                #   reg = <BASE_ADDR REG_SIZE PKT_MEM_BASE PKT_MEM_SIZE>;
+                # Without it, the Linux ethoc driver allocates DMA coherent buffers automatically.
+                "dts_extra_properties": f"""
+        // Interrupt parent: phandle to the Platform-Level Interrupt Controller (PLIC).
+        // Must match the PLIC peripheral name in the system device tree.
+        interrupt-parent = < &PLIC0 >;
+        // PLIC source ID for this Ethernet core's interrupt line.
+        interrupts = <{PLIC_SOURCE_ID}>;
+        // System clock reference, used to compute the MII management (MDIO) clock divider.
+        // The driver derives the MDIO clock by dividing this frequency.
+        clocks = <&sys_clk>;
+        // PHY interface mode. Must match the hardware wiring.
+        // Options: "mii", "rmii", "rgmii", "rgmii-id", "rgmii-rxid", "rgmii-txid", "gmii"
+        phy-mode = "rgmii-rxid";
+
+        // --- Optional properties below (uncomment as needed) ---
+
+        // MAC address. If omitted, the driver reads it from hardware registers,
+        // or generates a random address if the registers are also unset.
+        //local-mac-address = [AA BB CC DD EE FF];
+
+        // Reference to an external PHY node (not used when the driver probes
+        // PHYs via MDIO bus scanning, which is the default).
+        //phy-handle = <&phy0>;
+
+        // MDIO bus with PHY children (needed only with phy-handle above).
+        //mdio {{
+        //    #address-cells = <1>;
+        //    #size-cells = <0>;
+        //
+        //    phy0: ethernet-phy@1 {{
+        //        reg = <1>;
+        //    }};
+        //}};
+""",
             },
         ],
         "snippets": [
             {
                 "verilog_code": """
-   // Connect write outputs to read
+   reg  [31:0] int_source_reg;
+
+   // Interrupt events
+   reg         tx_irq_dly;
+   reg         rx_irq_dly;
+   wire        tx_frame_event;
+   wire        rx_frame_event;
+   wire [31:0] int_source_set_val;
+
+   // Connect write outputs to read (loopback for SW-writable registers)
    assign moder_rd         = moder_wr;
-   assign int_source_rd    = int_source_wr;
    assign int_mask_rd      = int_mask_wr;
    assign ipgt_rd          = ipgt_wr;
    assign ipgr1_rd         = ipgr1_wr;
@@ -1448,20 +1854,19 @@ def setup(py_params_dict):
    assign tx_bd_num_rd     = tx_bd_num_wr;
    assign ctrlmoder_rd     = ctrlmoder_wr;
    assign miimoder_rd      = miimoder_wr;
-   assign miicommand_rd    = miicommand_wr;
+   assign miicommand_rd    = mii_miicommand_clr ? 32'd0 : miicommand_wr;
    assign miiaddress_rd    = miiaddress_wr;
    assign miitx_data_rd    = miitx_data_wr;
-   assign miirx_data_rd    = miirx_data_wr;
-   assign miistatus_rd     = miistatus_wr;
+    // miirx_data readback comes from MII management module
+    assign miirx_data_rd    = mii_miirx_data;
    assign mac_addr0_rd     = mac_addr0_wr;
    assign mac_addr1_rd     = mac_addr1_wr;
    assign eth_hash0_adr_rd = eth_hash0_adr_wr;
    assign eth_hash1_adr_rd = eth_hash1_adr_wr;
    assign eth_txctrl_rd    = eth_txctrl_wr;
 
-   // signals are never written from core
+   // Core-to-CSR write paths (core can update some registers)
    assign moder_wstrb         = 4'h0;
-   assign int_source_wstrb    = 4'h0;
    assign int_mask_wstrb      = 4'h0;
    assign ipgt_wstrb          = 4'h0;
    assign ipgr1_wstrb         = 4'h0;
@@ -1471,11 +1876,12 @@ def setup(py_params_dict):
    assign tx_bd_num_wstrb     = 4'h0;
    assign ctrlmoder_wstrb     = 4'h0;
    assign miimoder_wstrb      = 4'h0;
-   assign miicommand_wstrb    = 4'h0;
+   // miicommand is self-cleared by MII management (MII module writes 0 to CSR)
+   assign miicommand_wstrb          = mii_miicommand_clr ? 4'hf : 4'h0;
    assign miiaddress_wstrb    = 4'h0;
    assign miitx_data_wstrb    = 4'h0;
-   assign miirx_data_wstrb    = 4'h0;
-   assign miistatus_wstrb     = 4'h0;
+    // miirx_data is updated by MII management on frame completion
+    assign miirx_data_wstrb    = mii_miicommand_clr ? 4'hf : 4'h0;
    assign mac_addr0_wstrb     = 4'h0;
    assign mac_addr1_wstrb     = 4'h0;
    assign eth_hash0_adr_wstrb = 4'h0;
@@ -1498,10 +1904,72 @@ def setup(py_params_dict):
    assign phy_rstn_o     = ~phy_rst;
    assign phy_rst_val_rd = phy_rst;
 
-   // DMA
-   assign inta_o = rx_irq | tx_irq;
+   // Interrupt controller
+   // Edge detection on tx_irq / rx_irq (DT outputs are level)
+   always @(posedge clk_i, posedge arst_i) begin
+      if (arst_i) begin
+         tx_irq_dly <= 1'b0;
+         rx_irq_dly <= 1'b0;
+      end else if (cke_i) begin
+         tx_irq_dly <= tx_irq;
+         rx_irq_dly <= rx_irq;
+      end
+   end
+   assign tx_frame_event = tx_irq & ~tx_irq_dly;
+   assign rx_frame_event = rx_irq & ~rx_irq_dly;
 
-   assign tx_ram_at2p_en = 1'b1;
+   // Hardware events to set in int_source
+   // bit 0: TXF (frame transmitted)
+   // bit 1: TXE (transmit error) - not used yet
+   // bit 2: RXF (frame received)
+   // bit 3: RXE (receive error) - not used yet
+   // bit 4: BUSY (MII busy) - not used as event
+   assign int_source_set_val = {27'd0, 1'b0, 1'b0, rx_frame_event, 1'b0, tx_frame_event};
+
+    // int_source register: write-1-to-clear + HW event OR-in
+    assign int_source_ready_wrrd  = 1'b1;
+    assign int_source_rdata_wrrd  = int_source_reg;
+
+    // Register rvalid to persist through WAIT_RVALID (same pattern as tx_bd_cnt)
+    wire int_source_rvalid_nxt = int_source_valid_wrrd & ~(|int_source_wstrb_wrrd);
+    reg  int_source_rvalid_wrrd_reg;
+    always @(posedge clk_i, posedge arst_i) begin
+       if (arst_i)
+          int_source_rvalid_wrrd_reg <= 1'b0;
+       else if (cke_i)
+          int_source_rvalid_wrrd_reg <= int_source_rvalid_nxt;
+    end
+    assign int_source_rvalid_wrrd = int_source_rvalid_wrrd_reg;
+
+   always @(posedge clk_i, posedge arst_i) begin
+      if (arst_i)
+         int_source_reg <= 32'd0;
+      else if (cke_i) begin
+         if (int_source_valid_wrrd && |int_source_wstrb_wrrd)
+            int_source_reg <= (int_source_reg & ~int_source_wdata_wrrd) | int_source_set_val;
+         else
+            int_source_reg <= int_source_reg | int_source_set_val;
+      end
+   end
+
+    // Combined interrupt output: masked int_source
+    assign inta_o = |(int_source_reg & int_mask_wr);
+
+    // miistatus: direct readback from MII management hardware (no register)
+    assign miistatus_ready_wrrd  = 1'b1;
+    assign miistatus_rdata_wrrd  = mii_miistatus;
+
+    // Register rvalid to persist through WAIT_RVALID (same pattern as tx_bd_cnt)
+    wire miistatus_rvalid_nxt = miistatus_valid_wrrd & ~(|miistatus_wstrb_wrrd);
+    reg  miistatus_rvalid_wrrd_reg;
+    always @(posedge clk_i, posedge arst_i) begin
+       if (arst_i)
+          miistatus_rvalid_wrrd_reg <= 1'b0;
+       else if (cke_i)
+          miistatus_rvalid_wrrd_reg <= miistatus_rvalid_nxt;
+    end
+    assign miistatus_rvalid_wrrd = miistatus_rvalid_wrrd_reg;
+
    assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
    assign dt_csrs_control_rx_en = moder_wr[0];
    assign dt_csrs_control_tx_en = moder_wr[1];

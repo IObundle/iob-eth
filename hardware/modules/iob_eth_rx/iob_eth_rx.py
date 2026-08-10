@@ -14,23 +14,32 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "buffer_o",
+                "name": "fifo_o",
+                "descr": "Byte push interface to data FIFO",
                 "signals": [
                     {"name": "wr_o", "isvar": True, "width": 1},
-                    {"name": "addr_o", "isvar": True, "width": 11},
                     {"name": "data_o", "isvar": True, "width": 8},
                 ],
             },
             {
-                "name": "dt_io",
+                "name": "info_io",
+                "descr": "Frame info push interface to info FIFO",
                 "signals": [
-                    {"name": "rcv_ack_i", "width": 1},
-                    {"name": "data_rcvd_o", "isvar": True, "width": 1},
-                    {"name": "crc_err_o", "width": 1},
+                    {"name": "info_wen_o", "isvar": True, "width": 1},
+                    {"name": "info_wdata_o", "isvar": True, "width": 12},
+                    {"name": "info_w_full_i", "width": 1},
+                ],
+            },
+            {
+                "name": "flow_control_i",
+                "descr": "Write-side empty of data FIFO (RX parks here until drained)",
+                "signals": [
+                    {"name": "w_empty_i", "width": 1},
                 ],
             },
             {
                 "name": "mii_i",
+                "descr": "Default description",
                 "signals": [
                     {"name": "rx_clk_i", "width": 1},
                     {"name": "rx_dv_i", "width": 1},
@@ -38,15 +47,7 @@ def setup(py_params_dict):
                 ],
             },
         ],
-        "subblocks": [
-            {
-                "core_name": "iob_reg",
-                "instantiate": False,
-                "port_params": {
-                    "clk_en_rst_s": "c_a",
-                },
-            },
-        ],
+        "subblocks": [],
     }
 
     return attributes_dict

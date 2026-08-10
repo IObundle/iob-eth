@@ -14,9 +14,10 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "buffer_io",
+                "name": "fifo_io",
+                "descr": "Byte pop interface to data FIFO",
                 "signals": [
-                    {"name": "addr_o", "isvar": True, "width": 11},
+                    {"name": "pop_en_o", "width": 1},
                     {"name": "data_i", "width": 8},
                 ],
             },

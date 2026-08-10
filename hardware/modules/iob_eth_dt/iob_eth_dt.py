@@ -49,9 +49,7 @@ def setup(py_params_dict):
             {
                 "name": "clk_en_rst_s",
                 "descr": "Clock, clock enable and reset",
-                "signals": {
-                    "type": "iob_clk",
-                },
+                "signals": {"type": "iob_clk"},
             },
             {
                 "name": "csrs_control_i",
@@ -59,11 +57,6 @@ def setup(py_params_dict):
                     {"name": "rx_en_i", "width": 1},
                     {"name": "tx_en_i", "width": 1},
                     {"name": "tx_bd_num_i", "width": "BD_ADDR_W-1"},
-                    # TODO: What should happen if the value of `tx_bd_num_i` changes? Should
-                    # the RX state machine be reset to this buffer descriptor?
-                    # For example, if the state machine is reading BD number 64, and the value
-                    # changes to 65, should the state machine be reset to BD number 65? Or keep
-                    # reading 64?
                 ],
             },
             {
@@ -80,8 +73,8 @@ def setup(py_params_dict):
                 "name": "tx_front_end_io",
                 "signals": [
                     {"name": "eth_data_wr_wen_o", "isvar": True, "width": 1},
-                    {"name": "eth_data_wr_addr_o", "isvar": True, "width": "BUFFER_W"},
                     {"name": "eth_data_wr_wdata_o", "isvar": True, "width": 8},
+                    {"name": "tx_w_full_i", "width": 1},
                     {"name": "tx_ready_i", "width": 1},
                     {"name": "crc_en_o", "width": 1},
                     {"name": "tx_nbytes_o", "width": 11},
@@ -91,13 +84,13 @@ def setup(py_params_dict):
             {
                 "name": "rx_back_end_io",
                 "signals": [
-                    {"name": "eth_data_rd_ren_o", "width": 1},
-                    {"name": "eth_data_rd_addr_o", "isvar": True, "width": "BUFFER_W"},
+                    {"name": "eth_data_rd_pop_o", "isvar": True, "width": 1},
                     {"name": "eth_data_rd_rdata_i", "width": 8},
-                    {"name": "rx_data_rcvd_i", "width": 1},
-                    {"name": "crc_err_i", "width": 1},
-                    {"name": "rx_nbytes_i", "width": 11},
-                    {"name": "rcv_ack_o", "width": 1},
+                    {"name": "eth_rx_info_pop_o", "isvar": True, "width": 1},
+                    {"name": "eth_rx_info_empty_i", "width": 1},
+                    {"name": "eth_rx_info_rdata_i", "width": 12},
+                    {"name": "rx_nbytes_valid_o", "isvar": True, "width": 1},
+                    {"name": "rx_nbytes_o", "width": 11},
                 ],
             },
             {

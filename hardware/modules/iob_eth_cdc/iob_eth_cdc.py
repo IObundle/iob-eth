@@ -42,26 +42,18 @@ def setup(py_params_dict):
             {
                 "name": "system_io",
                 "signals": [
-                    {"name": "rcv_ack_i", "width": 1},
                     {"name": "send_i", "width": 1},
                     {"name": "crc_en_i", "width": 1},
                     {"name": "tx_nbytes_i", "width": 11},
-                    {"name": "crc_err_o", "width": 1},
-                    {"name": "rx_nbytes_o", "width": "BUFFER_W"},
-                    {"name": "rx_data_rcvd_o", "width": 1},
                     {"name": "tx_ready_o", "width": 1},
                 ],
             },
             {
                 "name": "eth_io",
                 "signals": [
-                    {"name": "eth_rcv_ack_o", "width": 1},
                     {"name": "eth_send_o", "width": 1},
                     {"name": "eth_crc_en_o", "width": 1},
                     {"name": "eth_tx_nbytes_o", "width": 11},
-                    {"name": "eth_crc_err_i", "width": 1},
-                    {"name": "eth_rx_nbytes_i", "width": "BUFFER_W"},
-                    {"name": "eth_rx_data_rcvd_i", "width": 1},
                     {"name": "eth_tx_ready_i", "width": 1},
                 ],
             },
@@ -127,13 +119,6 @@ def setup(py_params_dict):
         # Name: (data_w, clk, arst, input, output)
         "rx_arst_sync": (1, "mii_rx_clk_i", "rx_clk_arst", "phy_rst_i", "rx_phy_rst_o"),
         "tx_arst_sync": (1, "mii_tx_clk_i", "tx_clk_arst", "phy_rst_i", "tx_phy_rst_o"),
-        "rcv_f2s_sync": (
-            1,
-            "mii_rx_clk_i",
-            "rx_phy_rst_o",
-            "rcv_ack_i",
-            "eth_rcv_ack_o",
-        ),
         "send_f2s_sync": (1, "mii_tx_clk_i", "tx_phy_rst_o", "send_i", "eth_send_o"),
         "crc_en_f2s_sync": (
             1,
@@ -148,21 +133,6 @@ def setup(py_params_dict):
             "tx_phy_rst_o",
             "tx_nbytes_i",
             "eth_tx_nbytes_o",
-        ),
-        "crc_err_sync": (1, "clk_i", "arst_i", "eth_crc_err_i", "crc_err_o"),
-        "rx_nbytes_sync": (
-            "BUFFER_W",
-            "clk_i",
-            "arst_i",
-            "eth_rx_nbytes_i",
-            "rx_nbytes_o",
-        ),
-        "rx_data_rcvd_sync": (
-            1,
-            "clk_i",
-            "arst_i",
-            "eth_rx_data_rcvd_i",
-            "rx_data_rcvd_o",
         ),
         "tx_ready_sync": (1, "clk_i", "arst_i", "eth_tx_ready_i", "tx_ready_o"),
     }

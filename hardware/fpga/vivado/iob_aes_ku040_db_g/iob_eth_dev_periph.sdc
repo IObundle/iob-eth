@@ -51,6 +51,12 @@ set_property IOSTANDARD LVCMOS18 [get_ports enet_tx_en_o]
 set_property PACKAGE_PIN G10 [get_ports enet_gtx_clk_o]
 set_property IOSTANDARD LVCMOS18 [get_ports enet_gtx_clk_o]
 
+set_property PACKAGE_PIN C8 [get_ports enet_mdio_io]
+set_property IOSTANDARD LVCMOS18 [get_ports enet_mdio_io]
+
+set_property PACKAGE_PIN C9 [get_ports enet_mdc_o]
+set_property IOSTANDARD LVCMOS18 [get_ports enet_mdc_o]
+
 set_property IOB TRUE [get_ports enet_tx_d0_o]
 set_property IOB TRUE [get_ports enet_tx_d1_o]
 set_property IOB TRUE [get_ports enet_tx_d2_o]
