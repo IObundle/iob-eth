@@ -35,7 +35,7 @@ VINCS := -I src -I $(ETH_SRC) -I $(ETH_SIM_SRC)
 
 # Compile and run the testbench.
 run:
-	nix-shell ../../../ --run 'iverilog -W all -g2005-sv -s iob_eth_dt_tb -o $(SIM) $(VINCS) $(VSRC); ./$(SIM)'
+	nix-shell ../../../ --run 'iverilog -W all -g2005-sv -s iob_eth_dt_tb -o $(SIM) $(VINCS) $(VSRC) && ./$(SIM)'
 
 clean:
 	rm -f $(SIM) *.vcd

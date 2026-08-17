@@ -15,8 +15,10 @@
 //   - the info word is {crc_err, length[10:0]} with crc_err=0 and
 //     length = 6+6+2+payload+4 (full wire length, FCS included)
 //   - a corrupted frame yields crc_err=1
-//   - the receiver parks until the data FIFO drains and re-arms for the next
-//     frame
+//   - the receiver never parks on data-FIFO back-pressure (w_full_i): bytes
+//     rejected while the FIFO is full are skipped, so the stored frame has a
+//     hole, its CRC check fails, and the info word carries the accepted byte
+//     count; the receiver then re-arms for the next frame
 
 `timescale 1ns / 1ps
 
@@ -42,6 +44,8 @@ module iob_eth_rx_tb;
    wire [11:0] rx_info_wdata;
    wire        rx_info_w_full;
    wire        rx_w_empty;
+   wire        rx_w_full;
+   reg         force_full = 0;
 
    reg        mii_rx_dv = 0;
    reg  [3:0] mii_rx_data = 0;
@@ -53,7 +57,7 @@ module iob_eth_rx_tb;
       .info_wen_o  (rx_info_wen),
       .info_wdata_o(rx_info_wdata),
       .info_w_full_i(rx_info_w_full),
-      .w_empty_i   (rx_w_empty),
+      .w_full_i    (force_full | rx_w_full),
       .rx_clk_i    (mii_rx_clk),
       .rx_dv_i     (mii_rx_dv),
       .rx_data_i   (mii_rx_data)
@@ -90,7 +94,7 @@ module iob_eth_rx_tb;
       .r_rst_i             (1'b0),
       .w_en_i              (rx_wr),
       .w_data_i            (rx_data_w),
-      .w_full_o            (),
+      .w_full_o            (rx_w_full),
       .w_empty_o           (rx_w_empty),
       .w_level_o           (rx_fifo_w_level),
       .r_en_i              (rx_fifo_r_en),
@@ -257,8 +261,11 @@ module iob_eth_rx_tb;
    endtask
 
    // ---------- Frame build + send ----------
+   // ndrop > 0 asserts force_full (w_full_i) while driving a small window of
+   // payload bytes, so the receiver must skip them instead of parking.
    task send_frame;
-      input corrupt;
+      input [31:0] corrupt;
+      input [31:0] ndrop;
       integer i;
       begin
          // Build frame: DA, SA, type, payload
@@ -287,7 +294,12 @@ module iob_eth_rx_tb;
          mii_rx_dv <= 1;
          for (i = 0; i < 7; i = i + 1) mii_byte(8'h55);
          mii_byte(8'hD5);
-         for (i = 0; i < frame_len; i = i + 1) mii_byte(frame_bytes[i]);
+         for (i = 0; i < frame_len; i = i + 1) begin
+            if (ndrop > 0 && i >= 13 && i < 13 + ndrop) force_full <= 1;
+            else force_full <= 0;
+            mii_byte(frame_bytes[i]);
+         end
+         force_full <= 0;
          mii_byte(fcs_bytes[0]);
          mii_byte(fcs_bytes[1]);
          mii_byte(fcs_bytes[2]);
@@ -389,7 +401,51 @@ module iob_eth_rx_tb;
          if (test_fail == 0 && expect_crc == 0) $display("PASS[%0t]: frame received correctly", $time);
          if (test_fail == 0 && expect_crc == 1) $display("PASS[%0t]: corrupted frame flagged", $time);
 
-         // Wait for RX to return to idle (data FIFO drained -> w_empty)
+      // Wait for RX to return to idle (data FIFO drained -> w_empty)
+      wait (rx_w_empty == 1'b1);
+      repeat (4) @(negedge mii_rx_clk);
+   end
+endtask
+
+   // Back-pressure check: frame was received while w_full gated some bytes.
+   // The receiver must NOT have parked: the info word is still pushed, its
+   // CRC bit is set (the stored byte stream has a hole) and its length equals
+   // the number of bytes actually accepted into the data FIFO.
+   task check_received_bp;
+      integer i;
+      reg [7:0] b;
+      reg [11:0] info;
+      begin
+         pop_rx_info(info);
+
+         rcv_count = 0;
+         while (!rx_fifo_r_empty) begin
+            pop_rx_data(b);
+            rcv_count = rcv_count + 1;
+         end
+
+         $display("INFO[%0t]: info = {crc=%0d, len=%0d}, data bytes = %0d", $time,
+                  info[11], info[10:0], rcv_count);
+
+         if (info[11] !== 1'b1) begin
+            $display("FAIL[%0t]: crc_err = %0d, expected 1 (bytes dropped)", $time, info[11]);
+            test_fail = 1;
+         end
+         if (info[10:0] !== rcv_count) begin
+            $display("FAIL[%0t]: length = %0d, expected accepted count %0d", $time, info[10:0], rcv_count);
+            test_fail = 1;
+         end
+         if (rcv_count === 6 + 6 + 2 + plen + 4) begin
+            $display("FAIL[%0t]: no bytes were dropped (count %0d)", $time, rcv_count);
+            test_fail = 1;
+         end
+         if (rcv_count === 0) begin
+            $display("FAIL[%0t]: nothing accepted, receiver failed to progress", $time);
+            test_fail = 1;
+         end
+
+         if (test_fail == 0) $display("PASS[%0t]: back-pressured frame dropped whole, no park", $time);
+
          wait (rx_w_empty == 1'b1);
          repeat (4) @(negedge mii_rx_clk);
       end
@@ -412,15 +468,23 @@ module iob_eth_rx_tb;
       repeat (10) @(posedge clk);
 
       $display("=== RX TB: valid frame (%0d payload bytes) ===", plen);
-      send_frame(0);
+      send_frame(0, 0);
       check_received(0);
 
       $display("=== RX TB: corrupted frame (payload bit flip) ===");
-      send_frame(1);
+      send_frame(1, 0);
       check_received(1);
 
       $display("=== RX TB: valid frame again (re-arm check) ===");
-      send_frame(0);
+      send_frame(0, 0);
+      check_received(0);
+
+      $display("=== RX TB: back-pressure (w_full) during payload, no park ===");
+      send_frame(0, 4);
+      check_received_bp;
+
+      $display("=== RX TB: valid frame after back-pressure (re-arm check) ===");
+      send_frame(0, 0);
       check_received(0);
 
       if (test_fail) $display("=== RX TB: TESTS FAILED ===");
