@@ -32,9 +32,9 @@ def setup(py_params_dict):
             },
             {
                 "name": "flow_control_i",
-                "descr": "Write-side empty of data FIFO (RX parks here until drained)",
+                "descr": "Write-side full of data FIFO. Byte writes are gated on this signal so only accepted bytes are stored and CRC'd. A rejected byte creates a hole in the stored frame that makes its CRC check fail, so the driver drops the frame; alignment is restored by the length stored below.",
                 "signals": [
-                    {"name": "w_empty_i", "width": 1},
+                    {"name": "w_full_i", "width": 1},
                 ],
             },
             {
