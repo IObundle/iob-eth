@@ -29,3 +29,26 @@ set_property SLEW FAST [get_ports {rgmii_txd_o[2]}]
 set_property SLEW FAST [get_ports {rgmii_txd_o[3]}]
 set_property SLEW FAST [get_ports rgmii_tx_en_o]
 set_property SLEW FAST [get_ports rgmii_tx_clk_o]
+
+# RGMII DDR timing constraints (100 Mbps: 25 MHz, same nibble on both edges)
+# RX input delays (PHY -> FPGA, RTL8211E with rx_dly=1 internal delay ~2ns)
+set_input_delay -clock rgmii_rx_clk_i -max 4.0 [get_ports {rgmii_rxd_i[*]}]
+set_input_delay -clock rgmii_rx_clk_i -min 1.0 [get_ports {rgmii_rxd_i[*]}]
+set_input_delay -clock rgmii_rx_clk_i -clock_fall -max 4.0 [get_ports {rgmii_rxd_i[*]}] -add_delay
+set_input_delay -clock rgmii_rx_clk_i -clock_fall -min 1.0 [get_ports {rgmii_rxd_i[*]}] -add_delay
+
+set_input_delay -clock rgmii_rx_clk_i -max 4.0 [get_ports rgmii_rx_dv_i]
+set_input_delay -clock rgmii_rx_clk_i -min 1.0 [get_ports rgmii_rx_dv_i]
+set_input_delay -clock rgmii_rx_clk_i -clock_fall -max 4.0 [get_ports rgmii_rx_dv_i] -add_delay
+set_input_delay -clock rgmii_rx_clk_i -clock_fall -min 1.0 [get_ports rgmii_rx_dv_i] -add_delay
+
+# TX output delays (FPGA -> PHY, ODDR ~1ns + PHY tx_dly=1 ~2ns)
+set_output_delay -clock rgmii_rx_clk_i -max 3.0 [get_ports {rgmii_txd_o[*]}]
+set_output_delay -clock rgmii_rx_clk_i -min 0.0 [get_ports {rgmii_txd_o[*]}]
+set_output_delay -clock rgmii_rx_clk_i -clock_fall -max 3.0 [get_ports {rgmii_txd_o[*]}] -add_delay
+set_output_delay -clock rgmii_rx_clk_i -clock_fall -min 0.0 [get_ports {rgmii_txd_o[*]}] -add_delay
+
+set_output_delay -clock rgmii_rx_clk_i -max 3.0 [get_ports rgmii_tx_en_o]
+set_output_delay -clock rgmii_rx_clk_i -min 0.0 [get_ports rgmii_tx_en_o]
+set_output_delay -clock rgmii_rx_clk_i -clock_fall -max 3.0 [get_ports rgmii_tx_en_o] -add_delay
+set_output_delay -clock rgmii_rx_clk_i -clock_fall -min 0.0 [get_ports rgmii_tx_en_o] -add_delay
