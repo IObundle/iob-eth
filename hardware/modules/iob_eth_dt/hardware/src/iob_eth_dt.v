@@ -35,16 +35,16 @@ module iob_eth_dt #(
       // LSB priority: "LOW", "HIGH"
       .LSB_PRIORITY("LOW")
    ) bd_mem_arbiter (
-      .clk (clk_i),
-      .arst(arst_i),
-      .rst (1'b0),
+       .clk (clk_i),
+       .arst(arst_i),
+       .rst (1'b0),
 
-      .request    (bd_mem_arbiter_req),
-      .acknowledge(bd_mem_arbiter_ack),
+       .request    (bd_mem_arbiter_req),
+       .acknowledge(bd_mem_arbiter_ack),
 
-      .grant        (bd_mem_arbiter_grant),
-      .grant_valid  (bd_mem_arbiter_grant_valid),
-      .grant_encoded(bd_mem_arbiter_grant_encoded)
+       .grant        (bd_mem_arbiter_grant),
+       .grant_valid  (bd_mem_arbiter_grant_valid),
+       .grant_encoded(bd_mem_arbiter_grant_encoded)
    );
 
    assign bd_mem_arbiter_ack = bd_mem_arbiter_grant & {2{bd_mem_arbiter_grant_valid}};
@@ -70,20 +70,20 @@ module iob_eth_dt #(
    reg [         4-1:0] axi_wstrb_o_reg;
    reg [AXI_DATA_W-1:0] axi_wdata_o_reg;
    reg                  axi_wlast_o_reg;
-   assign axi_awaddr_o      = axi_awaddr_o_reg;
-   assign axi_awvalid_o     = axi_awvalid_o_reg;
-   assign axi_wvalid_o      = axi_wvalid_o_reg;
-   assign axi_wstrb_o       = axi_wstrb_o_reg;
-   assign axi_wdata_o       = axi_wdata_o_reg;
-   assign axi_wlast_o       = axi_wlast_o_reg;
+   assign axi_awaddr_o  = axi_awaddr_o_reg;
+   assign axi_awvalid_o = axi_awvalid_o_reg;
+   assign axi_wvalid_o  = axi_wvalid_o_reg;
+   assign axi_wstrb_o   = axi_wstrb_o_reg;
+   assign axi_wdata_o   = axi_wdata_o_reg;
+   assign axi_wlast_o   = axi_wlast_o_reg;
 
 
    // Connect BD memory bus based on arbiter selection
-   assign bd_addr_o         = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_addr_o : rx_bd_addr_o;
-   assign bd_wen_o          = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_wen_o : rx_bd_wen_o;
-   assign bd_o              = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_o : rx_bd_o;
+   assign bd_addr_o     = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_addr_o : rx_bd_addr_o;
+   assign bd_wen_o      = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_wen_o : rx_bd_wen_o;
+   assign bd_o          = bd_mem_arbiter_grant_encoded == 0 ? tx_bd_o : rx_bd_o;
 
-   assign bd_en_o           = 1;
+   assign bd_en_o       = 1;
 
    //tx program
    reg  [4-1:0] tx_state_nxt;
@@ -92,11 +92,11 @@ module iob_eth_dt #(
       .DATA_W (4),
       .RST_VAL(0)
    ) tx_state_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_state_nxt),
-      .data_o(tx_state)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_state_nxt),
+       .data_o(tx_state)
    );
 
    reg  [32-1:0] tx_buffer_byte_counter_nxt;
@@ -105,11 +105,11 @@ module iob_eth_dt #(
       .DATA_W (32),
       .RST_VAL(0)
    ) tx_buffer_byte_counter_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_buffer_byte_counter_nxt),
-      .data_o(tx_buffer_byte_counter)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_buffer_byte_counter_nxt),
+       .data_o(tx_buffer_byte_counter)
    );
 
    reg  [BD_ADDR_W-2:0] tx_bd_num_nxt;
@@ -118,11 +118,11 @@ module iob_eth_dt #(
       .DATA_W (BD_ADDR_W - 1),
       .RST_VAL(0)
    ) tx_bd_num_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_bd_num_nxt),
-      .data_o(tx_bd_num)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_bd_num_nxt),
+       .data_o(tx_bd_num)
    );
 
    reg  [32-1:0] tx_buffer_descriptor_nxt;
@@ -131,11 +131,11 @@ module iob_eth_dt #(
       .DATA_W (32),
       .RST_VAL(0)
    ) tx_buffer_descriptor_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_buffer_descriptor_nxt),
-      .data_o(tx_buffer_descriptor)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_buffer_descriptor_nxt),
+       .data_o(tx_buffer_descriptor)
    );
 
    wire [15:0] tx_buffer_diff;
@@ -147,11 +147,11 @@ module iob_eth_dt #(
       .DATA_W (AXI_ADDR_W),
       .RST_VAL(0)
    ) tx_buffer_ptr_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_buffer_ptr_nxt),
-      .data_o(tx_buffer_ptr)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_buffer_ptr_nxt),
+       .data_o(tx_buffer_ptr)
    );
 
    reg  [AXI_LEN_W-1:0] axi_arlen_nxt;
@@ -160,11 +160,11 @@ module iob_eth_dt #(
       .DATA_W (AXI_LEN_W),
       .RST_VAL(0)
    ) axi_arlen_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(axi_arlen_nxt),
-      .data_o(axi_arlen)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(axi_arlen_nxt),
+       .data_o(axi_arlen)
    );
    assign axi_arlen_o = axi_arlen_nxt;
 
@@ -174,11 +174,11 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) crc_en_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(crc_en_nxt),
-      .data_o(crc_en)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(crc_en_nxt),
+       .data_o(crc_en)
    );
    assign crc_en_o = crc_en;
 
@@ -188,11 +188,11 @@ module iob_eth_dt #(
       .DATA_W (11),
       .RST_VAL(0)
    ) tx_nbytes_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_nbytes_nxt),
-      .data_o(tx_nbytes)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_nbytes_nxt),
+       .data_o(tx_nbytes)
    );
    assign tx_nbytes_o = tx_nbytes;
 
@@ -202,11 +202,11 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) send_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(send_nxt),
-      .data_o(send)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(send_nxt),
+       .data_o(send)
    );
    assign send_o = send;
 
@@ -216,12 +216,31 @@ module iob_eth_dt #(
       .DATA_W (BUFFER_W),
       .RST_VAL(0)
    ) tx_preamble_cnt_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_preamble_cnt_nxt),
-      .data_o(tx_preamble_cnt)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_preamble_cnt_nxt),
+       .data_o(tx_preamble_cnt)
    );
+
+   // Latch set when software writes TX_BD_NUM (ring re-init). The TX BD pointer
+   // is realigned to 0 (the driver resets cur_tx=0 on re-init), mirroring the
+   // RX-side resync, but only when no frame is mid-transmission so the status
+   // write of an in-flight frame cannot land on the wrong BD.
+   reg  [1-1:0] tx_force_resync_nxt;
+   wire [1-1:0] tx_force_resync;
+   iob_reg_ca #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) tx_force_resync_reg (
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_force_resync_nxt),
+       .data_o(tx_force_resync)
+   );
+
+   wire [BD_ADDR_W-2:0] tx_bd_num_prev;
 
    always @* begin
       tx_req                     = 0;
@@ -249,6 +268,7 @@ module iob_eth_dt #(
       tx_buffer_descriptor_nxt   = tx_buffer_descriptor;
       tx_buffer_ptr_nxt          = tx_buffer_ptr;
       tx_preamble_cnt_nxt        = tx_preamble_cnt;
+      tx_force_resync_nxt        = tx_force_resync;
 
       if (arst_i) begin
 
@@ -267,11 +287,11 @@ module iob_eth_dt #(
          tx_bd_cnt_o           = 0;
          tx_word_cnt_o         = 0;
          tx_preamble_cnt_nxt   = 0;
+         tx_force_resync_nxt   = 0;
 
       end else begin
 
          case (tx_state)
-
             0: begin  // Request buffer descriptor
                tx_bd_addr_o = tx_bd_num << 1;
                tx_req       = 1;
@@ -290,9 +310,9 @@ module iob_eth_dt #(
                if (!tx_buffer_descriptor_nxt[15] || !tx_en_i) tx_state_nxt = tx_state - 1'b1;
             end
 
-             2: begin  //Request buffer pointer
-               tx_bd_addr_o = (tx_bd_num << 1) + {{(BD_ADDR_W - 1) {1'b0}}, {1'b1}};
-               tx_req       = 1;
+            2: begin  //Request buffer pointer
+               tx_bd_addr_o        = (tx_bd_num << 1) + {{(BD_ADDR_W - 1) {1'b0}}, {1'b1}};
+               tx_req              = 1;
                tx_preamble_cnt_nxt = 0;
 
                // Wait for arbiter
@@ -310,7 +330,8 @@ module iob_eth_dt #(
                      // Push preamble and SFD bytes to the data FIFO
                      if (!tx_w_full_i) begin
                         eth_data_wr_wen_o = 1;
-                        if (tx_preamble_cnt == `IOB_ETH_PREAMBLE_LEN) eth_data_wr_wdata_o = `IOB_ETH_SFD;
+                        if (tx_preamble_cnt == `IOB_ETH_PREAMBLE_LEN)
+                           eth_data_wr_wdata_o = `IOB_ETH_SFD;
                         else eth_data_wr_wdata_o = `IOB_ETH_PREAMBLE;
                         tx_preamble_cnt_nxt = tx_preamble_cnt + 1'b1;
                      end
@@ -354,8 +375,8 @@ module iob_eth_dt #(
                   // Disable ready bit
                   tx_buffer_descriptor_nxt[15] = 0;
 
-                   // Write transmit status
-                   tx_state_nxt = 7;
+                  // Write transmit status
+                  tx_state_nxt = 7;
                end
 
                // No-DMA interface
@@ -429,6 +450,22 @@ module iob_eth_dt #(
 
          endcase
 
+         // Resync tx_bd_num when software writes TX_BD_NUM (ring re-init),
+         // mirroring the RX-side resync. The driver resets cur_tx=0 on re-init,
+         // so the TX BD pointer must be realigned to 0 as well. The resync is
+         // deferred while a frame is mid-transmission (states 4..8) because the
+         // frame bytes are already streaming to the wire and the status write
+         // (state 8) must still land on the correct BD.
+         if (tx_bd_num_wr_i || tx_bd_num_i != tx_bd_num_prev) tx_force_resync_nxt = 1;
+         if (tx_force_resync) begin
+            if (!(tx_state == 4 || tx_state == 5 || tx_state == 6 ||
+                  tx_state == 7 || tx_state == 8)) begin
+               tx_bd_num_nxt       = 0;
+               tx_state_nxt        = 0;
+               tx_force_resync_nxt = 0;
+            end
+         end
+
       end
    end
 
@@ -452,11 +489,11 @@ module iob_eth_dt #(
       .DATA_W (3),
       .RST_VAL(0)
    ) rx_state_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_state_nxt),
-      .data_o(rx_state)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_state_nxt),
+       .data_o(rx_state)
    );
 
    reg  [32-1:0] rx_buffer_byte_counter_nxt;
@@ -465,14 +502,15 @@ module iob_eth_dt #(
       .DATA_W (32),
       .RST_VAL(0)
    ) rx_buffer_byte_counter_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_buffer_byte_counter_nxt),
-      .data_o(rx_buffer_byte_counter)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_buffer_byte_counter_nxt),
+       .data_o(rx_buffer_byte_counter)
    );
 
    wire [11-1:0] rx_buffer_diff;
+   wire [11-1:0] rx_length;
    assign rx_buffer_diff = rx_length - rx_buffer_byte_counter[10:0];
 
    reg  [BD_ADDR_W-2:0] rx_bd_num_nxt;
@@ -481,24 +519,23 @@ module iob_eth_dt #(
       .DATA_W (BD_ADDR_W - 1),
       .RST_VAL({1'b1, {(BD_ADDR_W - 2) {1'b0}}})  // 2nd half of BD_ADDR_W range
    ) rx_bd_num_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_bd_num_nxt),
-      .data_o(rx_bd_num)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_bd_num_nxt),
+       .data_o(rx_bd_num)
    );
 
-   reg  [BD_ADDR_W-2:0] tx_bd_num_prev_nxt;
-   wire [BD_ADDR_W-2:0] tx_bd_num_prev;
+   reg [BD_ADDR_W-2:0] tx_bd_num_prev_nxt;
    iob_reg_ca #(
       .DATA_W (BD_ADDR_W - 1),
       .RST_VAL(0)
    ) tx_bd_num_prev_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(tx_bd_num_prev_nxt),
-      .data_o(tx_bd_num_prev)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(tx_bd_num_prev_nxt),
+       .data_o(tx_bd_num_prev)
    );
 
    reg  [AXI_LEN_W-1:0] rx_burst_word_num_nxt;
@@ -507,11 +544,11 @@ module iob_eth_dt #(
       .DATA_W (AXI_LEN_W),
       .RST_VAL(0)
    ) rx_burst_word_num_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_burst_word_num_nxt),
-      .data_o(rx_burst_word_num)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_burst_word_num_nxt),
+       .data_o(rx_burst_word_num)
    );
 
    reg  [32-1:0] rx_buffer_descriptor_nxt;
@@ -520,11 +557,11 @@ module iob_eth_dt #(
       .DATA_W (32),
       .RST_VAL(0)
    ) rx_buffer_descriptor_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_buffer_descriptor_nxt),
-      .data_o(rx_buffer_descriptor)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_buffer_descriptor_nxt),
+       .data_o(rx_buffer_descriptor)
    );
 
    reg  [AXI_ADDR_W-1:0] rx_buffer_ptr_nxt;
@@ -533,11 +570,11 @@ module iob_eth_dt #(
       .DATA_W (AXI_ADDR_W),
       .RST_VAL(0)
    ) rx_buffer_ptr_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_buffer_ptr_nxt),
-      .data_o(rx_buffer_ptr)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_buffer_ptr_nxt),
+       .data_o(rx_buffer_ptr)
    );
 
    reg  [AXI_LEN_W-1:0] axi_awlen_nxt;
@@ -546,25 +583,24 @@ module iob_eth_dt #(
       .DATA_W (AXI_LEN_W),
       .RST_VAL(0)
    ) axi_awlen_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(axi_awlen_nxt),
-      .data_o(axi_awlen)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(axi_awlen_nxt),
+       .data_o(axi_awlen)
    );
    assign axi_awlen_o = axi_awlen_nxt;
 
-   reg  [11-1:0] rx_length_nxt;
-   wire [11-1:0] rx_length;
+   reg [11-1:0] rx_length_nxt;
    iob_reg_ca #(
       .DATA_W (11),
       .RST_VAL(0)
    ) rx_length_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_length_nxt),
-      .data_o(rx_length)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_length_nxt),
+       .data_o(rx_length)
    );
    assign rx_nbytes_o = rx_length;
 
@@ -574,11 +610,11 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) rx_crc_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_crc_nxt),
-      .data_o(rx_crc)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_crc_nxt),
+       .data_o(rx_crc)
    );
 
    reg  [1-1:0] rx_info_pop_pending_nxt;
@@ -587,11 +623,27 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) rx_info_pop_pending_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_info_pop_pending_nxt),
-      .data_o(rx_info_pop_pending)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_info_pop_pending_nxt),
+       .data_o(rx_info_pop_pending)
+   );
+
+   // Latch set when software writes TX_BD_NUM (ring re-init). The rx_bd_num
+   // resync is applied only when no frame is being consumed, so a mid-frame
+   // re-init cannot orphan the already-popped info word or undrained bytes.
+   reg  [1-1:0] rx_force_resync_nxt;
+   wire [1-1:0] rx_force_resync;
+   iob_reg_ca #(
+      .DATA_W (1),
+      .RST_VAL(0)
+   ) rx_force_resync_reg (
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_force_resync_nxt),
+       .data_o(rx_force_resync)
    );
 
    reg  [1-1:0] rx_nbytes_valid_nxt;
@@ -600,11 +652,11 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) rx_nbytes_valid_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_nbytes_valid_nxt),
-      .data_o(rx_nbytes_valid)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_nbytes_valid_nxt),
+       .data_o(rx_nbytes_valid)
    );
    assign rx_nbytes_valid_o = rx_nbytes_valid;
 
@@ -613,11 +665,11 @@ module iob_eth_dt #(
       .DATA_W (8),
       .RST_VAL(0)
    ) rx_frame_word_rdata_o_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_frame_word_rdata_o_nxt),
-      .data_o(rx_frame_word_rdata_o)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_frame_word_rdata_o_nxt),
+       .data_o(rx_frame_word_rdata_o)
    );
 
    reg rx_frame_word_rvalid_o_nxt;
@@ -625,11 +677,11 @@ module iob_eth_dt #(
       .DATA_W (1),
       .RST_VAL(0)
    ) rx_frame_word_rvalid_o_reg (
-      .clk_i (clk_i),
-      .cke_i (cke_i),
-      .arst_i(arst_i),
-      .data_i(rx_frame_word_rvalid_o_nxt),
-      .data_o(rx_frame_word_rvalid_o)
+       .clk_i (clk_i),
+       .cke_i (cke_i),
+       .arst_i(arst_i),
+       .data_i(rx_frame_word_rvalid_o_nxt),
+       .data_o(rx_frame_word_rvalid_o)
    );
 
    always @* begin
@@ -665,6 +717,7 @@ module iob_eth_dt #(
       rx_crc_nxt                 = rx_crc;
       rx_info_pop_pending_nxt    = rx_info_pop_pending;
       rx_nbytes_valid_nxt        = rx_nbytes_valid;
+      rx_force_resync_nxt        = rx_force_resync;
 
 
       if (arst_i) begin
@@ -688,6 +741,7 @@ module iob_eth_dt #(
          rx_crc_nxt                 = 0;
          rx_info_pop_pending_nxt    = 0;
          rx_nbytes_valid_nxt        = 0;
+         rx_force_resync_nxt        = 0;
 
       end else begin
 
@@ -738,12 +792,12 @@ module iob_eth_dt #(
                   end
                end else begin
                   // Info data is now valid (1-cycle FIFO read latency)
-                  rx_length_nxt             = eth_rx_info_rdata_i[10:0];
-                  rx_crc_nxt                = eth_rx_info_rdata_i[11];
-                  rx_nbytes_valid_nxt       = 1;
+                  rx_length_nxt           = eth_rx_info_rdata_i[10:0];
+                  rx_crc_nxt              = eth_rx_info_rdata_i[11];
+                  rx_nbytes_valid_nxt     = 1;
                   // Prefetch first data byte
-                  eth_data_rd_pop_o         = 1;
-                  rx_info_pop_pending_nxt   = 0;
+                  eth_data_rd_pop_o       = 1;
+                  rx_info_pop_pending_nxt = 0;
                end
             end
 
@@ -779,22 +833,22 @@ module iob_eth_dt #(
                   // Length no longer available to software
                   rx_nbytes_valid_nxt             = 0;
 
-                   // Write receive status
-                   rx_state_nxt                    = 7;
-                end
+                  // Write receive status
+                  rx_state_nxt                    = 7;
+               end
 
-                // No-DMA interface
-                rx_bd_cnt_o           = rx_bd_num;
-                rx_word_cnt_o         = rx_buffer_byte_counter[10:0];
-                rx_frame_word_ready_o = 1;
-                if (rx_frame_word_ren_i) begin
-                   rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
-                   // Pop next byte, but not past the end of the frame
-                   if (rx_buffer_byte_counter + 1'b1 < rx_length) eth_data_rd_pop_o = 1;
-                   // Send word from buffer to CPU
-                   rx_frame_word_rdata_o_nxt  = eth_data_rd_rdata_i;
-                   rx_frame_word_rvalid_o_nxt = 1;
-                end
+               // No-DMA interface
+               rx_bd_cnt_o           = rx_bd_num;
+               rx_word_cnt_o         = rx_buffer_byte_counter[10:0];
+               rx_frame_word_ready_o = 1;
+               if (rx_frame_word_ren_i) begin
+                  rx_buffer_byte_counter_nxt = rx_buffer_byte_counter + 1'b1;
+                  // Pop next byte, but not past the end of the frame
+                  if (rx_buffer_byte_counter + 1'b1 < rx_length) eth_data_rd_pop_o = 1;
+                  // Send word from buffer to CPU
+                  rx_frame_word_rdata_o_nxt  = eth_data_rd_rdata_i;
+                  rx_frame_word_rvalid_o_nxt = 1;
+               end
 
             end
 
@@ -865,12 +919,35 @@ module iob_eth_dt #(
 
          endcase
 
-         // Edge detection: re-initialize rx_bd_num when tx_bd_num_i changes
+         // Resync rx_bd_num when software writes TX_BD_NUM (ring re-init).
+         // The resync is deferred while a frame is being consumed - i.e. an
+         // info word is popped or about to be popped (state 4), frame bytes
+         // are being transferred to memory (states 5/6) or the receive status
+         // is being written back to the BD (state 7). Applying it mid-frame
+         // would orphan the popped info word and the undrained data-FIFO
+         // bytes, permanently desyncing the receive path; applying it during
+         // the status write would redirect or abandon the write. Once the
+         // in-flight frame completes (or the DT is idle), rx_bd_num is set to
+         // the latest TX_BD_NUM and the RX state machine restarts at state 0.
          tx_bd_num_prev_nxt = tx_bd_num_i;
          if (tx_bd_num_i != tx_bd_num_prev) begin
-            rx_bd_num_nxt      = tx_bd_num_i;
-            tx_bd_num_prev_nxt = tx_bd_num_i;
-            rx_state_nxt       = 0;
+            tx_bd_num_prev_nxt  = tx_bd_num_i;
+            rx_force_resync_nxt = 1;
+         end
+         // Also resync on any TX_BD_NUM write, even when the written value is
+         // unchanged: software ring re-initialisation resets the driver's BD
+         // pointers, so the RX BD pointer must be realigned too.
+         if (tx_bd_num_wr_i) rx_force_resync_nxt = 1;
+         if (rx_force_resync) begin
+            // Defer while an info pop is in flight or about to be issued, or
+            // while the frame bytes are being transferred to memory, or while
+            // the receive status write is still pending.
+            if (!((rx_state == 4 && (rx_info_pop_pending || !eth_rx_info_empty_i)) ||
+                  rx_state == 5 || rx_state == 6 || rx_state == 7)) begin
+               rx_bd_num_nxt       = tx_bd_num_i;
+               rx_state_nxt        = 0;
+               rx_force_resync_nxt = 0;
+            end
          end
 
       end

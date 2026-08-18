@@ -14,6 +14,7 @@ static char TEMPLATE[TEMPLATE_LEN];
 
 // Function to flush cache (clean + invalidate)
 static void (*flush_cache)(void *, size_t) = NULL;
+static int (*printf_func)(const char *format, ...) = &printf;
 // Functions to alloc and free memory
 static void *(*mem_alloc)(size_t) = &malloc;
 static void (*mem_free)(void *) = &free;
@@ -49,17 +50,17 @@ static void set_int(char *ptr, unsigned int i_val) {
 
 static void print_buffer(char *buffer, int size) {
   if (buffer == NULL || size < 1) {
-    printf("DEBUG print buffer: invalid inputs\n");
+    printf_func("DEBUG print buffer: invalid inputs\n");
     return;
   }
   int i = 0, ch = 0;
   char HexTable[17] = "0123456789abcdef";
-  printf("\tDEBUG: Buffer:");
+  printf_func("\tDEBUG: Buffer:");
   for (i = 0; i < size; i++) {
     ch = (int)((unsigned char)buffer[i]);
-    printf("%c%c ", HexTable[ch >> 4], HexTable[ch & 0xF]);
+    printf_func("%c%c ", HexTable[ch >> 4], HexTable[ch & 0xF]);
   }
-  printf("\n\n");
+  printf_func("\n\n");
   return;
 }
 
@@ -67,7 +68,161 @@ static void print_buffer(char *buffer, int size) {
 /*********** ETHERNET DRIVERS **************/
 /*******************************************/
 
-void eth_init(int base_address, void (*flush_cache_func)(void *, size_t)) {
+// IEEE 802.3 Clause 22 PHY register addresses
+#define PHY_BMCR 0       // Basic Mode Control Register
+#define PHY_MII_STATUS 1 // MII Status Register
+#define PHY_PHY_ID_HI 2  // PHY Identifier High
+#define PHY_PHY_ID_LO 3  // PHY Identifier Low
+#define PHY_ANAR 4       // Auto-Negotiation Advertisement Register
+#define PHY_ANLPAR 5     // Auto-Negotiation Link Partner Ability Register
+#define PHY_CTRL1000 9   // 1000BASE-T Control Register (Clause 22)
+
+// BMCR bits (speed encoding: {bit13, bit6} = 00:10M, 01:100M, 10:1000M)
+#define BMCR_RESET (1 << 15)
+#define BMCR_SPEED100 (1 << 6)
+#define BMCR_ANENABLE (1 << 12)
+#define BMCR_RESTART_AUTONEG (1 << 9)
+#define BMCR_FULL_DUPLEX (1 << 8)
+
+// 1000BASE-T Control (GBCR) bits
+#define CTRL1000_ADVERTISE_1000_FD (1 << 9)
+#define CTRL1000_ADVERTISE_1000_HD (1 << 8)
+
+// MII Status bits
+#define MII_STATUS_LINK (1 << 2)
+#define MII_STATUS_AUTONEG_COMPLETE (1 << 5)
+
+// ANAR bits
+#define ANAR_PROTOCOL_802_3 (1 << 0)
+#define ANAR_100BASE_TX_HD (1 << 7)
+#define ANAR_100BASE_TX_FD (1 << 8)
+
+// Simple busy-wait delay of ~1 ms, scaled with the system clock so the
+// elapsed time is the same regardless of the CPU frequency (no OS timers
+// available in baremetal)
+static void mii_delay(uint32_t system_freq) {
+  volatile int i;
+  for (i = 0; i < (int)(system_freq / 1000); i++)
+    ;
+}
+
+// Wait until the MII management interface is idle
+// returns 0 on success, -1 on timeout
+static int mii_wait_idle(void) {
+  int timeout = 1000000;
+  while (timeout-- && (iob_eth_csrs_get_miistatus() & MIISTATUS_BUSY))
+    ;
+  return timeout > 0 ? 0 : -1;
+}
+
+// Read a Clause 22 PHY register
+// returns 0 on success, -1 on timeout
+static int mii_read(int phy, int reg, uint16_t *val) {
+  iob_eth_csrs_set_miiaddress(MIIADDRESS_ADDR(phy, reg));
+  iob_eth_csrs_set_miicommand(MIICOMMAND_READ);
+  if (mii_wait_idle())
+    return -1;
+  *val = iob_eth_csrs_get_miirx_data() & 0xffff;
+  iob_eth_csrs_set_miicommand(0);
+  return 0;
+}
+
+// Write a Clause 22 PHY register
+// returns 0 on success, -1 on timeout
+static int mii_write(int phy, int reg, uint16_t val) {
+  iob_eth_csrs_set_miiaddress(MIIADDRESS_ADDR(phy, reg));
+  iob_eth_csrs_set_miitx_data(val);
+  iob_eth_csrs_set_miicommand(MIICOMMAND_WRITE);
+  if (mii_wait_idle())
+    return -1;
+  iob_eth_csrs_set_miicommand(0);
+  return 0;
+}
+
+// Configure the PHY to only advertise 100BASE-TX and force the link to
+// 100 Mbps. The iob_eth core is a MII core and only works at 10/100 Mbps.
+// When the board is connected to a gigabit switch with auto-negotiation
+// enabled, the PHY would otherwise link at 1000 Mbps and the core cannot
+// decode the data.
+void eth_init_phy(uint32_t system_freq) {
+  int i, retry, phy = -1;
+  uint16_t val, id_hi;
+
+  // Wait for the PHY to be released from reset by the core
+  while (iob_eth_csrs_get_phy_rst_val())
+    ;
+
+  // Configure MII management clock divider so that MDC <= 2.5 MHz
+  iob_eth_csrs_set_miimoder(MIIMODER_CLKDIV(system_freq / 2500000));
+
+  // Scan the MDIO bus for the PHY (read PHY ID high register). Reject both
+  // 0xffff (no device pulls the line low) and 0x0000 (a floating line with no
+  // pull-up) as "not present".
+  for (i = 0; i < 32; i++) {
+    if (!mii_read(i, PHY_PHY_ID_HI, &val) && val != 0xffff && val != 0x0000) {
+      phy = i;
+      id_hi = val;
+      break;
+    }
+  }
+  if (phy < 0) {
+    printf_func("ETH: PHY not found on MDIO bus\n");
+    return;
+  }
+  mii_read(phy, PHY_PHY_ID_LO, &val);
+  printf_func("ETH: PHY found at address %d (id 0x%04x:%04x)\n", phy, id_hi,
+              val);
+
+  // Diagnostic readbacks of the Clause 22 registers on this PHY
+  mii_read(phy, PHY_BMCR, &val);
+  printf_func("ETH: PHY BMCR (before)      = 0x%04x\n", val);
+  mii_read(phy, PHY_ANAR, &val);
+  printf_func("ETH: PHY ANAR (before)      = 0x%04x\n", val);
+  mii_read(phy, PHY_CTRL1000, &val);
+  printf_func("ETH: PHY GBCR (before)      = 0x%04x\n", val);
+  mii_read(phy, PHY_MII_STATUS, &val);
+  printf_func("ETH: PHY STATUS (before)    = 0x%04x\n", val);
+
+  // Clear the 1000BASE-T advertisement (reg 9). A gigabit PHY advertises
+  // 1000BASE-T via GBCR independently of ANAR (reg 4); with it left set the
+  // link would negotiate 1000 Mbps, which the MII core cannot decode.
+  mii_write(phy, PHY_CTRL1000, 0x0000);
+  mii_read(phy, PHY_CTRL1000, &val);
+  printf_func("ETH: PHY GBCR (after write) = 0x%04x\n", val);
+
+  // Advertise only 100BASE-TX (full + half duplex) and restart auto-negotiation
+  mii_write(phy, PHY_ANAR,
+            ANAR_PROTOCOL_802_3 | ANAR_100BASE_TX_HD | ANAR_100BASE_TX_FD);
+  mii_read(phy, PHY_ANAR, &val);
+  printf_func("ETH: PHY ANAR (after write) = 0x%04x\n", val);
+  // Speed bits are ignored while auto-negotiation is enabled; the negotiation
+  // outcome is driven by the advertisements (GBCR + ANAR) above.
+  mii_write(phy, PHY_BMCR, BMCR_ANENABLE | BMCR_RESTART_AUTONEG);
+  mii_read(phy, PHY_BMCR, &val);
+  printf_func("ETH: PHY BMCR (after write) = 0x%04x\n", val);
+
+  // Wait for the link to come up (PHY re-negotiates with the switch). An
+  // auto-negotiation restart takes ~2 s, so poll for a few seconds.
+  for (retry = 0; retry < 2000; retry++) {
+    if (!mii_read(phy, PHY_MII_STATUS, &val) && (val & MII_STATUS_LINK)) {
+      printf_func("ETH: link up at 100 Mbps\n");
+      mii_read(phy, PHY_ANLPAR, &val);
+      printf_func("ETH: PHY ANLPAR = 0x%04x\n", val);
+      return;
+    }
+    mii_delay(system_freq);
+  }
+  mii_read(phy, PHY_MII_STATUS, &val);
+  printf_func("ETH: PHY STATUS (final)     = 0x%04x\n", val);
+  mii_read(phy, PHY_ANLPAR, &val);
+  printf_func("ETH: PHY ANLPAR (final)     = 0x%04x\n", val);
+  printf_func("ETH: warning, no link detected after PHY configuration\n");
+}
+
+void eth_init(int base_address, uint32_t system_freq,
+              void (*flush_cache_func)(void *start, size_t len),
+              int (*printf_func_)(const char *format, ...)) {
+  printf_func = printf_func_;
   eth_init_flush_cache(flush_cache_func);
 #ifdef LOOPBACK
   eth_init_mac(base_address, ETH_MAC_ADDR, ETH_MAC_ADDR);
@@ -75,6 +230,7 @@ void eth_init(int base_address, void (*flush_cache_func)(void *, size_t)) {
   eth_init_mac(base_address, ETH_MAC_ADDR, ETH_RMAC_ADDR);
 #endif
   eth_reset_bd_memory();
+  eth_init_phy(system_freq);
 }
 
 void eth_init_flush_cache(void (*flush_cache_func)(void *, size_t)) {
@@ -111,15 +267,15 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   }
 
 #ifdef ETH_DEBUG_PRINT
-  printf("\nSender: ");
+  printf_func("\nSender: ");
   for (i = 0; i < IOB_ETH_MAC_ADDR_LEN; i++) {
-    printf("%02x ", (unsigned char)TEMPLATE[MAC_SRC_PTR + i]);
+    printf_func("%02x ", (unsigned char)TEMPLATE[MAC_SRC_PTR + i]);
   }
-  printf("\nDest: ");
+  printf_func("\nDest: ");
   for (i = 0; i < IOB_ETH_MAC_ADDR_LEN; i++) {
-    printf("%02x ", (unsigned char)TEMPLATE[MAC_DEST_PTR + i]);
+    printf_func("%02x ", (unsigned char)TEMPLATE[MAC_DEST_PTR + i]);
   }
-  printf("\n");
+  printf_func("\n");
 #endif
 
   // eth type
@@ -131,7 +287,7 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   //     ;
   //
   // #ifdef ETH_DEBUG_PRINT
-  //   printf("Ethernet RX clock detected\n");
+  //   printf_func("Ethernet RX clock detected\n");
   // #endif
   //
   //   // wait for PLL to lock and produce tx clock
@@ -139,7 +295,7 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   //     ;
   //
   // #ifdef ETH_DEBUG_PRINT
-  //   printf("Ethernet TX PLL locked\n");
+  //   printf_func("Ethernet TX PLL locked\n");
   // #endif
   //
   //   // set initial payload size to Ethernet minimum excluding FCS
@@ -151,9 +307,9 @@ void eth_init_mac(int base_address, uint64_t mac_addr, uint64_t dest_mac_addr) {
   //
   //   // read and check result
   //   if (iob_eth_csrs_get_dummy_r() != 0xDEADBEEF) {
-  //     printf("Ethernet Init failed\n");
+  //     printf_func("Ethernet Init failed\n");
   //   } else {
-  //     printf("Ethernet Core Initialized\n");
+  //     printf_func("Ethernet Core Initialized\n");
   //   }
 }
 
@@ -322,7 +478,7 @@ int eth_rcv_frame_addr(unsigned int size, int timeout, uint32_t frame_addr) {
 
   if (eth_bad_crc(64)) {
     eth_receive(0);
-    printf("Bad CRC\n");
+    printf_func("Bad CRC\n");
     return ETH_INVALID_CRC;
   }
 
@@ -374,7 +530,7 @@ int eth_rcv_frame(char *data_rcv, unsigned int size, int timeout) {
     if (eth_bad_crc(64)) {
       eth_receive(0);
       (*mem_free)((char *)frame_ptr);
-      printf("Bad CRC\n");
+      printf_func("Bad CRC\n");
       return ETH_INVALID_CRC;
     }
 
@@ -494,7 +650,8 @@ static unsigned int eth_send_file_impl(char *data, int size) {
     for (int i = 0; i < bytes_to_send; i++) {
       if (buffer[i] != data[count_bytes + i]) {
         error_bytes += 1;
-        // printf("Error byte %d: %x %x\n",i,buffer[i], data[count_bytes + i]);
+        // printf_func("Error byte %d: %x %x\n",i,buffer[i], data[count_bytes +
+        // i]);
         // //DEBUG
       }
     }
@@ -503,7 +660,7 @@ static unsigned int eth_send_file_impl(char *data, int size) {
     count_bytes += bytes_to_send;
   }
 
-  printf("File transmitted with %d errors...\n", error_bytes);
+  printf_func("File transmitted with %d errors...\n", error_bytes);
 
   return count_bytes;
 }
@@ -560,7 +717,7 @@ void eth_wait_phy_rst() {
 }
 
 void eth_print_status() {
-  printf("tx_ready = %x\n", eth_tx_ready(0));
-  printf("rx_ready = %x\n", eth_rx_ready(0));
-  printf("Bad CRC = %x\n", eth_bad_crc(0));
+  printf_func("tx_ready = %x\n", eth_tx_ready(0));
+  printf_func("rx_ready = %x\n", eth_rx_ready(0));
+  printf_func("Bad CRC = %x\n", eth_bad_crc(0));
 }

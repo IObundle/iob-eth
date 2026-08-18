@@ -395,9 +395,12 @@ def setup(py_params_dict):
                 "name": "tx_bd_num",
                 "descr": "",
                 "signals": [
-                    {"name": "tx_bd_num_wr", "width": 32},
-                    {"name": "tx_bd_num_rd", "width": 32},
-                    {"name": "tx_bd_num_wstrb", "width": 32 // 8},
+                    {"name": "tx_bd_num_valid_wrrd", "width": 1},
+                    {"name": "tx_bd_num_wdata_wrrd", "width": 32},
+                    {"name": "tx_bd_num_wstrb_wrrd", "width": 4},
+                    {"name": "tx_bd_num_ready_wrrd", "width": 1},
+                    {"name": "tx_bd_num_rdata_wrrd", "width": 32},
+                    {"name": "tx_bd_num_rvalid_wrrd", "width": 1},
                 ],
             },
             {
@@ -864,7 +867,7 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_fifo_w_en", "width": 1},
                     {"name": "rx_fifo_w_data", "width": 8},
-                    {"name": "rx_fifo_w_empty", "width": 1},
+                    {"name": "rx_fifo_w_full", "width": 1},
                     {"name": "rx_fifo_r_en", "width": 1},
                     {"name": "rx_fifo_r_data", "width": 8},
                     {"name": "rx_fifo_r_empty", "width": 1},
@@ -895,9 +898,9 @@ def setup(py_params_dict):
                 ],
             },
             {
-                "name": "rx_fifo_w_empty",
+                "name": "rx_fifo_w_full",
                 "signals": [
-                    {"name": "rx_fifo_w_empty"},
+                    {"name": "rx_fifo_w_full"},
                 ],
             },
             {
@@ -958,7 +961,7 @@ def setup(py_params_dict):
             {
                 "name": "rx_fifo_flow_control",
                 "signals": [
-                    {"name": "rx_fifo_w_empty"},
+                    {"name": "rx_fifo_w_full"},
                 ],
             },
             # RX info FIFO
@@ -974,11 +977,11 @@ def setup(py_params_dict):
                     {"name": "rx_info_r_empty", "width": 1},
                     {"name": "rx_info_ext_mem_w_clk", "width": 1},
                     {"name": "rx_info_ext_mem_w_en", "width": 1},
-                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 3},
                     {"name": "rx_info_ext_mem_w_data", "width": 12},
                     {"name": "rx_info_ext_mem_r_clk", "width": 1},
                     {"name": "rx_info_ext_mem_r_en", "width": 1},
-                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 3},
                     {"name": "rx_info_ext_mem_r_data", "width": 12},
                 ],
             },
@@ -1031,11 +1034,11 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_info_ext_mem_w_clk"},
                     {"name": "rx_info_ext_mem_w_en"},
-                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 3},
                     {"name": "rx_info_ext_mem_w_data", "width": 12},
                     {"name": "rx_info_ext_mem_r_clk"},
                     {"name": "rx_info_ext_mem_r_en"},
-                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 3},
                     {"name": "rx_info_ext_mem_r_data", "width": 12},
                 ],
             },
@@ -1044,11 +1047,11 @@ def setup(py_params_dict):
                 "signals": [
                     {"name": "rx_info_ext_mem_r_clk"},
                     {"name": "rx_info_ext_mem_r_en"},
-                    {"name": "rx_info_ext_mem_r_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_r_addr", "width": 3},
                     {"name": "rx_info_ext_mem_r_data", "width": 12},
                     {"name": "rx_info_ext_mem_w_clk"},
                     {"name": "rx_info_ext_mem_w_en"},
-                    {"name": "rx_info_ext_mem_w_addr", "width": 1},
+                    {"name": "rx_info_ext_mem_w_addr", "width": 3},
                     {"name": "rx_info_ext_mem_w_data", "width": 12},
                 ],
             },
@@ -1136,6 +1139,7 @@ def setup(py_params_dict):
                     {"name": "dt_csrs_control_rx_en", "width": 1},
                     {"name": "dt_csrs_control_tx_en", "width": 1},
                     {"name": "dt_csrs_control_tx_bd_num", "width": "BD_NUM_LOG2"},
+                    {"name": "tx_bd_num_wr_pulse", "width": 1},
                 ],
             },
             {
@@ -1292,6 +1296,7 @@ def setup(py_params_dict):
                                 "rst_val": 64,
                                 "addr": 32,
                                 "log2n_items": 0,
+                                "type": "NOAUTO",
                             },
                             {
                                 "name": "ctrlmoder",
@@ -1643,8 +1648,8 @@ def setup(py_params_dict):
                 "connect": {
                     "w_clk_en_rst_s": "rx_fifo_w_clk_en_rst_s",
                     "w_data_i": "rx_fifo_w_data",
-                    "w_full_o": "z",
-                    "w_empty_o": "rx_fifo_w_empty",
+                    "w_full_o": "rx_fifo_w_full",
+                    "w_empty_o": "z",
                     "w_level_o": "z",
                     "r_clk_en_rst_s": "rx_fifo_r_clk_en_rst_s",
                     "r_data_o": "rx_fifo_r_data",
@@ -1670,11 +1675,11 @@ def setup(py_params_dict):
             {
                 "core_name": "iob_fifo_async",
                 "instance_name": "rx_info_fifo",
-                "instance_description": "RX info FIFO: carries the frame info word {crc_err, length[10:0]} from the MII RX to the system clock domain.",
+                "instance_description": "RX info FIFO: carries the frame info word {crc_err, length[10:0]} from the MII RX to the system clock domain. 8 entries (ADDR_W=3) so the receiver never blocks on a full info FIFO while the Data Transfer block is busy draining a previous frame.",
                 "parameters": {
                     "W_DATA_W": 12,
                     "R_DATA_W": 12,
-                    "ADDR_W": 1,
+                    "ADDR_W": 3,
                 },
                 "connect": {
                     "w_clk_en_rst_s": "info_fifo_w_clk_en_rst_s",
@@ -1695,7 +1700,7 @@ def setup(py_params_dict):
                 "instance_name": "rx_info_fifo_ram",
                 "instance_description": "",
                 "parameters": {
-                    "ADDR_W": 1,
+                    "ADDR_W": 3,
                     "DATA_W": 12,
                 },
                 "connect": {
@@ -1836,6 +1841,29 @@ def setup(py_params_dict):
                 "verilog_code": """
    reg  [31:0] int_source_reg;
 
+    // tx_bd_num register (NOAUTO - manual implementation)
+   reg [31:0] tx_bd_num_reg;
+   assign tx_bd_num_ready_wrrd  = 1'b1;
+   assign tx_bd_num_rdata_wrrd  = tx_bd_num_reg;
+   assign tx_bd_num_wr_pulse = tx_bd_num_valid_wrrd & (|tx_bd_num_wstrb_wrrd);
+   always @(posedge clk_i, posedge arst_i) begin
+      if (arst_i)
+         tx_bd_num_reg <= 32'd64;
+      else if (tx_bd_num_wr_pulse)
+         tx_bd_num_reg <= tx_bd_num_wdata_wrrd;
+   end
+
+   // tx_bd_num read-valid: pulse one cycle after a read request (no write)
+   wire tx_bd_num_rvalid_nxt = tx_bd_num_valid_wrrd & ~(|tx_bd_num_wstrb_wrrd);
+   reg  tx_bd_num_rvalid_wrrd_reg;
+   always @(posedge clk_i, posedge arst_i) begin
+      if (arst_i)
+         tx_bd_num_rvalid_wrrd_reg <= 1'b0;
+      else if (cke_i)
+         tx_bd_num_rvalid_wrrd_reg <= tx_bd_num_rvalid_nxt;
+   end
+   assign tx_bd_num_rvalid_wrrd = tx_bd_num_rvalid_wrrd_reg;
+
    // Interrupt events
    reg         tx_irq_dly;
    reg         rx_irq_dly;
@@ -1851,7 +1879,6 @@ def setup(py_params_dict):
    assign ipgr2_rd         = ipgr2_wr;
    assign packetlen_rd     = packetlen_wr;
    assign collconf_rd      = collconf_wr;
-   assign tx_bd_num_rd     = tx_bd_num_wr;
    assign ctrlmoder_rd     = ctrlmoder_wr;
    assign miimoder_rd      = miimoder_wr;
    assign miicommand_rd    = mii_miicommand_clr ? 32'd0 : miicommand_wr;
@@ -1873,7 +1900,6 @@ def setup(py_params_dict):
    assign ipgr2_wstrb         = 4'h0;
    assign packetlen_wstrb     = 4'h0;
    assign collconf_wstrb      = 4'h0;
-   assign tx_bd_num_wstrb     = 4'h0;
    assign ctrlmoder_wstrb     = 4'h0;
    assign miimoder_wstrb      = 4'h0;
    // miicommand is self-cleared by MII management (MII module writes 0 to CSR)
@@ -1973,7 +1999,7 @@ def setup(py_params_dict):
    assign bd_ram_port_a_addr = bd_addr_wrrd[2+:(BD_NUM_LOG2+1)];
    assign dt_csrs_control_rx_en = moder_wr[0];
    assign dt_csrs_control_tx_en = moder_wr[1];
-   assign dt_csrs_control_tx_bd_num = tx_bd_num_wr[BD_NUM_LOG2-1:0];
+   assign dt_csrs_control_tx_bd_num = tx_bd_num_reg[BD_NUM_LOG2-1:0];
 
 """,
             },

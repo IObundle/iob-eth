@@ -143,6 +143,7 @@ module iob_eth_dt_tb;
       .rx_en_i                 (rx_en_i),
       .tx_en_i                 (tx_en_i),
       .tx_bd_num_i             (tx_bd_num_i),
+      .tx_bd_num_wr_i          (1'b0),
       .bd_en_o                 (bd_en_o),
       .bd_addr_o               (bd_addr_o),
       .bd_wen_o                (bd_wen_o),

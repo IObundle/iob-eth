@@ -57,6 +57,11 @@ def setup(py_params_dict):
                     {"name": "rx_en_i", "width": 1},
                     {"name": "tx_en_i", "width": 1},
                     {"name": "tx_bd_num_i", "width": "BD_ADDR_W-1"},
+                    {
+                        "name": "tx_bd_num_wr_i",
+                        "width": 1,
+                        "descr": "pulses on any TX_BD_NUM register write (even same value)",
+                    },
                 ],
             },
             {
