@@ -17,9 +17,17 @@ ETH_P_ALL = 0x0003
 def file_2_eth(socket_object, file_object):
     while True:
         # Get frame size
-        frame_size = int.from_bytes(file_object.read(2), byteorder="little")
+        frame_size_bytes = file_object.read(2)
+        if len(frame_size_bytes) < 2:
+            continue
+        frame_size = int.from_bytes(frame_size_bytes, byteorder="little")
+        # Get frame data
+        frame_data = file_object.read(frame_size)
+        if len(frame_data) < frame_size:
+            continue
         # Send frame to socket (ignore last 4 CRC bytes)
-        socket_object.send(file_object.read(frame_size)[:-4])
+        if len(frame_data) > 4:
+            socket_object.send(frame_data[:-4])
 
 
 def eth_2_file(socket_object, file_object, mac_filter=None):
@@ -47,8 +55,6 @@ def eth_2_file(socket_object, file_object, mac_filter=None):
 
 def file_2_eth_thread(socket_object, fifo_file_path):
     # With a name pipe, we don't need keep polling and deleting chars from the file
-    if not os.path.exists(fifo_file_path):
-        os.mkfifo(fifo_file_path)
     with open(fifo_file_path, "rb") as input_file:
         file_2_eth(socket_object, input_file)
 
@@ -66,6 +72,9 @@ def relay_frames(interface, input_file, output_file, mac_filter=None):
         os.remove(input_file)
     if os.path.exists(output_file):
         os.remove(output_file)
+
+    # Ensure input_file is a named pipe for the SoC to write to
+    os.mkfifo(input_file)
 
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL)) as s:
         s.bind((interface, 0))
