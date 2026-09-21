@@ -90,7 +90,7 @@ def setup(py_params_dict):
         "subblocks": [
             # Reset Synchronizers
             {
-                "core_name": "iob_reset_sync",
+                "core": "iob_reset_sync",
                 "instance_name": "rx_reset_sync",
                 "instance_description": "Async reset synchronizer for RX",
                 "connect": {
@@ -99,7 +99,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_reset_sync",
+                "core": "iob_reset_sync",
                 "instance_name": "tx_reset_sync",
                 "instance_description": "Async reset synchronizer for TX",
                 "connect": {
@@ -155,7 +155,7 @@ def setup(py_params_dict):
         # Create synchronizer
         attributes_dict["subblocks"].append(
             {
-                "core_name": "iob_sync",
+                "core": "iob_sync",
                 "instance_name": f"{k}_sync",
                 "instance_description": f"Synchronizer for {v[4]}",
                 "parameters": {

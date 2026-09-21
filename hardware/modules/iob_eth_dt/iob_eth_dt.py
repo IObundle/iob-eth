@@ -135,14 +135,14 @@ def setup(py_params_dict):
         ],
         "subblocks": [
             {
-                "core_name": "iob_reg",
+                "core": "iob_reg",
                 "instantiate": False,
                 "port_params": {
                     "clk_en_rst_s": "c_a",
                 },
             },
             {
-                "core_name": "iob_arbiter",
+                "core": "iob_arbiter",
                 "instantiate": False,
             },
         ],
