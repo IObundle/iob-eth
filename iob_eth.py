@@ -1203,7 +1203,7 @@ def setup(py_params_dict):
         ],
         "subblocks": [
             {
-                "core_name": "iob_csrs",
+                "core": "iob_csrs",
                 "instance_name": "csrs",
                 "instance_description": "The Control and Status Register block contains registers accessible by the software for controlling the IP core attached as a peripheral.",
                 "autoaddr": False,
@@ -1544,7 +1544,7 @@ def setup(py_params_dict):
             },
             # PHY reset counter
             {
-                "core_name": "iob_acc",
+                "core": "iob_acc",
                 "instance_name": "phy_reset_counter",
                 "instance_description": "Counter to generate initial PHY reset signal. Configurable duration based on counter reset value.",
                 "parameters": {
@@ -1560,7 +1560,7 @@ def setup(py_params_dict):
             },
             # CDC block
             {
-                "core_name": "iob_eth_cdc",
+                "core": "iob_eth_cdc",
                 "instance_name": "cdc",
                 "instance_description": "Clock domain crossing block, using internal synchronizers.",
                 "parameters": {
@@ -1576,7 +1576,7 @@ def setup(py_params_dict):
             },
             # Transmitter
             {
-                "core_name": "iob_eth_tx",
+                "core": "iob_eth_tx",
                 "instance_name": "transmitter",
                 "instance_description": "Ethernet transmitter that reads payload bytes from a host interface, emits preamble/SFD and payload, computes and appends the CRC, and provides flow-control so the surrounding logic knows when the transmitter is ready for the next frame.",
                 "connect": {
@@ -1588,7 +1588,7 @@ def setup(py_params_dict):
             },
             # Receiver
             {
-                "core_name": "iob_eth_rx",
+                "core": "iob_eth_rx",
                 "instance_name": "receiver",
                 "instance_description": "Ethernet receiver that detects frame start, captures the destination MAC and payload, writes received bytes and a status info word to host FIFOs, and validates the frame with a CRC check.",
                 "connect": {
@@ -1601,7 +1601,7 @@ def setup(py_params_dict):
             },
             # TX data FIFO
             {
-                "core_name": "iob_fifo_async",
+                "core": "iob_fifo_async",
                 "instance_name": "tx_data_fifo",
                 "instance_description": "TX data FIFO: written in the system clock domain (Data Transfer block), read in the MII TX clock domain (transmitter).",
                 "parameters": {
@@ -1624,7 +1624,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_ram_at2p",
+                "core": "iob_ram_at2p",
                 "instance_name": "tx_data_fifo_ram",
                 "instance_description": "",
                 "parameters": {
@@ -1637,7 +1637,7 @@ def setup(py_params_dict):
             },
             # RX data FIFO
             {
-                "core_name": "iob_fifo_async",
+                "core": "iob_fifo_async",
                 "instance_name": "rx_data_fifo",
                 "instance_description": "RX data FIFO: written in the MII RX clock domain (receiver), read in the system clock domain (Data Transfer block).",
                 "parameters": {
@@ -1660,7 +1660,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_ram_at2p",
+                "core": "iob_ram_at2p",
                 "instance_name": "rx_data_fifo_ram",
                 "instance_description": "",
                 "parameters": {
@@ -1673,7 +1673,7 @@ def setup(py_params_dict):
             },
             # RX info FIFO
             {
-                "core_name": "iob_fifo_async",
+                "core": "iob_fifo_async",
                 "instance_name": "rx_info_fifo",
                 "instance_description": "RX info FIFO: carries the frame info word {crc_err, length[10:0]} from the MII RX to the system clock domain. 8 entries (ADDR_W=3) so the receiver never blocks on a full info FIFO while the Data Transfer block is busy draining a previous frame.",
                 "parameters": {
@@ -1696,7 +1696,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_ram_at2p",
+                "core": "iob_ram_at2p",
                 "instance_name": "rx_info_fifo_ram",
                 "instance_description": "",
                 "parameters": {
@@ -1708,7 +1708,7 @@ def setup(py_params_dict):
                 },
             },
             {
-                "core_name": "iob_ram_tdp",
+                "core": "iob_ram_tdp",
                 "instance_name": "buffer_descriptors",
                 "instance_description": "Buffer descriptors memory.",
                 "parameters": {
@@ -1724,7 +1724,7 @@ def setup(py_params_dict):
             },
             # Data transfer
             {
-                "core_name": "iob_eth_dt",
+                "core": "iob_eth_dt",
                 "instance_name": "data_transfer",
                 "instance_description": "Manages data transfers between ethernet modules and interfaces.",
                 "parameters": {
@@ -1749,7 +1749,7 @@ def setup(py_params_dict):
             },
             # MII Management
             {
-                "core_name": "iob_eth_mii_management",
+                "core": "iob_eth_mii_management",
                 "instance_name": "mii_management",
                 "instance_description": "Controls MII management signals.",
                 "parameters": {
@@ -1764,7 +1764,7 @@ def setup(py_params_dict):
             },
             # No-auto csrs logic
             {
-                "core_name": "iob_eth_logic",
+                "core": "iob_eth_logic",
                 "instance_name": "eth_logic",
                 "instance_description": "Extra ethernet logic for interface between CSRs and Data Transfer block.",
                 "parameters": {
@@ -1777,18 +1777,18 @@ def setup(py_params_dict):
             },
             # For simulation
             {
-                "core_name": "iob_tasks",
+                "core": "iob_tasks",
                 "dest_dir": "hardware/simulation/src",
                 "instantiate": False,
             },
         ],
         "sw_modules": [
             {
-                "core_name": "iob_coverage_analyze",
+                "core": "iob_coverage_analyze",
                 "instance_name": "iob_coverage_analyze_inst",
             },
             {
-                "core_name": "iob_linux_device_drivers",
+                "core": "iob_linux_device_drivers",
                 # The 'compatible' property is set as "opencores,ethoc" to match
                 # the Linux ethoc driver's of_match_table.
                 "compatible_str": "opencores,ethoc",
@@ -2009,7 +2009,7 @@ def setup(py_params_dict):
     attributes_dict["superblocks"] = [
         # Simulation wrapper
         {
-            "core_name": "iob_eth_sim",
+            "core": "iob_eth_sim",
             "dest_dir": "hardware/simulation/src",
             "csr_if": CSR_IF,
         },

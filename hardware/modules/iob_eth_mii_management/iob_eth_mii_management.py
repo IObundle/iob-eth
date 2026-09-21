@@ -54,7 +54,7 @@ def setup(py_params_dict):
         ],
         "subblocks": [
             {
-                "core_name": "iob_iobuf",
+                "core": "iob_iobuf",
                 "instantiate": False,
             },
         ],

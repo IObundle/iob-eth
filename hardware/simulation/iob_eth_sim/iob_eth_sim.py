@@ -444,7 +444,7 @@ def setup(py_params_dict):
         converter_connect["clk_en_rst_s"] = "clk_en_rst_s"
     attributes_dict["subblocks"] = [
         {
-            "core_name": "iob_universal_converter",
+            "core": "iob_universal_converter",
             "instance_name": "iob_universal_converter",
             "instance_description": "Convert IOb port from testbench into correct interface for Eth CSRs bus",
             "subordinate_if": "iob",
@@ -456,7 +456,7 @@ def setup(py_params_dict):
             "connect": converter_connect,
         },
         {
-            "core_name": "iob_counter",
+            "core": "iob_counter",
             "instance_name": "mii_counter_inst",
             "instance_description": "ETH clk counter: 4x slower than system clk",
             "parameters": {
@@ -471,7 +471,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_axistream_in",
+            "core": "iob_axistream_in",
             "instance_name": "axistream_in0",
             "instance_description": "AXIS IN test instrument",
             "parameters": {
@@ -492,7 +492,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_axistream_out",
+            "core": "iob_axistream_out",
             "instance_name": "axistream_out0",
             "instance_description": "AXIS OUT test instrument",
             "parameters": {
@@ -513,7 +513,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_split",
+            "core": "iob_split",
             "name": "tb_pbus_split",
             "instance_name": "iob_pbus_split",
             "instance_description": "Split between testbench peripherals",
@@ -530,7 +530,7 @@ def setup(py_params_dict):
             "addr_w": 14,
         },
         {
-            "core_name": "iob_eth",
+            "core": "iob_eth",
             "instance_name": "eth_inst",
             "instance_description": "Unit Under Test (UUT) DMA instance.",
             "parameters": {
@@ -552,7 +552,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_dma",
+            "core": "iob_dma",
             "instance_name": "dma_inst",
             "instance_description": "DMA test instrument.",
             "parameters": {
@@ -572,7 +572,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_axi_interconnect",
+            "core": "iob_axi_interconnect",
             "instance_name": "iob_axi_interconnect_ram",
             "instance_description": "Interconnect core: DMA + ETH managers, AXI RAM subordinate",
             "parameters": {
@@ -603,7 +603,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_axi_ram",
+            "core": "iob_axi_ram",
             "instance_name": "axi_ram_inst",
             "instance_description": "AXI RAM test instrument to connect to DMA",
             "parameters": {
@@ -619,7 +619,7 @@ def setup(py_params_dict):
             },
         },
         {
-            "core_name": "iob_ram_t2p_be",
+            "core": "iob_ram_t2p_be",
             "instance_name": "iob_ram_t2p_be_inst",
             "instance_description": "AXI RAM external memory",
             "parameters": {
