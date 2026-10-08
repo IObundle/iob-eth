@@ -22,6 +22,7 @@
  * @param system_freq The frequency of the system clock, in Hz.
  * @param flush_cache_func Function pointer to a function that flushes (cleans +
  * invalidates) the data cache, based on given memory address and size.
+ * @param printf_func Function pointer for printing.
  */
 void eth_init(int base_address, uint32_t system_freq,
               void (*flush_cache_func)(void *start, size_t len),
