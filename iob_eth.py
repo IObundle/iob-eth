@@ -14,7 +14,7 @@ from gen_custom_config_build import gen_custom_config_build
 def setup(py_params_dict):
     PLIC_SOURCE_ID = py_params_dict.get("plic_source_id", 1)
     CSR_IF = py_params_dict["csr_if"] if "csr_if" in py_params_dict else "iob"
-    VERSION = "0.1.0"
+    VERSION = "1.0.0"
     gen_custom_config_build(py_params_dict)
 
     IF_DISPLAY_NAME = {
