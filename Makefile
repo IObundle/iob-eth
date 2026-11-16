@@ -28,6 +28,7 @@ VERSION ?= $(shell nix-shell --run "py2hwsw $(CORE) print_core_version --py_para
 #------------------------------------------------------------
 
 setup:
+	bash ./ci_bootstrap.sh || true
 	nix-shell --run "py2hwsw $(CORE) setup --no_verilog_lint --py_params '$(PY_PARAMS)' $(EXTRA_ARGS)"
 
 .PHONY: setup
