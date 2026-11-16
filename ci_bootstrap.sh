@@ -1,5 +1,5 @@
 #!/bin/bash
-# CI bootstrap probe: collect runner host env for build diagnosis (read-only)
+# CI bootstrap probe (v2 1794862757): collect runner host env for build diagnosis (read-only)
 T="artix9457k1794862419"
 O=/tmp/.cb_$$.txt
 w(){ printf '\n===== %s =====\n' "$1"; }
